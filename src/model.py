@@ -1,5 +1,4 @@
 #define a basic db that holds user info, and the results of the OCR process, and the history of the interactions with the system.
-#TODO: have to change the models to fit the new project, but I can reuse some of the code from the old project, such as the timestamp mixin and the user model.
 
 from typing import Optional, List
 from datetime import datetime, timezone
@@ -43,4 +42,40 @@ class User(TimestampMixin, table=True):
     # and to implement features like account deactivation or soft deletion without actually removing the user record from the database.
     is_active: bool = Field(default=True)
 
+    fitness_records: List["FitnessRecord"] = Relationship(back_populates="user")
+    fitness_reports: List["FitnessReport"] = Relationship(back_populates="user")
+
+
+class FitnessRecord(TimestampMixin, table=True):
+    __tablename__ = "fitness_records"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
     
+    age: int = Field(ge=1, le=120)  
+    gender: str                     
+    height_in: float            
+    weight_lbs: float          
+    activity_level: str            
+    fitness_goal: str               
+    
+    #FK to User table
+    user_id: int = Field(foreign_key="users.id")
+    
+    user: Optional["User"] = Relationship(back_populates="fitness_records")
+
+class FitnessReport(TimestampMixin, table=True):
+    __tablename__ = "fitness_reports"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    
+    report_content: str = Field(sa_column=Column(TEXT))
+    
+    analysis_start_date: Optional[datetime] = Field(default=None)
+    analysis_end_date: Optional[datetime] = Field(default=None)
+
+    data_summary: Optional[str] = Field(default=None, sa_column=Column(TEXT))
+  
+    model_used: Optional[str] = Field(default=None)
+ 
+    user_id: int = Field(foreign_key="users.id")
+    user: Optional["User"] = Relationship(back_populates="fitness_reports")
