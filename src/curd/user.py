@@ -1,6 +1,6 @@
 #define user crud operations, such as creating new users, retrieving user information, and managing user accounts.
 
-##using SQLModel to define the database models for users and OCR results, 
+##using SQLModel to define the database models for users
 # and to perform CRUD operations on the database asynchronously with AsyncSession from SQLAlchemy.
 # for asynchronous database operations, we will use AsyncSession from SQLAlchemy, which allows us to perform database operations without blocking the main thread of the application, 
 # and to take advantage of the asynchronous capabilities of FastAPI for handling multiple requests concurrently.

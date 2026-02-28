@@ -44,3 +44,49 @@ class User(TimestampMixin, table=True):
     is_active: bool = Field(default=True)
 
     
+class User(TimestampMixin, table=True):
+    __tablename__ = "users"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    email: str = Field(unique=True, index=True)
+    username: str = Field(unique=True, index=True)
+    password_hash: str
+    is_active: bool = Field(default=True)
+    
+    fitness_records: List["FitnessRecord"] = Relationship(back_populates="user")
+
+
+class FitnessRecord(TimestampMixin, table=True):
+    __tablename__ = "fitness_records"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    
+    #health-related information
+    age: int = Field(ge=1, le=120)  
+    gender: str                     
+    height_cm: float                
+    weight_kg: float                
+    
+   
+    activity_level: str            
+    fitness_goal: str               
+    
+    # FK to the User model, establishing a relationship between fitness records and users, allowing us to associate each fitness record with a specific user in the database.
+    user_id: int = Field(foreign_key="users.id")
+    user: User = Relationship(back_populates="fitness_records")
+
+class FitnessReport(TimestampMixin, table=True):
+    __tablename__ = "fitness_reports"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    
+    report_content: str = Field(sa_column=Column(TEXT))
+    
+    analysis_start_date: Optional[datetime] = Field(default=None)
+    analysis_end_date: Optional[datetime] = Field(default=None)
+
+    data_summary: Optional[str] = Field(default=None, sa_column=Column(TEXT))
+  
+    model_used: Optional[str] = Field(default=None)
+ 
+    user_id: int = Field(foreign_key="users.id")
+    user: Optional["User"] = Relationship(back_populates="fitness_reports")
