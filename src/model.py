@@ -1,5 +1,4 @@
 #define a basic db that holds user info, and the results of the OCR process, and the history of the interactions with the system.
-#TODO: have to change the models to fit the new project, but I can reuse some of the code from the old project, such as the timestamp mixin and the user model.
 
 from typing import Optional, List
 from datetime import datetime, timezone
@@ -42,17 +41,6 @@ class User(TimestampMixin, table=True):
     # use this field to control user account status, such as active, suspended, or deleted, 
     # and to implement features like account deactivation or soft deletion without actually removing the user record from the database.
     is_active: bool = Field(default=True)
-
-    
-class User(TimestampMixin, table=True):
-    __tablename__ = "users"
-    id: Optional[int] = Field(default=None, primary_key=True)
-    email: str = Field(unique=True, index=True)
-    username: str = Field(unique=True, index=True)
-    password_hash: str
-    is_active: bool = Field(default=True)
-    
-    fitness_records: List["FitnessRecord"] = Relationship(back_populates="user")
 
 
 class FitnessRecord(TimestampMixin, table=True):

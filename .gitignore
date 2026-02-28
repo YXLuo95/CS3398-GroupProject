@@ -1,0 +1,47 @@
+# ==========================================
+# environment variables and secrets (API keys, database credentials, etc.)
+# ==========================================
+.env
+.env.*
+*.pem
+secrets/
+
+# ==========================================
+# 2. Database files (SQLite, local databases, etc.)
+# ==========================================
+*.db
+*.sqlite3
+database.db
+
+# ==========================================
+# 3. Python bytecode, C extensions, and pytest cache
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# ==========================================
+# 4. Virtual environments and dependency lock files
+# ==========================================
+venv/
+env/
+.venv/
+.conda/
+Pipfile.lock
+
+# ==========================================
+# 5. Log files and application-specific cache directories
+# ==========================================
+*.log
+logs/
+
+# ==========================================
+# 6. IDE and editor configuration files (VSCode, PyCharm, etc.)
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.DS_Store
+Thumbs.db
