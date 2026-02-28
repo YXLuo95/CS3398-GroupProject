@@ -128,11 +128,11 @@ async def health_check():
 
 # loading API routes for authentication and fitness data management. The login_router is included for handling user authentication-related endpoints,
 from src.api.login import router as login_router
-app.include_router(login_router, tags=["auth"])
+app.include_router(login_router, tags=["Authentication"])
 
-# TODO: user data input and report generation endpoints
-# from src.api.fitness import router as fitness_router
-# app.include_router(fitness_router, tags=["fitness"])
+#api router for fitness related endpoints
+from src.api.fitness import router as fitness_router
+app.include_router(fitness_router, prefix=settings.API_V1_STR, tags=["Fitness"])
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
