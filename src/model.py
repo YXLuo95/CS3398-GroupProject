@@ -48,19 +48,17 @@ class FitnessRecord(TimestampMixin, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     
-    #health-related information
     age: int = Field(ge=1, le=120)  
     gender: str                     
-    height_cm: float                
-    weight_kg: float                
-    
-   
+    height_in: float            
+    weight_lbs: float          
     activity_level: str            
     fitness_goal: str               
     
-    # FK to the User model, establishing a relationship between fitness records and users, allowing us to associate each fitness record with a specific user in the database.
+    #FK to User table
     user_id: int = Field(foreign_key="users.id")
-    user: User = Relationship(back_populates="fitness_records")
+    
+    user: Optional["User"] = Relationship(back_populates="fitness_records")
 
 class FitnessReport(TimestampMixin, table=True):
     __tablename__ = "fitness_reports"

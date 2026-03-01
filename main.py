@@ -73,13 +73,20 @@ async def lifespan(app: FastAPI):
         try:
             logger.info(f"[Booting] Checking Local LLM Model ({settings.LOCAL_MODEL_NAME})...")
             
+            # importing the ollama client library and the generate_fitness_report function from the llm module.
+            import ollama
             from src.core.llm import generate_fitness_report
+            
+            client = ollama.AsyncClient(host='http://localhost:11434')
+            await client.list() # test connection and model availability by listing models, if this fails it will jump to the except block
+            
             app.state.generate_report = generate_fitness_report
-            logger.info("[Booting] LLM Engine initialized and ready.")
+            logger.info(f"[Booting] LLM Engine ({settings.LOCAL_MODEL_NAME}) is online and ready!")
+            
         except ImportError:
             logger.error("[Booting] Dependency missing: ollama. Falling back to Mock.")
         except Exception as e:
-            logger.error(f"[Booting] LLM Init failed: {e}. Falling back to Mock.")
+            logger.error(f"[Booting] LLM Engine is offline or failed to connect: {e}. Falling back to Mock.")
     else:
         logger.info("[Booting] LLM disabled by settings. Using Mock mode.")
 

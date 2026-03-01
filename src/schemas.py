@@ -28,12 +28,15 @@ class UserRead(UserBase):
 # 2. Fitness Record Schemas 
 # ==========================================
 class FitnessRecordBase(BaseModel):
-    age: int = Field(..., gt=0, le=120, description="age in years")
-    gender: str = Field(..., description="gender")
-    height_cm: float = Field(..., gt=0, description="height(inches)")
-    weight_kg: float = Field(..., gt=0, description="weight(pounds)")
-    activity_level: str = Field(..., description="level of activity：sedentary, active")
-    fitness_goal: str = Field(..., description="fitness goal：lose_weight, build_muscle")
+    age: int = Field(..., gt=0, le=120, description="Age in years")
+    gender: str = Field(..., description="Gender (e.g., Male, Female, Other)")
+    
+    # 彻底告别 cm 和 kg，统一使用 in 和 lbs
+    height_in: float = Field(..., gt=0, description="Height in inches")
+    weight_lbs: float = Field(..., gt=0, description="Weight in pounds (lbs)")
+    
+    activity_level: str = Field(..., description="Level of activity: sedentary, lightly_active, highly_active")
+    fitness_goal: str = Field(..., description="Fitness goal: lose_weight, maintain, build_muscle")
 
 class FitnessRecordCreate(FitnessRecordBase):
     pass 
