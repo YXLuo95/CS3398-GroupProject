@@ -43,4 +43,28 @@ class User(TimestampMixin, table=True):
     # and to implement features like account deactivation or soft deletion without actually removing the user record from the database.
     is_active: bool = Field(default=True)
 
-    
+
+class FitnessGoal(TimestampMixin, table=True):
+    __tablename__ = "fitness_goals"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", unique=True, index=True)
+
+    goal_type: str
+    age: int
+    gender: str
+    height_cm: float
+    weight_kg: float
+    target_weight: Optional[float] = None
+    activity_level: str
+    workout_days: int
+    dietary_preferences: str = "[]"
+    allergies: str = "[]"
+    limitations: Optional[str] = None
+
+    bmi: Optional[float] = None
+    bmr: Optional[float] = None
+    tdee: Optional[float] = None
+
+    quiz_completed: bool = Field(default=False)
+
