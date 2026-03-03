@@ -1,4 +1,3 @@
-# src/core/llm.py
 from typing import Optional
 import logging
 import ollama
@@ -74,5 +73,5 @@ async def generate_fitness_report(user_age: int, gender: str, data_summary: str)
         
     except Exception as e:
         logger.error(f"[LLM Service] LLM invocation failed: {str(e)}")
-        # 发生任何网络或模型错误时，优雅降级，返回 mock 报告保证后端不崩溃
+        logger.info("[LLM Service] Returning mock report due to LLM failure.")
         return MOCK_REPORT

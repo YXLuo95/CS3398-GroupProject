@@ -31,7 +31,6 @@ class FitnessRecordBase(BaseModel):
     age: int = Field(..., gt=0, le=120, description="Age in years")
     gender: str = Field(..., description="Gender (e.g., Male, Female, Other)")
     
-    # 彻底告别 cm 和 kg，统一使用 in 和 lbs
     height_in: float = Field(..., gt=0, description="Height in inches")
     weight_lbs: float = Field(..., gt=0, description="Weight in pounds (lbs)")
     

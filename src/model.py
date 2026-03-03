@@ -42,6 +42,9 @@ class User(TimestampMixin, table=True):
     # and to implement features like account deactivation or soft deletion without actually removing the user record from the database.
     is_active: bool = Field(default=True)
 
+    fitness_records: List["FitnessRecord"] = Relationship(back_populates="user")
+    fitness_reports: List["FitnessReport"] = Relationship(back_populates="user")
+
 
 class FitnessRecord(TimestampMixin, table=True):
     __tablename__ = "fitness_records"
