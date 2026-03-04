@@ -99,7 +99,7 @@ To prevent scope creep, the following features are excluded:
 
 ### 4.2 Non-Functional Requirements
 
-- System response time shall not exceed **XX seconds** for plan generation.
+- System response time shall not exceed 3 seconds for plan generation.
 - Passwords shall be securely stored using appropriate hashing techniques.
 - The interface shall be intuitive and accessible.
 - The architecture shall be modular to ensure maintainability.
