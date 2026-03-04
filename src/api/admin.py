@@ -1,5 +1,5 @@
 from sqladmin import Admin, ModelView
-from src.model import User, FitnessRecord, FitnessReport
+from src.model import User, FitnessRecord, FitnessReport , FitnessGoal
 
 class UserAdmin(ModelView, model=User):
 
@@ -34,9 +34,25 @@ class FitnessReportAdmin(ModelView, model=FitnessReport):
     name_plural = "AI Reports"
     icon = "fa-solid fa-file-medical"
 
+class FitnessGoalAdmin(ModelView, model=FitnessGoal):
+    column_list = [
+        FitnessGoal.id, 
+        FitnessGoal.user_id, 
+        FitnessGoal.goal_type, 
+        FitnessGoal.weight_lbs, 
+        FitnessGoal.target_weight,
+        FitnessGoal.quiz_completed,
+        FitnessGoal.created_at
+    ]
+    column_details_exclude_list = [FitnessGoal.updated_at]
+    name = "Fitness Goal"
+    name_plural = "Fitness Goals"
+    icon = "fa-solid fa-bullseye" 
+
 def setup_admin(app, engine):
     admin = Admin(app, engine, title="Fitness AI Admin Dashboard")
     admin.add_view(UserAdmin)
     admin.add_view(FitnessRecordAdmin)
     admin.add_view(FitnessReportAdmin)
+    admin.add_view(FitnessGoalAdmin)
     return admin

@@ -3,7 +3,7 @@
 from typing import Optional, List
 from datetime import datetime, timezone
 from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy import Column, TEXT
+from sqlalchemy import JSON, Column, TEXT
 
 # Base model with timestamp fields for created_at and updated_at
 # so I don't have to repeat these fields in every model, 
@@ -45,6 +45,11 @@ class User(TimestampMixin, table=True):
     fitness_records: List["FitnessRecord"] = Relationship(back_populates="user")
     fitness_reports: List["FitnessReport"] = Relationship(back_populates="user")
 
+    #add relation for quiz TS3-26
+    fitness_goal: Optional["FitnessGoal"] = Relationship(
+        sa_relationship_kwargs={"uselist": False},
+        back_populates="user"
+    )
 
 class FitnessRecord(TimestampMixin, table=True):
     __tablename__ = "fitness_records"
@@ -90,17 +95,21 @@ class FitnessGoal(TimestampMixin, table=True):
     goal_type: str
     age: int
     gender: str
-    height_cm: float
-    weight_kg: float
+    height_in: float
+    weight_lbs: float
     target_weight: Optional[float] = None
     activity_level: str
     workout_days: int
-    dietary_preferences: str = "[]"
-    allergies: str = "[]"
-    limitations: Optional[str] = None
+    
+    
+    dietary_preferences: List[str] = Field(default=[], sa_column=Column(JSON))
+    allergies: List[str] = Field(default=[], sa_column=Column(JSON))
+    limitations: Optional[str] = Field(default=None, sa_column=Column(TEXT))
 
     bmi: Optional[float] = None
     bmr: Optional[float] = None
     tdee: Optional[float] = None
 
     quiz_completed: bool = Field(default=False)
+
+    user: Optional["User"] = Relationship(back_populates="fitness_goal")

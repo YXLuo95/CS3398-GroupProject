@@ -149,8 +149,8 @@ app.include_router(report_router, prefix=f"{settings.API_V1_STR}/reports", tags=
 from src.api.admin import setup_admin
 setup_admin(app, engine)
 
-from src.api.onboarding import router as quiz_router
-app.include_router(quiz.router, prefix="/api/v1/onboarding", tags=["onboarding"])
+from src.api.quiz import router as quiz_router
+app.include_router(quiz_router, prefix="/api/v1/onboarding", tags=["onboarding"])
 
 
 if __name__ == "__main__":
