@@ -1,5 +1,5 @@
 # ==========================================
-# environment variables and secrets (API keys, database credentials, etc.)
+# 1. Environment variables and secrets
 # ==========================================
 .env
 .env.*
@@ -7,7 +7,7 @@
 secrets/
 
 # ==========================================
-# 2. Database files (SQLite, local databases, etc.)
+# 2. Database files
 # ==========================================
 *.db
 *.sqlite3
@@ -38,7 +38,7 @@ Pipfile.lock
 logs/
 
 # ==========================================
-# 6. IDE and editor configuration files (VSCode, PyCharm, etc.)
+# 6. IDE and editor configuration files
 # ==========================================
 .vscode/
 .idea/
