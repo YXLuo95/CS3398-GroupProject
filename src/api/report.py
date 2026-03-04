@@ -1,4 +1,3 @@
-# src/api/report.py
 import json
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,12 +8,10 @@ from src.core.database import get_session
 from src.core.auth import get_current_user
 from src.core.config import settings
 
-# import db models (FitnessReport is removed from here as the worker will handle it)
 from src.model import User, FitnessRecord
 
 router = APIRouter()
 
-# Changed status code to 202 ACCEPTED, standard for async queued tasks
 @router.post("/generate", status_code=status.HTTP_202_ACCEPTED)
 async def enqueue_fitness_report(
     request: Request, 
@@ -83,7 +80,7 @@ async def enqueue_fitness_report(
     # ==========================================
     # 3. Return Immediate Response
     # ==========================================
-    # Do not wait for the LLM! Return to the user instantly.
+    # instant feedback, 
     return {
         "message": "Fitness report generation queued successfully!",
         "status": "pending",
