@@ -1,6 +1,7 @@
 **AI Fitness Tracking & Analysis System **
 
 **Core Features(So far)**
+
 Asynchronous Architecture: Decoupled API and AI processing using Redis. This prevents the UI from freezing during heavy LLM inference tasks.
 
 Local AI Integration: Powered by mistral-nemo via Ollama, running locally and optimized for dedicated GPUs.
@@ -15,6 +16,7 @@ Admin Dashboard: Built-in graphical interface to manage Users, Fitness Records, 
 
 **Setup and Installation**
 1. Environment Variables
+
 Create a .env file in the root directory with the following content:
 
 SECRET_KEY=your_secret_key_here
@@ -29,16 +31,20 @@ REDIS_DB_QUEUE=2
 ENABLE_LLM_MODEL=FALSE
 LOCAL_MODEL_NAME=mistral-nemo
 **2. Installation**
+
 Run the following command to install all necessary Python packages:
 pip install -r requirements.txt
 
 **3. Dependencies**
+
+
 Redis: Must be active. You can start a local instance quickly via Docker:
 docker run -d -p 6379:6379 redis:alpine
 
 Ollama: Required for actual AI analysis. Install it from ollama.com.
 
 **Running the Application**
+
 Option A: Fully Local (With GPU and Ollama)
 Ensure Ollama is running and the model is available: ollama run mistral-nemo
 
@@ -46,6 +52,7 @@ Start the FastAPI server:
 python main.py
 
 **API Documentation**
+
 Once the server is running, visit:
 
 Interactive Docs (Swagger UI): http://localhost:8000/docs
