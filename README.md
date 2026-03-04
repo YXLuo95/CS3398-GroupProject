@@ -6,6 +6,8 @@ A personalized fitness guide web app.
 
 ```
 cs3398-groupproject/
+├── docs/
+|   ├──pmp            # Project Management Plan
 ├── src/
 │   ├── api/          # API endpoints
 │   ├── core/         # Config, auth, database
@@ -41,3 +43,7 @@ uvicorn src.main:app --reload
 ## API Docs
 
 http://localhost:8000/docs
+
+## Documentation
+
+- [Project Management Plan](docs/project-management-plan.md)
