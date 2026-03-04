@@ -5,6 +5,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from src.crud import quiz
 import uvicorn
 import redis.asyncio as aioredis 
 
@@ -147,6 +148,10 @@ app.include_router(report_router, prefix=f"{settings.API_V1_STR}/reports", tags=
 
 from src.api.admin import setup_admin
 setup_admin(app, engine)
+
+from src.api.onboarding import router as quiz_router
+app.include_router(quiz.router, prefix="/api/v1/onboarding", tags=["onboarding"])
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
