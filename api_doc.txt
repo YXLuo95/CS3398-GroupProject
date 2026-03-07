@@ -1,0 +1,69 @@
+Fitness AI Backend - API Reference
+
+=======================================
+Base URL: http://localhost:8000
+Interactive Docs (Swagger UI): http://localhost:8000/docs
+Admin Dashboard: http://localhost:8000/admin
+
+Note: Endpoints marked with 🔒 require a valid JWT token in the request header (Authorization: Bearer <token>).
+
+1. Authentication
+POST /api/v1/login/access-token
+
+Description: Authenticate user and obtain a JWT access token.
+
+Payload: x-www-form-urlencoded containing username and password.
+
+Response: {"access_token": "eyJhb...", "token_type": "bearer"}
+
+POST /api/v1/register
+
+Description: Register a new user account.
+
+Payload (JSON): {"username": "...", "email": "...", "password": "..."}
+
+Response: {"id": 1, "username": "...", "email": "..."}
+=======================================
+
+=======================================
+2. Fitness Data
+POST /api/v1/fitness 🔒
+
+Description: Submit new fitness metrics (used as a baseline or progress update).
+
+Payload (JSON): {"age": 35, "gender": "male", "height_in": 72.5, "weight_lbs": 195.0, "activity_level": "sedentary", "fitness_goal": "lose_weight"}
+
+Response: 200 OK with the created database record (includes id and created_at).
+
+GET /api/v1/fitness 🔒
+
+Description: Retrieve the current user's historical fitness records.
+
+Response: A list of fitness record JSON objects.
+=======================================
+
+=======================================
+3. AI Reports (Core Async Logic)
+POST /api/v1/reports/generate 🔒
+
+Description: Extracts the user's latest two fitness records, calculates progress (e.g., weight difference), and queues an LLM generation task.
+
+Payload: None
+
+Response: 202 Accepted -> {"message": "Fitness report generation queued successfully!", "status": "pending", "action_required": "Please check your report history in a few moments."}
+
+GET /api/v1/reports 🔒
+
+Description: Fetch all generated AI fitness reports for the current user.
+
+Response: A list of report objects containing the full Markdown text (report_content).
+=======================================
+
+=======================================
+4. System status
+GET /health
+
+Description: Check if the server and the local LLM engine are online.
+
+Response: {"status": "online", "llm": "ready", "message": "Server is running."}
+=======================================

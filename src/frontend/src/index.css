@@ -1,0 +1,89 @@
+/* =========================================================
+   HOME HERO SECTION (Reference-inspired layout)
+   ========================================================= */
+
+/* Hero container:
+   - Big background image (Falcon logo)
+   - Covers full width
+   - Tall section like the reference */
+.hero {
+  min-height: 520px;              /* makes it feel like a "banner" */
+  background-size: cover;         /* fills the area */
+  background-position: center;    /* centers the logo image */
+  background-repeat: no-repeat;
+  border-radius: 12px;            /* nice rounded corners */
+  overflow: hidden;               /* keeps overlay edges clean */
+}
+
+/* Dark overlay so text is readable */
+.hero-overlay {
+  min-height: 520px;
+  background: rgba(8, 12, 24, 0.75); /* deep navy overlay */
+  display: flex;
+  align-items: center;             /* vertically centers content */
+}
+
+/* Content box inside hero */
+.hero-content {
+  max-width: 900px;
+  padding: 32px;
+}
+
+/* Big headline like the reference */
+.hero-title {
+  margin: 0;
+  font-size: 64px;                 /* huge */
+  line-height: 1.05;
+  letter-spacing: 1px;
+  color: #ffffff;
+}
+
+/* Accent color for "FALCON" (use your logo's bright blue tone) */
+.hero-title-accent {
+  color: #2f7bff;                  /* bright falcon-blue accent */
+}
+
+/* Subtitle styling */
+.hero-subtitle {
+  margin-top: 14px;
+  max-width: 650px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 18px;
+}
+
+/* Buttons row */
+.hero-actions {
+  margin-top: 22px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Button base styles */
+.btn {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Primary button (blue accent) */
+.btn-primary {
+  background: #2f7bff;
+  color: white;
+  border: 1px solid #2f7bff;
+}
+
+/* Outline button (white border) */
+.btn-outline {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+/* Optional section under the hero */
+.home-section {
+  margin-top: 18px;
+  padding: 18px;
+}

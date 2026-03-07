@@ -1,0 +1,47 @@
+# ==========================================
+# 1. Environment variables and secrets
+# ==========================================
+.env
+.env.*
+*.pem
+secrets/
+
+# ==========================================
+# 2. Database files
+# ==========================================
+*.db
+*.sqlite3
+database.db
+
+# ==========================================
+# 3. Python bytecode, C extensions, and pytest cache
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# ==========================================
+# 4. Virtual environments and dependency lock files
+# ==========================================
+venv/
+env/
+.venv/
+.conda/
+Pipfile.lock
+
+# ==========================================
+# 5. Log files and application-specific cache directories
+# ==========================================
+*.log
+logs/
+
+# ==========================================
+# 6. IDE and editor configuration files
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.DS_Store
+Thumbs.db
