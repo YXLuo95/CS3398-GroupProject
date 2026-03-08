@@ -156,6 +156,7 @@ To prevent scope creep, the following features are excluded:
 - Database schema design
 - Profile creation
 - Onboarding quiz implementation
+- Live website
 
 ### Sprint 2: Core Functionality
 
@@ -222,7 +223,7 @@ The following documents will be maintained:
 - Project Management Plan
 - Requirements Specification
 - System Architecture Overview
-- API Documentation
+- API Documentation (via FastAPI: interactive docs at `/docs`, OpenAPI schema at `/openapi.json`)
 - Test Plan
 - User Guide
 - Final Project Report
