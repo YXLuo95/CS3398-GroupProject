@@ -7,8 +7,10 @@ from sqlmodel import select
 from src.core.database import get_session
 from src.core.auth import get_current_user
 from src.core.config import settings
+from typing import List
 
-from src.model import User, FitnessRecord
+
+from src.model import User, FitnessRecord ,FitnessReport
 
 router = APIRouter()
 
@@ -86,3 +88,22 @@ async def enqueue_fitness_report(
         "status": "pending",
         "action_required": "Please check your report history in a few moments."
     }
+
+# ==========================================
+# GETTER: This is the bridge for React to see the DB data
+# ==========================================
+@router.get("", response_model=List[FitnessReport])
+async def get_my_reports(
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    React calls this to pull the latest report from the Database.
+    """
+    statement = (
+        select(FitnessReport)
+        .where(FitnessReport.user_id == current_user.id)
+        .order_by(FitnessReport.created_at.desc())
+    )
+    result = await session.execute(statement)
+    return result.scalars().all()
