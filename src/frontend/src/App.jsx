@@ -501,18 +501,53 @@ function Dashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px', marginBottom: '30px' }}>
         
         {/* PROFILE CARD */}
-        <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <h2 style={{ color: "#0b1f3a", borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Fitness Profile</h2>
-          {quizStatus === null ? <p>Loading...</p> : (
-            <div>
-              <p style={{ color: quizStatus ? "#2ecc71" : "#f39c12", fontWeight: "bold" }}>
-                {quizStatus ? "✅ Profile Completed" : "⚠️ Profile Incomplete"}
-              </p>
-              <button onClick={() => navigate(quizStatus ? '/quiz?retake=true' : '/quiz')} style={{ marginTop: '15px', padding: "10px 20px", border: "1px solid #0b1f3a", color: "#0b1f3a", backgroundColor: "transparent", borderRadius: "6px", cursor: "pointer" }}>
-                {quizStatus ? "Update Profile" : "Start Quiz"}
+        <div style={{ backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+          {/* Blue top accent bar */}
+          <div style={{ height: '6px', background: 'linear-gradient(to right, #0b1f3a, #3498db)' }} />
+          <div style={{ padding: '24px 28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ color: "#0b1f3a", margin: 0, fontSize: '1.1rem' }}>🦅 Fitness Profile</h2>
+              <button onClick={() => navigate(quizStatus ? '/quiz?retake=true' : '/quiz')} style={{ padding: "7px 16px", border: "1px solid #0b1f3a", color: "#0b1f3a", backgroundColor: "transparent", borderRadius: "20px", cursor: "pointer", fontSize: '0.8rem', fontWeight: 'bold' }}>
+                {quizStatus ? "Update" : "Start Quiz"}
               </button>
             </div>
-          )}
+
+            {quizStatus === null ? <p style={{ color: '#999' }}>Loading...</p> : !quizStatus ? (
+              <p style={{ color: "#f39c12", fontWeight: "bold" }}>⚠️ Complete your profile to get started</p>
+            ) : fullQuizData ? (
+              <>
+                {/* Metric tiles */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
+                  {[
+                    { label: 'BMI',  value: fullQuizData.bmi,  unit: '',     color: '#2980b9', bg: '#ebf5fb', tip: 'Body Mass Index' },
+                    { label: 'BMR',  value: fullQuizData.bmr,  unit: 'kcal', color: '#27ae60', bg: '#eafaf1', tip: 'Calories at rest' },
+                    { label: 'TDEE', value: fullQuizData.tdee, unit: 'kcal', color: '#8e44ad', bg: '#f5eef8', tip: 'Daily energy need' },
+                  ].map(m => (
+                    <div key={m.label} style={{ backgroundColor: m.bg, borderRadius: '12px', padding: '14px 10px', textAlign: 'center', border: `1px solid ${m.color}22` }}>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: m.color }}>{m.value}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#999', marginTop: '1px' }}>{m.unit}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#333', fontWeight: 'bold', marginTop: '4px' }}>{m.label}</div>
+                      <div style={{ fontSize: '0.65rem', color: '#aaa', marginTop: '2px' }}>{m.tip}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Profile details */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {[
+                    { label: 'Goal',     value: fullQuizData.goal_type?.replace(/_/g, ' ') },
+                    { label: 'Activity', value: fullQuizData.activity_level?.replace(/_/g, ' ') },
+                    { label: 'Weight',   value: `${fullQuizData.weight_lbs} lbs` },
+                    { label: 'Workouts', value: `${fullQuizData.workout_days}x / week` },
+                  ].map(d => (
+                    <div key={d.label} style={{ backgroundColor: '#f8f9fa', borderRadius: '8px', padding: '10px 12px' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d.label}</div>
+                      <div style={{ fontSize: '0.9rem', color: '#0b1f3a', fontWeight: 'bold', marginTop: '2px', textTransform: 'capitalize' }}>{d.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
+          </div>
         </div>
 
         {/* TRACKER CARD */}
