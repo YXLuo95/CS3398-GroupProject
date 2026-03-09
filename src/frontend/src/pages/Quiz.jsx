@@ -1,5 +1,8 @@
 import { useReducer, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
+
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // ==========================================
 // STATE MANAGEMENT
@@ -333,30 +336,138 @@ function Step5({ state, dispatch }) {
 }
 
 // ==========================================
+// REVIEW SCREEN
+// ==========================================
+function ReviewScreen({ state, onSubmit, loading, error }) {
+  const goalLabels     = { lose_weight: "Lose Weight 🔥", gain_muscle: "Gain Muscle 💪", maintain: "Maintain ⚖️", improve_endurance: "Improve Endurance 🏃" };
+  const activityLabels = { sedentary: "Sedentary 🛋️", lightly_active: "Lightly Active 🚶", moderately_active: "Moderately Active 🏋️", very_active: "Very Active 🏃", extra_active: "Extra Active ⚡" };
+
+  const row = (label, value) => (
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+      <span style={{ color: "#aac4d8", fontSize: "0.9rem" }}>{label}</span>
+      <span style={{ color: "white", fontWeight: "bold", fontSize: "0.9rem" }}>{value || "—"}</span>
+    </div>
+  );
+
+  return (
+    <>
+      <div style={{ fontSize: "3rem", textAlign: "center", marginBottom: "8px" }}>🦅</div>
+      <h2 style={{ color: "white", fontSize: "1.5rem", textAlign: "center", margin: "0 0 4px" }}>Review Your Profile</h2>
+      <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "20px", fontSize: "0.9rem" }}>Everything look good?</p>
+
+      <div style={{ backgroundColor: "rgba(255,255,255,0.04)", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" }}>
+        {row("Goal", goalLabels[state.goal_type])}
+        {row("Gender", state.gender)}
+        {row("Age", `${state.age} years`)}
+        {row("Height", `${state.height_in} in`)}
+        {row("Current Weight", `${state.weight_lbs} lbs`)}
+        {state.target_weight && row("Target Weight", `${state.target_weight} lbs`)}
+        {row("Activity Level", activityLabels[state.activity_level])}
+        {row("Workout Days", `${state.workout_days} days/week`)}
+        {state.dietary_preferences.length > 0 && row("Diet", state.dietary_preferences.join(", "))}
+        {state.allergies.length > 0 && row("Allergies", state.allergies.join(", "))}
+        {state.limitations && row("Limitations", state.limitations)}
+      </div>
+
+      {error && <p style={{ color: "#e74c3c", textAlign: "center", marginBottom: "12px" }}>{error}</p>}
+
+      <button onClick={onSubmit} disabled={loading} style={{
+        width: "100%", padding: "16px", borderRadius: "12px",
+        background: loading ? "rgba(255,255,255,0.1)" : "linear-gradient(to right, #2980b9, #3498db)",
+        color: loading ? "rgba(255,255,255,0.4)" : "white",
+        border: "none", fontSize: "1rem", fontWeight: "bold",
+        cursor: loading ? "not-allowed" : "pointer",
+        boxShadow: loading ? "none" : "0 4px 20px rgba(52,152,219,0.4)",
+      }}>
+        {loading ? "Calculating your metrics..." : "🚀 Submit & Calculate My Metrics"}
+      </button>
+    </>
+  );
+}
+
+// ==========================================
 // MAIN QUIZ COMPONENT
 // ==========================================
 export default function Quiz() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isRetake = new URLSearchParams(location.search).get("retake") === "true";
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [animating, setAnimating] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) navigate("/login");
-  }, [navigate]);
+    const token = localStorage.getItem("token");
+    if (!token) { navigate("/login"); return; }
+    const headers = { Authorization: `Bearer ${token}` };
+
+    if (isRetake) {
+      // Pre-fill form with existing quiz data
+      axios.get(`${API}/api/v1/onboarding/quiz`, { headers })
+        .then(res => {
+          const d = res.data;
+          const fields = ["goal_type", "age", "gender", "height_in", "weight_lbs", "target_weight", "activity_level", "workout_days", "dietary_preferences", "allergies", "limitations"];
+          fields.forEach(field => {
+            if (d[field] !== null && d[field] !== undefined) {
+              dispatch({ type: "SET_FIELD", field, value: Array.isArray(d[field]) ? d[field] : String(d[field]) });
+            }
+          });
+        }).catch(() => {});
+    } else {
+      axios.get(`${API}/api/v1/onboarding/status`, { headers })
+        .then(res => {
+          if (res.data.completed) navigate("/dashboard");
+        }).catch(() => {});
+    }
+  }, [navigate, isRetake]);
 
   const canProceed = isStepComplete(state);
-  const progress = (state.step / TOTAL_STEPS) * 100;
+  const progress = showReview ? 100 : (state.step / TOTAL_STEPS) * 100;
   const stepLabels = ["Goal", "Metrics", "Activity", "Schedule", "Diet"];
 
   const handleNext = () => {
     if (!canProceed) return;
+    if (state.step === TOTAL_STEPS) { setShowReview(true); return; }
     setAnimating(true);
     setTimeout(() => { dispatch({ type: "NEXT_STEP" }); setAnimating(false); }, 200);
   };
 
   const handleBack = () => {
+    if (showReview) { setShowReview(false); return; }
     setAnimating(true);
     setTimeout(() => { dispatch({ type: "PREV_STEP" }); setAnimating(false); }, 200);
+  };
+
+  const handleSubmit = async () => {
+    setError("");
+    setLoading(true);
+    const token = localStorage.getItem("token");
+    const payload = {
+      goal_type: state.goal_type,
+      age: parseInt(state.age),
+      gender: state.gender,
+      height_in: parseFloat(state.height_in),
+      weight_lbs: parseFloat(state.weight_lbs),
+      target_weight: state.target_weight ? parseFloat(state.target_weight) : null,
+      activity_level: state.activity_level,
+      workout_days: parseInt(state.workout_days),
+      dietary_preferences: state.dietary_preferences,
+      allergies: state.allergies,
+      limitations: state.limitations || null,
+    };
+    try {
+      const method = isRetake ? axios.put : axios.post;
+      await method(`${API}/api/v1/onboarding/quiz`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.detail || "Submission failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -382,7 +493,7 @@ export default function Quiz() {
       <div style={{ width: "100%", maxWidth: "560px", marginTop: "40px" }}>
 
         {/* Step dot indicators */}
-        <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "32px" }}>
+        {!showReview && <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "32px" }}>
           {stepLabels.map((label, i) => (
             <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
               <div style={{
@@ -395,7 +506,7 @@ export default function Quiz() {
               }} />
             </div>
           ))}
-        </div>
+        </div>}
 
         {/* Step content with fade + slide animation */}
         <div style={{
@@ -403,15 +514,21 @@ export default function Quiz() {
           transform: animating ? `translateX(${state.direction > 0 ? "20px" : "-20px"})` : "translateX(0)",
           transition: "opacity 0.2s ease, transform 0.2s ease",
         }}>
-          {state.step === 1 && <Step1 state={state} dispatch={dispatch} />}
-          {state.step === 2 && <Step2 state={state} dispatch={dispatch} />}
-          {state.step === 3 && <Step3 state={state} dispatch={dispatch} />}
-          {state.step === 4 && <Step4 state={state} dispatch={dispatch} />}
-          {state.step === 5 && <Step5 state={state} dispatch={dispatch} />}
+          {showReview ? (
+            <ReviewScreen state={state} onSubmit={handleSubmit} loading={loading} error={error} />
+          ) : (
+            <>
+              {state.step === 1 && <Step1 state={state} dispatch={dispatch} />}
+              {state.step === 2 && <Step2 state={state} dispatch={dispatch} />}
+              {state.step === 3 && <Step3 state={state} dispatch={dispatch} />}
+              {state.step === 4 && <Step4 state={state} dispatch={dispatch} />}
+              {state.step === 5 && <Step5 state={state} dispatch={dispatch} />}
+            </>
+          )}
         </div>
 
-        {/* Manual Next button for steps that need it (2 and 5) */}
-        {(state.step === 2 || state.step === 5) && (
+        {/* Manual Next button for steps that need it (2, 5, and review) */}
+        {(state.step === 2 || state.step === 5 || showReview) && !loading && (
           <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
             <button onClick={handleBack} style={{
               flex: 1, padding: "14px", borderRadius: "12px",
@@ -421,23 +538,25 @@ export default function Quiz() {
             }}>
               ← Back
             </button>
-            <button onClick={handleNext} disabled={!canProceed} style={{
-              flex: 2, padding: "14px", borderRadius: "12px",
-              background: canProceed ? "linear-gradient(to right, #2980b9, #3498db)" : "rgba(255,255,255,0.08)",
-              color: canProceed ? "white" : "rgba(255,255,255,0.3)",
-              border: "none", fontSize: "1rem",
-              cursor: canProceed ? "pointer" : "not-allowed",
-              fontWeight: "bold",
-              boxShadow: canProceed ? "0 4px 15px rgba(52,152,219,0.35)" : "none",
-              transition: "all 0.3s ease"
-            }}>
-              {state.step === TOTAL_STEPS ? "Review →" : "Next →"}
-            </button>
+            {!showReview && (
+              <button onClick={handleNext} disabled={!canProceed} style={{
+                flex: 2, padding: "14px", borderRadius: "12px",
+                background: canProceed ? "linear-gradient(to right, #2980b9, #3498db)" : "rgba(255,255,255,0.08)",
+                color: canProceed ? "white" : "rgba(255,255,255,0.3)",
+                border: "none", fontSize: "1rem",
+                cursor: canProceed ? "pointer" : "not-allowed",
+                fontWeight: "bold",
+                boxShadow: canProceed ? "0 4px 15px rgba(52,152,219,0.35)" : "none",
+                transition: "all 0.3s ease"
+              }}>
+                {state.step === TOTAL_STEPS ? "Review →" : "Next →"}
+              </button>
+            )}
           </div>
         )}
 
         {/* Subtle back link for auto-advance steps */}
-        {(state.step === 3 || state.step === 4) && (
+        {!showReview && (state.step === 3 || state.step === 4) && (
           <div style={{ marginTop: "20px", textAlign: "center" }}>
             <button onClick={handleBack} style={{
               background: "none", border: "none",
@@ -449,7 +568,7 @@ export default function Quiz() {
           </div>
         )}
 
-        {state.step === 1 && (
+        {!showReview && state.step === 1 && (
           <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.85rem", textAlign: "center", marginTop: "16px" }}>
             Tap an option to continue
           </p>

@@ -508,7 +508,7 @@ function Dashboard() {
               <p style={{ color: quizStatus ? "#2ecc71" : "#f39c12", fontWeight: "bold" }}>
                 {quizStatus ? "✅ Profile Completed" : "⚠️ Profile Incomplete"}
               </p>
-              <button onClick={() => navigate('/quiz')} style={{ marginTop: '15px', padding: "10px 20px", border: "1px solid #0b1f3a", color: "#0b1f3a", backgroundColor: "transparent", borderRadius: "6px", cursor: "pointer" }}>
+              <button onClick={() => navigate(quizStatus ? '/quiz?retake=true' : '/quiz')} style={{ marginTop: '15px', padding: "10px 20px", border: "1px solid #0b1f3a", color: "#0b1f3a", backgroundColor: "transparent", borderRadius: "6px", cursor: "pointer" }}>
                 {quizStatus ? "Update Profile" : "Start Quiz"}
               </button>
             </div>
