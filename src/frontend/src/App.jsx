@@ -3,6 +3,7 @@
 // ==========================================
 import React, { useState, useEffect ,useCallback} from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
+import Quiz from "./pages/Quiz";
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import falconLogo from "./assets/blue-falcon-logo.png";
@@ -603,7 +604,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/quiz" element={<OnboardingQuiz />} />
+          <Route path="/quiz" element={<Quiz />} />
         </Routes>
       </div>
     </Router>
