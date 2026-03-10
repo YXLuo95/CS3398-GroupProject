@@ -286,6 +286,16 @@ function Step2({ state, dispatch }) {
                 </button>
                 <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" }}>{wSliderMax} {weightUnit}</span>
               </div>
+              {state.goal_type === "lose_weight" && targetLbs >= weightLbs && (
+                <p style={{ color: "#e07b54", fontSize: "0.82rem", marginTop: "8px" }}>
+                  ⚠️ Your target weight is higher than your current weight — did you mean to select "Gain Muscle"?
+                </p>
+              )}
+              {state.goal_type === "gain_muscle" && targetLbs <= weightLbs && (
+                <p style={{ color: "#e07b54", fontSize: "0.82rem", marginTop: "8px" }}>
+                  ⚠️ Your target weight is lower than your current weight — did you mean to select "Lose Weight"?
+                </p>
+              )}
             </>
           ) : (
             <button
