@@ -298,12 +298,14 @@ function Step4({ state, dispatch }) {
 // ==========================================
 function Step5({ state, dispatch }) {
   const diets = [
-    { value: "vegan",       emoji: "🌱", label: "Vegan" },
-    { value: "vegetarian",  emoji: "🥦", label: "Vegetarian" },
-    { value: "keto",        emoji: "🥑", label: "Keto" },
-    { value: "paleo",       emoji: "🍖", label: "Paleo" },
-    { value: "gluten_free", emoji: "🌾", label: "Gluten Free" },
-    { value: "dairy_free",  emoji: "🥛", label: "Dairy Free" },
+    { value: "vegan",                emoji: "🌱", label: "Vegan" },
+    { value: "vegetarian",           emoji: "🥦", label: "Vegetarian" },
+    { value: "keto",                 emoji: "🥑", label: "Keto" },
+    { value: "paleo",                emoji: "🍖", label: "Paleo" },
+    { value: "gluten_free",          emoji: "🌾", label: "Gluten Free" },
+    { value: "dairy_free",           emoji: "🥛", label: "Dairy Free" },
+    { value: "mediterranean",        emoji: "🫒", label: "Mediterranean" },
+    { value: "intermittent_fasting", emoji: "⏱️", label: "Intermittent Fasting" },
   ];
 
   const allergyList = [
