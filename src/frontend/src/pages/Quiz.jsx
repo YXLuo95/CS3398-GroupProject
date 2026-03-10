@@ -287,8 +287,17 @@ function Step5({ state, dispatch }) {
     { value: "soy",       emoji: "🫘", label: "Soy" },
   ];
 
+  const [customAllergy, setCustomAllergy] = useState("");
+
   const toggle = (field, value) => dispatch({ type: "TOGGLE_ARRAY", field, value });
   const set = (field) => (e) => dispatch({ type: "SET_FIELD", field, value: e.target.value });
+
+  const addCustomAllergy = () => {
+    const val = customAllergy.trim().toLowerCase();
+    if (!val || state.allergies.includes(val)) return;
+    dispatch({ type: "SET_FIELD", field: "allergies", value: [...state.allergies, val] });
+    setCustomAllergy("");
+  };
 
   const chipStyle = (selected) => ({
     padding: "10px 16px",
@@ -327,6 +336,27 @@ function Step5({ state, dispatch }) {
             <span>{a.emoji}</span> {a.label}
           </button>
         ))}
+        {state.allergies.filter(v => !allergyList.find(a => a.value === v)).map(v => (
+          <button key={v} onClick={() => toggle("allergies", v)} style={chipStyle(true)}>
+            ⚠️ {v} ×
+          </button>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+        <input
+          type="text"
+          placeholder="Other allergy (press Enter to add)"
+          value={customAllergy}
+          onChange={e => setCustomAllergy(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addCustomAllergy())}
+          style={{ ...inputStyle, flex: 1, padding: "10px 14px", fontSize: "0.9rem" }}
+        />
+        <button
+          onClick={addCustomAllergy}
+          style={{ padding: "10px 16px", borderRadius: "12px", border: "2px solid rgba(255,255,255,0.15)", backgroundColor: "rgba(255,255,255,0.08)", color: "white", cursor: "pointer", fontSize: "1.1rem" }}
+        >
+          +
+        </button>
       </div>
 
       <label style={labelStyle}>Physical Limitations (optional)</label>
