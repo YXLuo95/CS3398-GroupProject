@@ -136,6 +136,7 @@ function Step1({ state, dispatch }) {
 // ==========================================
 function Step2({ state, dispatch }) {
   const [heightUnit, setHeightUnit] = useState("in");
+  const [weightUnit, setWeightUnit] = useState("lbs");
   const set = (field) => (e) => dispatch({ type: "SET_FIELD", field, value: e.target.value });
 
   const genders = [
@@ -160,6 +161,29 @@ function Step2({ state, dispatch }) {
   const sliderHint  = heightUnit === "cm"
     ? `${heightIn} in · ${toFeet(heightIn)}`
     : `${toFeet(heightIn)} · ${heightCm} cm`;
+
+  // Weight conversion helpers — state always stores lbs
+  const weightLbs = Number(state.weight_lbs) || 150;
+  const weightKg  = Math.round(weightLbs * 0.453592);
+
+  const handleWeightSlider = (val) => {
+    const lbs = weightUnit === "kg" ? Math.round(val / 0.453592) : Number(val);
+    dispatch({ type: "SET_FIELD", field: "weight_lbs", value: String(lbs) });
+  };
+
+  const targetLbs = Number(state.target_weight) || weightLbs;
+  const targetKg  = Math.round(targetLbs * 0.453592);
+
+  const handleTargetSlider = (val) => {
+    const lbs = weightUnit === "kg" ? Math.round(val / 0.453592) : Number(val);
+    dispatch({ type: "SET_FIELD", field: "target_weight", value: String(lbs) });
+  };
+
+  const wSliderVal    = (lbs) => weightUnit === "kg" ? Math.round(lbs * 0.453592) : lbs;
+  const wSliderMin    = weightUnit === "kg" ? 36  : 80;
+  const wSliderMax    = weightUnit === "kg" ? 181 : 400;
+  const weightHint    = weightUnit === "kg" ? `${weightLbs} lbs` : `${weightKg} kg`;
+  const targetHint    = weightUnit === "kg" ? `${targetLbs} lbs` : `${targetKg} kg`;
 
   const unitToggleStyle = (active) => ({
     padding: "3px 10px", borderRadius: "6px", border: "none", cursor: "pointer", fontSize: "0.78rem", fontWeight: "bold",
@@ -211,13 +235,59 @@ function Step2({ state, dispatch }) {
             <span>{sliderMax} {heightUnit}</span>
           </div>
         </div>
-        <div>
-          <label style={labelStyle}>Weight (lbs)</label>
-          <input type="number" placeholder="e.g. 160" value={state.weight_lbs} onChange={set("weight_lbs")} step="0.1" style={inputStyle} />
+        <div style={{ gridColumn: "1 / -1" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px" }}>
+            <label style={{ ...labelStyle, marginTop: 0 }}>Weight</label>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", backgroundColor: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "3px" }}>
+              <button style={unitToggleStyle(weightUnit === "lbs")} onClick={() => setWeightUnit("lbs")}>lbs</button>
+              <button style={unitToggleStyle(weightUnit === "kg")}  onClick={() => setWeightUnit("kg")}>kg</button>
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
+            <span style={{ color: "white", fontWeight: "bold", fontSize: "1.25rem" }}>
+              {wSliderVal(weightLbs)} <span style={{ color: "#7ec8e3", fontSize: "0.8rem" }}>{weightUnit}</span>
+              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>{weightHint}</span>
+            </span>
+          </div>
+          <input type="range" min={wSliderMin} max={wSliderMax} step="1" value={wSliderVal(weightLbs)}
+            onChange={(e) => handleWeightSlider(e.target.value)}
+            style={{ width: "100%", marginTop: "8px", accentColor: "#3498db", cursor: "pointer" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", marginTop: "2px" }}>
+            <span>{wSliderMin} {weightUnit}</span><span>{wSliderMax} {weightUnit}</span>
+          </div>
         </div>
-        <div>
-          <label style={labelStyle}>Target Weight (optional)</label>
-          <input type="number" placeholder="e.g. 145" value={state.target_weight} onChange={set("target_weight")} step="0.1" style={inputStyle} />
+
+        <div style={{ gridColumn: "1 / -1" }}>
+          <label style={{ ...labelStyle, marginTop: "8px" }}>
+            Target Weight <span style={{ color: "#7ec8e3", fontWeight: "normal", fontSize: "0.82rem" }}>(optional)</span>
+          </label>
+          {state.target_weight ? (
+            <>
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
+                <span style={{ color: "white", fontWeight: "bold", fontSize: "1.25rem" }}>
+                  {wSliderVal(targetLbs)} <span style={{ color: "#7ec8e3", fontSize: "0.8rem" }}>{weightUnit}</span>
+                  <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>{targetHint}</span>
+                </span>
+              </div>
+              <input type="range" min={wSliderMin} max={wSliderMax} step="1" value={wSliderVal(targetLbs)}
+                onChange={(e) => handleTargetSlider(e.target.value)}
+                style={{ width: "100%", marginTop: "8px", accentColor: "#3498db", cursor: "pointer" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "2px" }}>
+                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" }}>{wSliderMin} {weightUnit}</span>
+                <button onClick={() => dispatch({ type: "SET_FIELD", field: "target_weight", value: "" })}
+                  style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", fontSize: "0.75rem", textDecoration: "underline" }}>
+                  clear
+                </button>
+                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" }}>{wSliderMax} {weightUnit}</span>
+              </div>
+            </>
+          ) : (
+            <button
+              onClick={() => dispatch({ type: "SET_FIELD", field: "target_weight", value: String(weightLbs) })}
+              style={{ marginTop: "8px", padding: "12px", borderRadius: "10px", border: "2px dashed rgba(255,255,255,0.15)", backgroundColor: "transparent", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: "0.85rem", width: "100%" }}>
+              + Set a target weight
+            </button>
+          )}
         </div>
       </div>
     </>
