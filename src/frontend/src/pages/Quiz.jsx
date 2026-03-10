@@ -140,9 +140,10 @@ function Step2({ state, dispatch }) {
   const set = (field) => (e) => dispatch({ type: "SET_FIELD", field, value: e.target.value });
 
   const genders = [
-    { value: "male",   emoji: "👨", label: "Male" },
-    { value: "female", emoji: "👩", label: "Female" },
-    { value: "other",  emoji: "🧑", label: "Other" },
+    { value: "male",              emoji: "👨", label: "Male" },
+    { value: "female",            emoji: "👩", label: "Female" },
+    { value: "other",             emoji: "🧑", label: "Other" },
+    { value: "prefer_not_to_say", emoji: "🤐", label: "Prefer not to say" },
   ];
 
   // Height conversion helpers — state always stores inches
@@ -198,15 +199,20 @@ function Step2({ state, dispatch }) {
       <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "24px", fontSize: "0.95rem" }}>We'll calculate your BMI, BMR & TDEE</p>
 
       <label style={labelStyle}>Gender</label>
-      <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>
         {genders.map(g => (
           <button key={g.value} onClick={() => dispatch({ type: "SET_FIELD", field: "gender", value: g.value })}
-            style={{ ...optionCard(state.gender === g.value), flex: 1, justifyContent: "center", flexDirection: "column", alignItems: "center", padding: "14px 10px", marginBottom: 0, gap: "4px" }}>
-            <span style={{ fontSize: "1.6rem" }}>{g.emoji}</span>
-            <span style={{ fontSize: "0.85rem" }}>{g.label}</span>
+            style={{ ...optionCard(state.gender === g.value), justifyContent: "center", flexDirection: "column", alignItems: "center", padding: "12px 8px", marginBottom: 0, gap: "4px", fontSize: "0.82rem" }}>
+            <span style={{ fontSize: "1.4rem" }}>{g.emoji}</span>
+            <span>{g.label}</span>
           </button>
         ))}
       </div>
+      {state.gender === "prefer_not_to_say" && (
+        <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginTop: "6px", textAlign: "center" }}>
+          BMR & TDEE will be estimated using a generalized formula
+        </p>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "4px" }}>
         <div>
