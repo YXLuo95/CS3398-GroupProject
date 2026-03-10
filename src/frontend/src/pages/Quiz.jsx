@@ -139,6 +139,12 @@ function Step2({ state, dispatch }) {
   const [weightUnit, setWeightUnit] = useState("lbs");
   const set = (field) => (e) => dispatch({ type: "SET_FIELD", field, value: e.target.value });
 
+  // Seed slider defaults into state on mount so validation passes without needing to drag
+  useEffect(() => {
+    if (!state.height_in)  dispatch({ type: "SET_FIELD", field: "height_in",  value: "66" });
+    if (!state.weight_lbs) dispatch({ type: "SET_FIELD", field: "weight_lbs", value: "150" });
+  }, []);
+
   const genders = [
     { value: "male",              emoji: "👨", label: "Male" },
     { value: "female",            emoji: "👩", label: "Female" },
