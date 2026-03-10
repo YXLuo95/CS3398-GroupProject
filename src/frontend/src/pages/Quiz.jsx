@@ -186,12 +186,14 @@ function Step2({ state, dispatch }) {
 // STEP 3 — ACTIVITY LEVEL
 // ==========================================
 function Step3({ state, dispatch }) {
+  const [openTooltip, setOpenTooltip] = useState(null);
+
   const levels = [
-    { value: "sedentary",         emoji: "🛋️", label: "Sedentary",         sub: "Little or no exercise" },
-    { value: "lightly_active",    emoji: "🚶", label: "Lightly Active",     sub: "Light exercise 1–3 days/week" },
-    { value: "moderately_active", emoji: "🏋️", label: "Moderately Active",  sub: "Moderate exercise 3–5 days/week" },
-    { value: "very_active",       emoji: "🏃", label: "Very Active",         sub: "Hard exercise 6–7 days/week" },
-    { value: "extra_active",      emoji: "⚡", label: "Extra Active",         sub: "Athlete-level training" },
+    { value: "sedentary",         emoji: "🛋️", label: "Sedentary",         sub: "Little or no exercise",            tooltip: "Desk job, mostly sitting all day. Fewer than 5,000 steps/day. e.g. office worker, gamer, driver." },
+    { value: "lightly_active",    emoji: "🚶", label: "Lightly Active",     sub: "Light exercise 1–3 days/week",     tooltip: "On your feet part of the day. e.g. teacher, retail worker, or someone who walks ~30 mins/day." },
+    { value: "moderately_active", emoji: "🏋️", label: "Moderately Active",  sub: "Moderate exercise 3–5 days/week",  tooltip: "Regular gym sessions or an active job. e.g. nursing, construction, or working out 3–5x/week." },
+    { value: "very_active",       emoji: "🏃", label: "Very Active",         sub: "Hard exercise 6–7 days/week",      tooltip: "Intense training nearly every day, or a very physical job. e.g. personal trainer, athlete in season." },
+    { value: "extra_active",      emoji: "⚡", label: "Extra Active",         sub: "Athlete-level training",           tooltip: "Twice-a-day training or elite competition prep. e.g. military, Olympic athlete, or heavy manual labor." },
   ];
 
   const select = (value) => {
@@ -203,16 +205,42 @@ function Step3({ state, dispatch }) {
     <>
       <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>🏋️</div>
       <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>How active are you?</h2>
-      <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "24px", fontSize: "0.95rem" }}>Pick your current lifestyle</p>
+      <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "24px", fontSize: "0.95rem" }}>Pick your current lifestyle — be honest!</p>
       {levels.map(l => (
-        <button key={l.value} onClick={() => select(l.value)} style={optionCard(state.activity_level === l.value)}>
-          <span style={{ fontSize: "1.6rem" }}>{l.emoji}</span>
-          <div>
-            <div style={{ fontWeight: "bold" }}>{l.label}</div>
-            <div style={{ fontSize: "0.8rem", color: "#aac4d8", marginTop: "2px" }}>{l.sub}</div>
+        <div key={l.value} style={{ marginBottom: "10px" }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "stretch" }}>
+            <button onClick={() => select(l.value)} style={{ ...optionCard(state.activity_level === l.value), flex: 1, marginBottom: 0 }}>
+              <span style={{ fontSize: "1.6rem" }}>{l.emoji}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: "bold" }}>{l.label}</div>
+                <div style={{ fontSize: "0.8rem", color: "#aac4d8", marginTop: "2px" }}>{l.sub}</div>
+              </div>
+              {state.activity_level === l.value && <span style={{ color: "#3498db", fontSize: "1.2rem" }}>✓</span>}
+            </button>
+            <button
+              onClick={() => setOpenTooltip(openTooltip === l.value ? null : l.value)}
+              title="See examples"
+              style={{
+                width: "36px", flexShrink: 0, borderRadius: "12px",
+                border: openTooltip === l.value ? "2px solid rgba(52,152,219,0.5)" : "2px solid rgba(255,255,255,0.1)",
+                backgroundColor: openTooltip === l.value ? "rgba(52,152,219,0.15)" : "rgba(255,255,255,0.04)",
+                color: openTooltip === l.value ? "#7ec8e3" : "rgba(255,255,255,0.4)",
+                cursor: "pointer", fontSize: "0.8rem", fontWeight: "bold",
+              }}
+            >
+              ?
+            </button>
           </div>
-          {state.activity_level === l.value && <span style={{ marginLeft: "auto", color: "#3498db", fontSize: "1.2rem" }}>✓</span>}
-        </button>
+          {openTooltip === l.value && (
+            <div style={{
+              backgroundColor: "rgba(52,152,219,0.08)", border: "1px solid rgba(52,152,219,0.2)",
+              borderRadius: "8px", padding: "10px 14px", marginTop: "4px",
+              color: "#aac4d8", fontSize: "0.82rem", lineHeight: "1.5",
+            }}>
+              💡 {l.tooltip}
+            </div>
+          )}
+        </div>
       ))}
     </>
   );
