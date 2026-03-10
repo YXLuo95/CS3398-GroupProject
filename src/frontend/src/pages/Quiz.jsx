@@ -135,6 +135,7 @@ function Step1({ state, dispatch }) {
 // STEP 2 — BODY METRICS
 // ==========================================
 function Step2({ state, dispatch }) {
+  const [heightUnit, setHeightUnit] = useState("in");
   const set = (field) => (e) => dispatch({ type: "SET_FIELD", field, value: e.target.value });
 
   const genders = [
@@ -142,6 +143,29 @@ function Step2({ state, dispatch }) {
     { value: "female", emoji: "👩", label: "Female" },
     { value: "other",  emoji: "🧑", label: "Other" },
   ];
+
+  // Height conversion helpers — state always stores inches
+  const heightIn  = Number(state.height_in) || 66;
+  const heightCm  = Math.round(heightIn * 2.54);
+  const toFeet    = (inches) => `${Math.floor(inches / 12)}'${inches % 12}"`;
+
+  const handleHeightSlider = (val) => {
+    const inches = heightUnit === "cm" ? Math.round(val / 2.54) : Number(val);
+    dispatch({ type: "SET_FIELD", field: "height_in", value: String(inches) });
+  };
+
+  const sliderValue = heightUnit === "cm" ? heightCm  : heightIn;
+  const sliderMin   = heightUnit === "cm" ? 122       : 48;
+  const sliderMax   = heightUnit === "cm" ? 244       : 96;
+  const sliderHint  = heightUnit === "cm"
+    ? `${heightIn} in · ${toFeet(heightIn)}`
+    : `${toFeet(heightIn)} · ${heightCm} cm`;
+
+  const unitToggleStyle = (active) => ({
+    padding: "3px 10px", borderRadius: "6px", border: "none", cursor: "pointer", fontSize: "0.78rem", fontWeight: "bold",
+    backgroundColor: active ? "#3498db" : "transparent",
+    color: active ? "white" : "rgba(255,255,255,0.4)",
+  });
 
   return (
     <>
@@ -165,9 +189,27 @@ function Step2({ state, dispatch }) {
           <label style={labelStyle}>Age</label>
           <input type="number" placeholder="e.g. 25" value={state.age} onChange={set("age")} min="1" max="120" style={inputStyle} />
         </div>
-        <div>
-          <label style={labelStyle}>Height (inches)</label>
-          <input type="number" placeholder="e.g. 68" value={state.height_in} onChange={set("height_in")} step="0.1" style={inputStyle} />
+        <div style={{ gridColumn: "1 / -1" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
+            <label style={{ ...labelStyle, marginTop: 0 }}>Height</label>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", backgroundColor: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "3px" }}>
+              <button style={unitToggleStyle(heightUnit === "in")} onClick={() => setHeightUnit("in")}>in</button>
+              <button style={unitToggleStyle(heightUnit === "cm")} onClick={() => setHeightUnit("cm")}>cm</button>
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
+            <span style={{ color: "white", fontWeight: "bold", fontSize: "1.25rem" }}>
+              {sliderValue} <span style={{ color: "#7ec8e3", fontSize: "0.8rem" }}>{heightUnit}</span>
+              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>{sliderHint}</span>
+            </span>
+          </div>
+          <input type="range" min={sliderMin} max={sliderMax} step="1" value={sliderValue}
+            onChange={(e) => handleHeightSlider(e.target.value)}
+            style={{ width: "100%", marginTop: "8px", accentColor: "#3498db", cursor: "pointer" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", marginTop: "2px" }}>
+            <span>{sliderMin} {heightUnit}</span>
+            <span>{sliderMax} {heightUnit}</span>
+          </div>
         </div>
         <div>
           <label style={labelStyle}>Weight (lbs)</label>
