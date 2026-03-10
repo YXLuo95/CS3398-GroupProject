@@ -100,7 +100,7 @@ function Login() {
     formData.append('password', password);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/v1/login/access-token', formData, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+      const response = await axios.post('https://api.bluefalconfitness.com/api/v1/login/access-token', formData, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
       localStorage.setItem('token', response.data.access_token);
       navigate('/dashboard'); 
     } catch (err) { setError('Invalid username or password'); }
@@ -136,7 +136,7 @@ function SignUp() {
     e.preventDefault();
     setError('');
     try {
-      await axios.post('http://localhost:8000/api/v1/register', { username, email, password, is_active: true });
+      await axios.post('https://api.bluefalconfitness.com/api/v1/register', { username, email, password, is_active: true });
       navigate('/login');
     } catch (err) { setError(err.response?.data?.detail || 'Registration failed'); }
   };
@@ -214,7 +214,7 @@ function OnboardingQuiz() {
     };
 
     try {
-      await axios.post('http://localhost:8000/api/v1/onboarding/quiz', payload, { headers });
+      await axios.post('https://api.bluefalconfitness.com/api/v1/onboarding/quiz', payload, { headers });
       navigate('/dashboard'); 
     } catch (err) {
       setError(err.response?.data?.detail || "Failed to submit quiz. Please check your inputs.");
@@ -367,20 +367,20 @@ function Dashboard() {
       if (payload.sub) setUsername(payload.sub);
 
       // 2. Fetch Quiz Status & Data (To merge with daily logs)
-      const statusRes = await axios.get('http://localhost:8000/api/v1/onboarding/status', { headers });
+      const statusRes = await axios.get('https://api.bluefalconfitness.com/api/v1/onboarding/status', { headers });
       setQuizStatus(statusRes.data.completed);
       
       if (statusRes.data.completed) {
-        const quizRes = await axios.get('http://localhost:8000/api/v1/onboarding/quiz', { headers });
+        const quizRes = await axios.get('https://api.bluefalconfitness.com/api/v1/onboarding/quiz', { headers });
         setFullQuizData(quizRes.data);
       }
 
       // 3. Fetch Records
-      const recordsRes = await axios.get('http://localhost:8000/api/v1/records?limit=30', { headers });
+      const recordsRes = await axios.get('https://api.bluefalconfitness.com/api/v1/records?limit=30', { headers });
       setFitnessRecords(recordsRes.data);
 
       // 4. Fetch Reports
-      const reportsRes = await axios.get('http://localhost:8000/api/v1/reports', { headers });
+      const reportsRes = await axios.get('https://api.bluefalconfitness.com/api/v1/reports', { headers });
       setReports(reportsRes.data || []);
       
     } catch (err) {
@@ -408,7 +408,7 @@ function Dashboard() {
         const headers = { Authorization: `Bearer ${token}` };
 
         try {
-          const res = await axios.get('http://localhost:8000/api/v1/reports', { headers });
+          const res = await axios.get('https://api.bluefalconfitness.com/api/v1/reports', { headers });
           const latestReports = res.data || [];
           
           if (latestReports.length > 0) {
@@ -454,7 +454,7 @@ function Dashboard() {
     };
 
     try {
-      await axios.post('http://localhost:8000/api/v1/records', payload, { headers });
+      await axios.post('https://api.bluefalconfitness.com/api/v1/records', payload, { headers });
       setNewWeight('');
       await fetchDashboardData(); 
     } catch (err) {
@@ -472,7 +472,7 @@ function Dashboard() {
     const headers = { Authorization: `Bearer ${getToken()}` };
 
     try {
-      const res = await axios.post('http://localhost:8000/api/v1/reports/generate', {}, { headers });
+      const res = await axios.post('https://api.bluefalconfitness.com/api/v1/reports/generate', {}, { headers });
       if (res.status === 202) {
         setQueueMessage("🤖 Task Queued! AI Coach is analyzing your logs. Hang tight, results will appear automatically...");
         setPollingActive(true); // START SNIFFER
