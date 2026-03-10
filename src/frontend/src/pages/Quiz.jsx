@@ -541,7 +541,7 @@ function ReviewScreen({ state, onSubmit, loading, error }) {
     <>
       <div style={{ fontSize: "3rem", textAlign: "center", marginBottom: "8px" }}>🦅</div>
       <h2 style={{ color: "white", fontSize: "1.5rem", textAlign: "center", margin: "0 0 4px" }}>Review Your Profile</h2>
-      <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "20px", fontSize: "0.9rem" }}>Everything look good?</p>
+      <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "20px", fontSize: "0.9rem" }}>Everything looks good?</p>
 
       <div style={{ backgroundColor: "rgba(255,255,255,0.04)", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" }}>
         {row("Goal", goalLabels[state.goal_type])}
