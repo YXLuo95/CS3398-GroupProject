@@ -457,6 +457,7 @@ export default function Quiz() {
   const [showReview, setShowReview] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [validationMsg, setValidationMsg] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -487,8 +488,17 @@ export default function Quiz() {
   const progress = showReview ? 100 : (state.step / TOTAL_STEPS) * 100;
   const stepLabels = ["Goal", "Metrics", "Activity", "Schedule", "Diet"];
 
+  const stepValidationMsgs = {
+    2: "Please fill in your age, gender, height, and weight to continue.",
+    5: "Almost there — fill in any missing fields to continue.",
+  };
+
   const handleNext = () => {
-    if (!canProceed) return;
+    if (!canProceed) {
+      setValidationMsg(stepValidationMsgs[state.step] || "Please complete this step to continue.");
+      return;
+    }
+    setValidationMsg("");
     if (state.step === TOTAL_STEPS) { setShowReview(true); return; }
     setAnimating(true);
     setTimeout(() => { dispatch({ type: "NEXT_STEP" }); setAnimating(false); }, 200);
@@ -586,6 +596,13 @@ export default function Quiz() {
             </>
           )}
         </div>
+
+        {/* Inline validation message */}
+        {validationMsg && (
+          <p style={{ color: "#e07b54", fontSize: "0.88rem", textAlign: "center", marginTop: "12px", marginBottom: "0" }}>
+            ⚠️ {validationMsg}
+          </p>
+        )}
 
         {/* Manual Next button for steps that need it (2, 5, and review) */}
         {(state.step === 2 || state.step === 5 || showReview) && !loading && (
