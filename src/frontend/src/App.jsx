@@ -7,6 +7,7 @@ import Quiz from "./pages/Quiz";
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import falconLogo from "./assets/blue-falcon-logo.png";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // ==========================================
 // 1. SMART NAVIGATION BAR
@@ -101,7 +102,7 @@ function Login() {
     formData.append('password', password);
 
     try {
-      const response = await axios.post('https://api.bluefalconfitness.com/api/v1/login/access-token', formData, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+      const response = await axios.post(`${API_URL}/api/v1/login/access-token`, formData, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
       localStorage.setItem('token', response.data.access_token);
       navigate('/dashboard'); 
     } catch (err) { setError('Invalid username or password'); }
@@ -137,7 +138,7 @@ function SignUp() {
     e.preventDefault();
     setError('');
     try {
-      await axios.post('https://api.bluefalconfitness.com/api/v1/register', { username, email, password, is_active: true });
+      await axios.post(`${API_URL}/api/v1/register`, { username, email, password, is_active: true });
       navigate('/login');
     } catch (err) { setError(err.response?.data?.detail || 'Registration failed'); }
   };
@@ -155,150 +156,6 @@ function SignUp() {
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} required />
           {error && <p style={{ color: '#e74c3c', marginBottom: '15px' }}>{error}</p>}
           <button type="submit" style={{ width: '100%', padding: '12px', backgroundColor: '#0b1f3a', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Sign Up</button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// 4. ONBOARDING QUIZ (Strictly aligned with QuizSubmit Schema)
-// ==========================================
-function OnboardingQuiz() {
-  const navigate = useNavigate();
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  // Initialize form matching exact backend literals
-  const [formData, setFormData] = useState({
-    goal_type: 'lose_weight',
-    age: '',
-    gender: 'male',
-    height_in: '',
-    weight_lbs: '',
-    target_weight: '',
-    activity_level: 'sedentary',
-    workout_days: 3,
-    dietary_preferences: '',
-    allergies: '',
-    limitations: ''
-  });
-
-  useEffect(() => { if (!localStorage.getItem('token')) navigate('/login'); }, [navigate]);
-
-  const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
-
-    // Helper to convert comma-separated strings to List[str]
-    const toArray = (str) => str && str.toLowerCase() !== 'none' ? str.split(',').map(s => s.trim()) : [];
-
-    // Cast types to strictly match QuizSubmit Pydantic Schema
-    const payload = {
-      goal_type: formData.goal_type,
-      age: parseInt(formData.age),
-      gender: formData.gender,
-      height_in: parseFloat(formData.height_in),
-      weight_lbs: parseFloat(formData.weight_lbs),
-      target_weight: formData.target_weight ? parseFloat(formData.target_weight) : null,
-      activity_level: formData.activity_level,
-      workout_days: parseInt(formData.workout_days),
-      dietary_preferences: toArray(formData.dietary_preferences),
-      allergies: toArray(formData.allergies),
-      limitations: formData.limitations || null
-    };
-
-    try {
-      await axios.post('https://api.bluefalconfitness.com/api/v1/onboarding/quiz', payload, { headers });
-      navigate('/dashboard'); 
-    } catch (err) {
-      setError(err.response?.data?.detail || "Failed to submit quiz. Please check your inputs.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formInputStyle = { ...inputStyle, marginBottom: '15px', backgroundColor: '#f9f9f9', padding: '10px' };
-
-  return (
-    <div style={{ padding: "60px 20px", display: 'flex', justifyContent: 'center', backgroundColor: "#f4f7f6", minHeight: "100vh" }}>
-      <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', width: '100%', maxWidth: '800px' }}>
-        <h1 style={{ color: '#0b1f3a', textAlign: 'center', marginBottom: '10px' }}>Fitness Profile Setup</h1>
-        <p style={{ color: '#666', textAlign: 'center', marginBottom: '30px' }}>Tell us about yourself to calculate your BMI, BMR, and TDEE.</p>
-        
-        {error && <div style={{ color: 'white', backgroundColor: '#e74c3c', padding: '10px', borderRadius: '6px', marginBottom: '20px' }}>{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-            
-            {/* COLUMN 1: Body Metrics */}
-            <div>
-              <h3 style={{ borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Body Metrics</h3>
-              <label style={{ fontWeight: 'bold' }}>Age</label>
-              <input type="number" name="age" value={formData.age} onChange={handleChange} style={formInputStyle} required min="1" max="120" />
-              
-              <label style={{ fontWeight: 'bold' }}>Gender</label>
-              <select name="gender" value={formData.gender} onChange={handleChange} style={formInputStyle}>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-
-              <label style={{ fontWeight: 'bold' }}>Height (Inches)</label>
-              <input type="number" step="0.1" name="height_in" value={formData.height_in} onChange={handleChange} style={formInputStyle} required />
-
-              <label style={{ fontWeight: 'bold' }}>Current Weight (lbs)</label>
-              <input type="number" step="0.1" name="weight_lbs" value={formData.weight_lbs} onChange={handleChange} style={formInputStyle} required />
-            </div>
-
-            {/* COLUMN 2: Goals */}
-            <div>
-              <h3 style={{ borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Fitness Goals</h3>
-              <label style={{ fontWeight: 'bold' }}>Primary Goal</label>
-              <select name="goal_type" value={formData.goal_type} onChange={handleChange} style={formInputStyle}>
-                <option value="lose_weight">Lose Weight</option>
-                <option value="gain_muscle">Gain Muscle</option>
-                <option value="maintain">Maintain</option>
-                <option value="improve_endurance">Improve Endurance</option>
-              </select>
-
-              <label style={{ fontWeight: 'bold' }}>Target Weight (lbs) (Optional)</label>
-              <input type="number" step="0.1" name="target_weight" value={formData.target_weight} onChange={handleChange} style={formInputStyle} />
-
-              <label style={{ fontWeight: 'bold' }}>Activity Level</label>
-              <select name="activity_level" value={formData.activity_level} onChange={handleChange} style={formInputStyle}>
-                <option value="sedentary">Sedentary</option>
-                <option value="lightly_active">Lightly Active</option>
-                <option value="moderately_active">Moderately Active</option>
-                <option value="very_active">Very Active</option>
-                <option value="extra_active">Extra Active</option>
-              </select>
-
-              <label style={{ fontWeight: 'bold' }}>Workout Days/Week</label>
-              <input type="number" name="workout_days" value={formData.workout_days} onChange={handleChange} style={formInputStyle} required min="1" max="7" />
-            </div>
-          </div>
-
-          {/* FULL WIDTH: Dietary */}
-          <div style={{ marginTop: '20px' }}>
-            <h3 style={{ borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Medical & Dietary (Comma Separated)</h3>
-            <label style={{ fontWeight: 'bold' }}>Dietary Preferences</label>
-            <input type="text" name="dietary_preferences" value={formData.dietary_preferences} onChange={handleChange} style={formInputStyle} placeholder="e.g. Vegan, Keto" />
-            <label style={{ fontWeight: 'bold' }}>Allergies</label>
-            <input type="text" name="allergies" value={formData.allergies} onChange={handleChange} style={formInputStyle} placeholder="e.g. Peanuts, Dairy" />
-            <label style={{ fontWeight: 'bold' }}>Limitations</label>
-            <input type="text" name="limitations" value={formData.limitations} onChange={handleChange} style={formInputStyle} placeholder="e.g. Bad knees" />
-          </div>
-
-          <button type="submit" disabled={loading} style={{ width: '100%', padding: '16px', backgroundColor: loading ? '#ccc' : '#0b1f3a', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '1.1rem', cursor: loading ? 'not-allowed' : 'pointer' }}>
-            {loading ? 'Calculating Metrics...' : 'Submit Profile & Calculate'}
-          </button>
         </form>
       </div>
     </div>
@@ -368,20 +225,20 @@ function Dashboard() {
       if (payload.sub) setUsername(payload.sub);
 
       // 2. Fetch Quiz Status & Data (To merge with daily logs)
-      const statusRes = await axios.get('https://api.bluefalconfitness.com/api/v1/onboarding/status', { headers });
+      const statusRes = await axios.get(`${API_URL}/api/v1/onboarding/status`, { headers });
       setQuizStatus(statusRes.data.completed);
       
       if (statusRes.data.completed) {
-        const quizRes = await axios.get('https://api.bluefalconfitness.com/api/v1/onboarding/quiz', { headers });
+        const quizRes = await axios.get(`${API_URL}/api/v1/onboarding/quiz`, { headers });
         setFullQuizData(quizRes.data);
       }
 
       // 3. Fetch Records
-      const recordsRes = await axios.get('https://api.bluefalconfitness.com/api/v1/records?limit=30', { headers });
+      const recordsRes = await axios.get(`${API_URL}/api/v1/records?limit=30`, { headers });
       setFitnessRecords(recordsRes.data);
 
       // 4. Fetch Reports
-      const reportsRes = await axios.get('https://api.bluefalconfitness.com/api/v1/reports', { headers });
+      const reportsRes = await axios.get(`${API_URL}/api/v1/reports`, { headers });
       setReports(reportsRes.data || []);
       
     } catch (err) {
@@ -409,7 +266,7 @@ function Dashboard() {
         const headers = { Authorization: `Bearer ${token}` };
 
         try {
-          const res = await axios.get('https://api.bluefalconfitness.com/api/v1/reports', { headers });
+          const res = await axios.get(`${API_URL}/api/v1/reports`, { headers });
           const latestReports = res.data || [];
           
           if (latestReports.length > 0) {
@@ -455,7 +312,7 @@ function Dashboard() {
     };
 
     try {
-      await axios.post('https://api.bluefalconfitness.com/api/v1/records', payload, { headers });
+      await axios.post(`${API_URL}/api/v1/records`, payload, { headers });
       setNewWeight('');
       await fetchDashboardData(); 
     } catch (err) {
@@ -473,7 +330,7 @@ function Dashboard() {
     const headers = { Authorization: `Bearer ${getToken()}` };
 
     try {
-      const res = await axios.post('https://api.bluefalconfitness.com/api/v1/reports/generate', {}, { headers });
+      const res = await axios.post(`${API_URL}/api/v1/reports/generate`, {}, { headers });
       if (res.status === 202) {
         setQueueMessage("🤖 Task Queued! AI Coach is analyzing your logs. Hang tight, results will appear automatically...");
         setPollingActive(true); // START SNIFFER
