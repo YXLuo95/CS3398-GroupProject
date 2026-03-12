@@ -1,49 +1,62 @@
 /* =========================================================
-   HOME HERO SECTION (Reference-inspired layout)
+   Global Reset
+   Removes default browser margins and ensures consistent sizing
    ========================================================= */
-
-/* Hero container:
-   - Big background image (Falcon logo)
-   - Covers full width
-   - Tall section like the reference */
-.hero {
-  min-height: 520px;              /* makes it feel like a "banner" */
-  background-size: cover;         /* fills the area */
-  background-position: center;    /* centers the logo image */
-  background-repeat: no-repeat;
-  border-radius: 12px;            /* nice rounded corners */
-  overflow: hidden;               /* keeps overlay edges clean */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #0b1727;
+  font-family: Arial, sans-serif;
 }
 
-/* Dark overlay so text is readable */
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+/* =========================================================
+   Home Hero Section (Banner Style)
+   ========================================================= */
+.hero {
+  min-height: 520px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 12px;       /* Keeps the banner rounded */
+  overflow: hidden;          /* Prevents overlay from spilling out */
+  margin: 20px;              /* Adds some breathing room around the banner */
+}
+
+/* Dark Overlay for Text Readability */
 .hero-overlay {
   min-height: 520px;
-  background: rgba(8, 12, 24, 0.75); /* deep navy overlay */
+  background: rgba(8, 12, 24, 0.75);
   display: flex;
-  align-items: center;             /* vertically centers content */
+  align-items: center;
 }
 
-/* Content box inside hero */
+/* Hero Content Container */
 .hero-content {
   max-width: 900px;
   padding: 32px;
 }
 
-/* Big headline like the reference */
+/* Main Headline */
 .hero-title {
   margin: 0;
-  font-size: 64px;                 /* huge */
+  font-size: 64px;
   line-height: 1.05;
   letter-spacing: 1px;
   color: #ffffff;
 }
 
-/* Accent color for "FALCON" (use your logo's bright blue tone) */
+/* Accent Color for "FALCON" */
 .hero-title-accent {
-  color: #2f7bff;                  /* bright falcon-blue accent */
+  color: #2f7bff;
 }
 
-/* Subtitle styling */
+/* Subtitle */
 .hero-subtitle {
   margin-top: 14px;
   max-width: 650px;
@@ -51,7 +64,7 @@
   font-size: 18px;
 }
 
-/* Buttons row */
+/* Call to Action Buttons Row */
 .hero-actions {
   margin-top: 22px;
   display: flex;
@@ -59,30 +72,39 @@
   flex-wrap: wrap;
 }
 
-/* Button base styles */
+/* =========================================================
+   Buttons & General Components
+   ========================================================= */
 .btn {
   display: inline-block;
   padding: 10px 18px;
   border-radius: 10px;
   font-weight: 700;
   text-decoration: none;
+  transition: all 0.2s ease-in-out; /* Adds a smooth hover effect */
 }
 
-/* Primary button (blue accent) */
 .btn-primary {
   background: #2f7bff;
   color: white;
   border: 1px solid #2f7bff;
 }
 
-/* Outline button (white border) */
+.btn-primary:hover {
+  background: #1e5bcc; /* Slightly darker on hover */
+}
+
 .btn-outline {
   background: transparent;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.7);
 }
 
-/* Optional section under the hero */
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Content Sections below Hero */
 .home-section {
   margin-top: 18px;
   padding: 18px;

@@ -1,0 +1,13 @@
+##tunnel
+cloudflared tunnel run fitness-bridge
+##frontend
+npx serve -s dist -l 5173
+
+##backend
+docker-redis
+ollama-LLM
+main.py uvicorn
+
+##frontend dev
+npm run dev
+npm run build
