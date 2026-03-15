@@ -13,20 +13,22 @@ export default function Architecture() {
     width: '210px', 
     flexShrink: 0,
     position: 'relative',
-    zIndex: 2 // Keeps cards above the connecting lines
+    zIndex: 10 
   };
 
+  // Floating port information badge
   const PortBadge = ({ port, color }) => (
     <div style={{
       position: 'absolute', top: '-12px', right: '15px',
       backgroundColor: color, color: '#000', fontWeight: 'bold', fontSize: '0.75rem',
-      padding: '4px 10px', borderRadius: '12px', boxShadow: `0 0 10px ${color}88`
+      padding: '4px 10px', borderRadius: '12px', boxShadow: `0 0 10px ${color}88`,
+      zIndex: 20 
     }}>
       Port: {port}
     </div>
   );
 
-  // Horizontal Arrow Connector
+  // Simple horizontal arrow connector
   const ArrowWithText = ({ text }) => (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#2f7bff', margin: '0 15px', flexShrink: 0 }}>
       <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 'bold', letterSpacing: '0.5px', marginBottom: '4px' }}>{text}</span>
@@ -36,16 +38,15 @@ export default function Architecture() {
     </div>
   );
 
-  // SVG Fork Connector (Creates the clean "Y" split)
+  // Updated SVG fork connector to match the downward shift
   const SVGForkConnector = () => (
-    <div style={{ margin: '0 15px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-      <svg width="50" height="180" viewBox="0 0 50 180">
-        {/* Top branch to Redis */}
-        <path d="M 0 90 L 20 90 L 20 30 L 45 30" stroke="#2f7bff" strokeWidth="3" fill="none" />
-        <polygon points="45,25 52,30 45,35" fill="#2f7bff" />
-        {/* Bottom branch to LLM */}
-        <path d="M 0 90 L 20 90 L 20 150 L 45 150" stroke="#2f7bff" strokeWidth="3" fill="none" />
-        <polygon points="45,145 52,150 45,155" fill="#2f7bff" />
+    <div style={{ margin: '0 15px', flexShrink: 0, display: 'flex', alignItems: 'center', position: 'relative', zIndex: -1 }}> 
+      <svg width="60" height="200" viewBox="0 0 60 200">
+        {/* Adjusted paths: M 0 100 is the center entry point from FastAPI */}
+        <path d="M 0 100 L 25 100 L 25 45 L 55 45" stroke="#2f7bff" strokeWidth="3" fill="none" />
+        <polygon points="53,40 60,45 53,50" fill="#2f7bff" />
+        <path d="M 0 100 L 25 100 L 25 155 L 55 155" stroke="#2f7bff" strokeWidth="3" fill="none" />
+        <polygon points="53,150 60,155 53,160" fill="#2f7bff" />
       </svg>
     </div>
   );
@@ -57,34 +58,17 @@ export default function Architecture() {
         {/* Header Section */}
         <div style={{ textAlign: "center", marginBottom: "60px" }}>
           <h1 style={{ fontSize: "2.5rem", marginBottom: "15px", letterSpacing: "1px" }}>
-            7. High-Level Architecture ⚙️
+            Architecture overview
           </h1>
           <p style={{ color: "#cbd5e1", fontSize: "1.1rem", maxWidth: "850px", margin: "0 auto" }}>
             An enterprise-grade pipeline: Cloudflare routing to a FastAPI backend, utilizing Redis DB isolation for Auth/Queues, and offloading inference to a scalable LLM worker pool.
           </p>
         </div>
 
-        {/* ==========================================
-            STRICT HORIZONTAL PIPELINE
-            Added overflowX: auto so it scrolls instead of breaking
-            ========================================== */}
-        <div style={{ 
-          width: "100%", 
-          overflowX: "auto", 
-          paddingBottom: "30px", /* padding for scrollbar */
-          marginBottom: "60px"
-        }}>
-          <div style={{ 
-            display: "flex", 
-            flexDirection: "row", 
-            alignItems: "center", 
-            justifyContent: "flex-start", 
-            flexWrap: "nowrap", // 🚀 CRITICAL: NEVER WRAP!
-            width: "max-content", // 🚀 CRITICAL: Forces container to fit contents
-            margin: "0 auto" // Centers the whole diagram if screen is wide enough
-          }}>
+        {/* Horizontal Flow Container */}
+        <div style={{ width: "100%", overflowX: "auto", paddingBottom: "30px", marginBottom: "60px" }}>
+          <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", flexWrap: "nowrap", width: "max-content", margin: "0 auto" }}>
             
-            {/* 1. Cloudflare Tunnel */}
             <div style={{ ...glassCardStyle, borderTop: "4px solid #f39c12" }}>
               <PortBadge port="443" color="#f39c12" />
               <div style={{ fontSize: "2rem", marginBottom: "5px" }}>☁️</div>
@@ -94,7 +78,6 @@ export default function Architecture() {
 
             <ArrowWithText text="HTTP" />
 
-            {/* 2. React Frontend */}
             <div style={{ ...glassCardStyle, borderTop: "4px solid #3498db" }}>
               <PortBadge port="5173" color="#3498db" />
               <div style={{ fontSize: "2rem", marginBottom: "5px" }}>💻</div>
@@ -104,7 +87,6 @@ export default function Architecture() {
 
             <ArrowWithText text="REST API" />
 
-            {/* 3. FastAPI Backend */}
             <div style={{ ...glassCardStyle, borderTop: "4px solid #2ecc71" }}>
               <PortBadge port="8000" color="#2ecc71" />
               <div style={{ fontSize: "2rem", marginBottom: "5px" }}>⚙️</div>
@@ -112,13 +94,12 @@ export default function Architecture() {
               <p style={{ fontSize: "0.8rem", color: "#94a3b8", margin: 0 }}>Validates HS256 JWT & routes traffic.</p>
             </div>
 
-            {/* 4. The SVG Splitter (Replaces text arrows) */}
             <SVGForkConnector />
 
-            {/* 5. Right Side Branches */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
+            {/* 🚀 核心修改：zIndex + marginTop 整体下移 20px 彻底解决遮挡 */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "40px", position: "relative", zIndex: 5, marginTop: "20px" }}>
               
-              {/* Upper Branch: Redis -> Database */}
+              {/* Storage Branch */}
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                 <div style={{ ...glassCardStyle, borderTop: "4px solid #e74c3c", width: "220px" }}>
                   <PortBadge port="6379" color="#e74c3c" />
@@ -140,9 +121,8 @@ export default function Architecture() {
                 </div>
               </div>
 
-              {/* Lower Branch: LLM Worker + Celery Scalability */}
+              {/* AI Worker Branch */}
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "15px" }}>
-                
                 <div style={{ ...glassCardStyle, width: "320px", borderTop: "4px solid #9b59b6", borderLeft: "4px solid #9b59b6", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "15px 20px" }}>
                   <div style={{ textAlign: "left", maxWidth: "60%" }}>
                     <h3 style={{ margin: "0 0 5px 0", color: "#9b59b6", fontSize: "1rem" }}>Decoupled Worker</h3>
@@ -170,46 +150,40 @@ export default function Architecture() {
           </div>
         </div>
 
-        {/* Technical Details Section */}
+        {/* Technical Details */}
         <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', padding: '40px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
           <h2 style={{ color: "white", marginTop: 0, borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "15px" }}>
             System Level Technical Details
           </h2>
           
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "25px", marginTop: "20px" }}>
-            
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "25px", marginTop: "20px" }}>
             <div>
-              <h4 style={{ color: "#2ecc71", fontSize: "1.05rem", margin: "0 0 10px 0" }}>1. Secure Gateway</h4>
+              <h4 style={{ color: "#2ecc71", fontSize: "1.05rem", margin: "0 0 10px 0" }}>1. Secure Authentication</h4>
               <p style={{ color: "#cbd5e1", lineHeight: "1.5", fontSize: "0.85rem", margin: 0 }}>
                 React SPA connects to FastAPI using <strong>HS256 JWT</strong>. Cloudflare Tunnel protects the local origin server from direct internet exposure.
               </p>
             </div>
-
             <div>
               <h4 style={{ color: "#e74c3c", fontSize: "1.05rem", margin: "0 0 10px 0" }}>2. Database Isolation</h4>
               <p style={{ color: "#cbd5e1", lineHeight: "1.5", fontSize: "0.85rem", margin: 0 }}>
                 We enforce strict separation of concerns in Redis: <strong>DB 0</strong> for fast Auth state caching, and <strong>DB 2</strong> as an isolated message broker for AI tasks.
               </p>
             </div>
-
             <div>
               <h4 style={{ color: "#9b59b6", fontSize: "1.05rem", margin: "0 0 10px 0" }}>3. Decoupled Inference</h4>
               <p style={{ color: "#cbd5e1", lineHeight: "1.5", fontSize: "0.85rem", margin: 0 }}>
                 To prevent blocking the API, the <strong>mistral-nemo</strong> LLM operates as a decoupled worker, asynchronously consuming tasks from Redis DB 2.
               </p>
             </div>
-
             <div style={{ backgroundColor: 'rgba(155, 89, 182, 0.05)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(155, 89, 182, 0.2)' }}>
               <h4 style={{ color: "#d2b4de", fontSize: "1.05rem", margin: "0 0 10px 0" }}>4. Future Scalability</h4>
               <p style={{ color: "#cbd5e1", lineHeight: "1.5", fontSize: "0.85rem", margin: 0 }}>
                 Because the AI is already decoupled via Redis, we are fully prepared to drop in <strong>Celery</strong>. This allows us to scale horizontally by adding a pool of distributed LLM workers.
               </p>
             </div>
-
           </div>
         </div>
 
-        {/* Navigation */}
         <div style={{ marginTop: "60px", textAlign: "center" }}>
           <Link to="/" style={{ color: "#2f7bff", textDecoration: "none", borderBottom: "1px solid #2f7bff", paddingBottom: "2px" }}>
             ← Back to Home
