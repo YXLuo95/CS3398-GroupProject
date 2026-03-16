@@ -116,3 +116,4 @@ async def get_my_reports(
     )
     result = await session.execute(statement)
     return result.scalars().all()
+```

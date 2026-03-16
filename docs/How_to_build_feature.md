@@ -47,7 +47,7 @@ class UserProfile(SQLModel, table=True):
     preferences: List[str] = Field(default=[], sa_column=Column(JSON))
 
     user: Optional["User"] = Relationship(back_populates="profile")
-
+```
 
 ### Step 2: Define the Schema
 
@@ -69,9 +69,9 @@ class UserProfileResponse(UserProfileBase):
 
     class Config:
         from_attributes = True
+```
 
-### Step 3 : define CRUD operation 
-
+### Step 3: Define CRUD operations
 
 ```python
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -95,10 +95,9 @@ async def create_user_profile(
     await session.refresh(db_profile)
     
     return db_profile
-
+```
 
 ### Step 4: Create the Router
-
 
 ```python
 from fastapi import APIRouter, Depends
@@ -120,11 +119,8 @@ async def create_profile(
     # The router does NOT contain session.add() or session.commit().
     # It strictly passes the validated payload and the secure user_id to the CRUD layer.
     return await crud.create_user_profile(session, payload, current_user.id)
+```
 
+### Step 5: Test the new API with FastAPI's built-in tools
 
-
-
-### Step 5: test new api use FastAPI's built-in tool
-
-Add your new table to (if you have created one) to api/admin.py to use SQLadmin.
-see if your new feature correctly creates and retrives new table.
+Add your new table (if you created one) to `api/admin.py` to use SQLAdmin. Verify that your new feature correctly creates and retrieves the new table.
