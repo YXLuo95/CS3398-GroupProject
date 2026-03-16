@@ -76,7 +76,7 @@ _Concrete commitments for the next sprint._
 
 ## 5. Confluence copy-paste block
 
-_Copy the section below into your Confluence retro page so the format is ready._
+_Copy the section below into Confluence retro page so the format is ready._
 
 ```markdown
 ## Sprint [X] Retrospective
