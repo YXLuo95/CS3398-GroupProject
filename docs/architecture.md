@@ -53,6 +53,47 @@ The system is a **web application** with:
 └──────────────┘    └──────────────────┘    └─────────────────────────┘
 ```
 
+### 3.1 Component diagram (Mermaid)
+
+In Markdown viewers that support Mermaid (e.g. GitHub, GitLab), the block below renders as a flowchart. **In VS Code** install the recommended extension (Markdown Preview Mermaid Support) when prompted, or add it from the Extensions view so the diagram renders in the Markdown preview.
+
+```mermaid
+flowchart LR
+    User["User (Browser)"]
+    FE["Frontend (React + Vite)"]
+    BE["Backend API (FastAPI)"]
+    Auth["Auth & JWT\n(login, register)"]
+    Fitness["Fitness Records\n(POST/GET /records)"]
+    Quiz["Onboarding Quiz\n(/onboarding/quiz, /status)"]
+    Reports["AI Reports\n(/reports)"]
+    Admin["Admin UI"]
+    DB["SQLite DB\n(SQLModel)"]
+    Redis["Redis\n(Auth & Queue)"]
+    Worker["Background Worker\n(llm_queue_worker)"]
+    LLM["Local LLM (Ollama)\n(or mock)"]
+
+    User --> FE
+    FE -->|"HTTP (axios, JSON)"| BE
+
+    BE --> Auth
+    BE --> Fitness
+    BE --> Quiz
+    BE --> Reports
+    BE --> Admin
+
+    Auth --> DB
+    Fitness --> DB
+    Quiz --> DB
+    Reports --> Redis
+
+    BE -->|"lifespan init"| DB
+    BE -->|"lifespan init"| Redis
+
+    Worker --> Redis
+    Worker --> DB
+    Worker --> LLM
+```
+
 ---
 
 ## 4. Backend Structure
@@ -177,4 +218,4 @@ A detailed entity-relationship diagram is available in the repository: **docs/ER
 
 | Version | Date       | Author | Changes     |
 |---------|------------|--------|-------------|
-| 1.0     | 2026-03-07 | —      | Initial draft |
+| 1.0     | 2026-03-07 | Shawn  | Initial draft |
