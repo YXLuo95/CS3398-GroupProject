@@ -65,3 +65,10 @@ async def authenticate_user(
     if not verify_password(password, user.password_hash):
         return None
     return user
+
+
+# reset password function,
+async def update_user_password(session: AsyncSession, user: User, new_password: str):
+    user.password_hash = get_password_hash(new_password)
+    session.add(user)
+    await session.commit()
