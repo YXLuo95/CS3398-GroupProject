@@ -84,6 +84,16 @@ from typing import Optional, List, Literal
 from datetime import datetime
 import json
 
+# new schemas for password reset functionality
+class PasswordResetRequest(BaseModel):
+    username: str
+    email: str
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
+
+
 #==========================================
 # 5. Quiz Schemas
 #==========================================

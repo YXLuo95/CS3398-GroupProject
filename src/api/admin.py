@@ -71,7 +71,7 @@ class FitnessGoalAdmin(ModelView, model=FitnessGoal):
 
 def setup_admin(app, engine):
     auth = AdminAuth(secret_key=settings.SECRET_KEY)
-    admin = Admin(app, engine, title="Fitness AI Admin Dashboard", authentication_backend=auth)
+    admin = Admin(app, engine, title="Blue Falcon Admin Dashboard", authentication_backend=auth)
     admin.add_view(UserAdmin)
     admin.add_view(FitnessRecordAdmin)
     admin.add_view(FitnessReportAdmin)

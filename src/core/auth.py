@@ -13,7 +13,7 @@ from jose import JWTError, jwt
 #libs from fastApi
 #notes: using FastAPI's OAuth2PasswordBearer to handle token-based authentication,
 # which will allow us to secure our API endpoints and ensure that only authorized users can access the OCR services.
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status , Request
 from fastapi.security import OAuth2PasswordBearer
 
 #libs that support behavior like acessing db
@@ -56,7 +56,7 @@ def create_access_token(
     
     #prepare payload
     #IAW JWT standard
-    to_encode = {"exp": expire, "sub": str(subject)}
+    to_encode = {"exp": expire, "sub": str(subject), "type": "access"}
     
     # use the secret key in the .evn to sign the token
     # the token will be encoded using the specified algorithm (HS256 in this case) and returned as a string.
@@ -72,6 +72,7 @@ def create_access_token(
 # this function will be used as a dependency in the API endpoints that require authentication,
 # it will automatically extract the token from the request, verify it, and return the current user
 async def get_current_user(
+    request: Request, #to check if the token is blacklisted in Redis, we need access to the request object to get the Redis connection from the app state.
     token: str = Depends(oauth2_scheme), # fastAPI have built-in support for extracting the token from the Authorization header using the OAuth2PasswordBearer dependency,
     session: AsyncSession = Depends(get_session) 
 ) -> User:
@@ -90,6 +91,10 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
+    # check if the token is blacklisted in Redis, which allows us to invalidate tokens when users log out or when we want to revoke access for security reasons. If the token is found in the blacklist, we raise the same credentials_exception to indicate that the token is no longer valid.
+    if await is_token_blacklisted(request, token):
+        raise credentials_exception
+    
     try:
         # 1. decode the token using the secret key and algorithm specified in the .evn file,
         payload = jwt.decode(
@@ -101,6 +106,10 @@ async def get_current_user(
         # 2. extract the username (or user ID) from the "sub" claim in the token payload,
         username: str = payload.get("sub")
         if username is None:
+            raise credentials_exception
+        #2.5 check type for reset token
+        token_type: str = payload.get("type", "access")
+        if token_type != "access":
             raise credentials_exception
             
         # 3. validate the token payload using the TokenPayload schema, 
@@ -120,3 +129,27 @@ async def get_current_user(
         
     # if everything is valid, return the user object, which can then be used in the API endpoint to access user-specific information or perform authorization checks.
     return user
+
+
+
+
+
+
+
+
+# --- Token Blacklist (Redis) ---
+
+async def blacklist_token(request: Request, token: str, expires_in: int):
+    redis = request.app.state.redis_auth
+    await redis.setex(f"blacklist:{token}", expires_in, "1")
+
+async def is_token_blacklisted(request: Request, token: str) -> bool:
+    redis = request.app.state.redis_auth
+    return await redis.exists(f"blacklist:{token}") > 0
+
+# --- Reset Token ---
+
+def create_reset_token(subject: Union[str, Any]) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode = {"exp": expire, "sub": str(subject), "type": "reset"}
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
