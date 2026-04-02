@@ -167,6 +167,9 @@ app.include_router(profile_router, prefix=settings.API_V1_STR, tags=["User Profi
 from src.api.chat import router as chat_router
 app.include_router(chat_router, prefix=settings.API_V1_STR, tags=["Chat"])
 
+from src.api.workout import router as workout_router
+app.include_router(workout_router, prefix="/api/v1/workout", tags=["Workout"])
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
