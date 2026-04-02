@@ -1,15 +1,26 @@
-fastapi
-uvicorn[standard]
-sqlmodel
-sqlalchemy
-aiosqlite
-python-jose[cryptography]
-passlib[bcrypt]
+# Web framework
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+
+# Database
+sqlmodel==0.0.22
+sqlalchemy==2.0.36
+aiosqlite==0.20.0
+greenlet==3.0.3
+
+# Auth & validation
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
-python-multipart
-pydantic-settings
-redis
-ollama
-sqladmin
+python-multipart==0.0.17
+pydantic-settings==2.6.1
+
+# Redis (auth + queue)
+redis==5.2.1
+
+# Optional: local LLM (fitness reports)
+ollama==0.3.3
+
+# Admin UI
+sqladmin==0.16.1
 itsdangerous
-greenlet
