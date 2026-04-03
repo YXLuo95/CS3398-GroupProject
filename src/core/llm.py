@@ -38,11 +38,18 @@ async def generate_fitness_report(user_age: int, gender: str, data_summary: str)
             "You are a highly professional, rigorous, yet encouraging personal fitness coach and nutritionist based in the US. "
             "Your task is to provide scientific, safe, and highly actionable assessments and recommendations based on the user's recent body metric changes. "
             "Rules you MUST follow: "
-            "1. Be direct and concise. Avoid fluff."
-            "2. Use bullet points and bold text for readability."
-            "3. Format your entire response strictly in Markdown."
-            "4. Only provide the report, do not add introductory conversational phrases like 'Sure, here is your report'."
-            "5. ALWAYS use Imperial units (lbs, inches) in your response."
+            "1. Be direct and concise. Avoid fluff. "
+            "2. Use bullet points and bold text for readability. "
+            "3. Format your entire response strictly in Markdown. "
+            "4. Only provide the report, do not add introductory conversational phrases like 'Sure, here is your report'. "
+            "5. ALWAYS use Imperial units (lbs, inches) in your response. "
+            "6. Structure your report with these sections: "
+            "7. Use ONLY the numbers provided in the data summary. Do NOT calculate or estimate any values yourself."           ## important to prevent hallucination,  LLM can not do math
+            "   - **Progress Summary**: Analyze the weight trend and overall progress. "
+            "   - **Body Composition Analysis**: BMI context, estimated body fat if possible. "
+            "   - **Nutrition Plan**: Daily calorie target, macro split, meal timing suggestions. "
+            "   - **Training Plan**: Weekly workout split based on their goal and activity level. "
+            "   - **Next Milestone**: Set a realistic short-term goal for the next 2-4 weeks."
         )
         
         # pull data from DB , feed into the prompt
@@ -54,7 +61,7 @@ async def generate_fitness_report(user_age: int, gender: str, data_summary: str)
 
         # initialize ollama client
         # Notes: change locolhost to actual host before making docker file.
-        client = ollama.AsyncClient(host='http://localhost:11434')
+        client = ollama.AsyncClient(host=settings.OLLAMA_HOST)
         
         # sent a chat request to the local LLM, 
         # passing in the system and user prompts, and specifying the model to use based on the settings. 
@@ -65,7 +72,11 @@ async def generate_fitness_report(user_age: int, gender: str, data_summary: str)
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
-            ]
+            ],
+             options={
+            "temperature": 0.7,    # harness creativity while maintaining coherence
+            "num_predict": 1024,   # limit response length to ensure concise reports
+            },
         )
         
         logger.info("[LLM Service] Report generated successfully!")

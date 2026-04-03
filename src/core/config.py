@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     # LOCAL_MODEL_NAME is set to "llama3" as a placeholder, 
     # and can be updated to the actual name of the local model being used in the application (e.g., "gpt-4", "llama3", etc.) when the LLM integration is implemented.
     LOCAL_MODEL_NAME: str = "llama3" 
+    OLLAMA_HOST: str = "http://localhost:11434"
 
     # Redis configuration settings, including the host, port, and password for connecting to the Redis server, 
     # as well as the database indices for different purposes (authentication, LLM rate limiting, and task queue management). This allows for organized and efficient use of Redis for various functionalities in the application.

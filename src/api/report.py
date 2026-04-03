@@ -9,6 +9,8 @@ from src.core.auth import get_current_user
 from src.core.config import settings
 from typing import List
 
+#added to improve data summary
+from src.model import User, FitnessRecord, FitnessReport, FitnessGoal
 
 from src.model import User, FitnessRecord ,FitnessReport
 
@@ -28,11 +30,13 @@ async def enqueue_fitness_report(
     # ==========================================
     # 1. Pre processing & Data Extraction
     # ==========================================
+    
+    # Pull recent fitness records
     statement = (
         select(FitnessRecord)
         .where(FitnessRecord.user_id == current_user.id)
         .order_by(FitnessRecord.created_at.desc())
-        .limit(2) # pull 2 for now
+        .limit(10)
     )
     result = await session.execute(statement)
     records = result.scalars().all()
@@ -41,23 +45,61 @@ async def enqueue_fitness_report(
         raise HTTPException(status_code=400, detail="No fitness records found. Please submit your data first.")
     
     latest_record = records[0]
-    
-    # calculate the user data summary (Imperial units)
+
+    # Build weight trend summary
     if len(records) == 1:
         data_summary = (
-            f"Current baseline: Weight {latest_record.weight_lbs} pounds, Height {latest_record.height_in} inches. "
-            f"Goal: {latest_record.fitness_goal}. Activity Level: {latest_record.activity_level}."
+            f"Current baseline: Weight {latest_record.weight_lbs} lbs, "
+            f"Height {latest_record.height_in} inches. "
+            f"Goal: {latest_record.fitness_goal}. "
+            f"Activity Level: {latest_record.activity_level}."
         )
     else:
-        previous_record = records[1]
-        weight_diff = latest_record.weight_lbs - previous_record.weight_lbs
-        trend = "gained" if weight_diff > 0 else "lost"
-        
-        data_summary = (
-            f"Current: Weight {latest_record.weight_lbs} pounds, Height {latest_record.height_in} inches. "
-            f"Compared to previous record, the user has {trend} {abs(weight_diff):.1f} pounds. "
-            f"Goal: {latest_record.fitness_goal}. Activity Level: {latest_record.activity_level}."
+        oldest_record = records[-1]
+        total_change = latest_record.weight_lbs - oldest_record.weight_lbs
+        total_trend = "gained" if total_change > 0 else "lost"
+
+        weight_timeline = ", ".join(
+            f"{r.weight_lbs} lbs ({r.created_at.strftime('%m/%d')})"
+            for r in reversed(records)
         )
+
+        data_summary = (
+            f"Current: Weight {latest_record.weight_lbs} lbs, "
+            f"Height {latest_record.height_in} inches. "
+            f"Weight history (oldest to newest): {weight_timeline}. "
+            f"Over {len(records)} records, the user has {total_trend} "
+            f"{abs(total_change):.1f} lbs total. "
+            f"Goal: {latest_record.fitness_goal}. "
+            f"Activity Level: {latest_record.activity_level}."
+        )
+
+    # Pull user's fitness goal for richer context
+    goal_statement = select(FitnessGoal).where(FitnessGoal.user_id == current_user.id)
+    goal_result = await session.execute(goal_statement)
+    goal = goal_result.scalars().first()
+
+    # Adjust the data summary to include more details from the fitness goal if available, which can help the LLM generate a more personalized and relevant report. This includes target weight, workout frequency, dietary preferences, and any physical limitations that the user has specified in their fitness goal. Additionally, it provides context on how much weight the user needs to lose or gain to reach their target weight, which can be a crucial piece of information for the LLM to create actionable recommendations in the fitness report.
+    if goal:
+        if goal.target_weight:
+            data_summary += f" Target weight: {goal.target_weight} lbs."
+        if goal.workout_days:
+            data_summary += f" Workout days per week: {goal.workout_days}."
+        if goal.bmi or goal.bmr or goal.tdee:
+            data_summary += f" BMI: {goal.bmi}, BMR: {goal.bmr}, TDEE: {goal.tdee}."
+        if goal.dietary_preferences:
+            data_summary += f" Dietary preferences: {', '.join(goal.dietary_preferences)}."
+        if goal.allergies:
+            data_summary += f" Allergies: {', '.join(goal.allergies)}."
+        if goal.limitations:
+            data_summary += f" Physical limitations: {goal.limitations}."
+        if goal.target_weight and latest_record:                           #make sure calculation happend before given to LLM because local LLM can not do math.
+            weight_to_go = latest_record.weight_lbs - goal.target_weight
+            direction = "lose" if weight_to_go > 0 else "gain"
+            data_summary += (
+                f" Target weight: {goal.target_weight} lbs."
+                f" User needs to {direction} {abs(weight_to_go):.1f} lbs to reach target."
+            )
 
     # ==========================================
     # 2. Push Task to Redis Queue (Producer)
