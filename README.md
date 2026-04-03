@@ -91,6 +91,8 @@ Create a `.env` file in the **project root** (next to `main.py`):
 | `REDIS_DB_QUEUE` | No | Redis DB for report queue (default: `2`) |
 | `ENABLE_LLM_MODEL` | No | Set to `true` to use Ollama; `false` for mock reports (default: `true`) |
 | `LOCAL_MODEL_NAME` | No | Ollama model name, e.g. `llama3` or `mistral-nemo` (default: `llama3`) |
+| `OLLAMA_HOST` | No | Ollama server URL (default: `http://localhost:11434`) |
+| `ADMIN_PASSWORD` | No | Admin panel password (default: `admin123`) |
 
 **Minimal `.env` example:**
 
@@ -103,6 +105,8 @@ REDIS_DB_AUTH=0
 REDIS_DB_QUEUE=2
 ENABLE_LLM_MODEL=false
 LOCAL_MODEL_NAME=mistral-nemo
+OLLAMA_HOST=http://localhost:11434
+ADMIN_PASSWORD=admin123
 ```
 
 ---
