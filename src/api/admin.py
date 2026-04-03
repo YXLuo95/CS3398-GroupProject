@@ -4,7 +4,7 @@ from starlette.requests import Request
 from sqladmin.authentication import AuthenticationBackend
 from src.core.config import settings
 from src.model import User, FitnessRecord, FitnessReport, FitnessGoal, UserProfile
-
+from src.model import User, FitnessRecord, FitnessReport, FitnessGoal, UserProfile, ChatMessage
 
 class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool:
@@ -85,6 +85,12 @@ class UserProfileAdmin(ModelView, model=UserProfile):
     name_plural = "User Profiles"
     icon = "fa-solid fa-address-card"
 
+class ChatMessageAdmin(ModelView, model=ChatMessage):
+    column_list = ["id", "user_id", "username", "content", "created_at"]
+    name = "Chat Message"
+    name_plural = "Chat Messages"
+    icon = "fa-solid fa-comments"
+
 def setup_admin(app, engine):
     auth = AdminAuth(secret_key=settings.SECRET_KEY)
     admin = Admin(app, engine, title="Blue Falcon Admin Dashboard", authentication_backend=auth)
@@ -93,4 +99,5 @@ def setup_admin(app, engine):
     admin.add_view(FitnessReportAdmin)
     admin.add_view(FitnessGoalAdmin)
     admin.add_view(UserProfileAdmin)
+    admin.add_view(ChatMessageAdmin)
     return admin
