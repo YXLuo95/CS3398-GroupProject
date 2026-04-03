@@ -3,6 +3,7 @@ from src.model import User, FitnessRecord, FitnessReport , FitnessGoal
 from starlette.requests import Request
 from sqladmin.authentication import AuthenticationBackend
 from src.core.config import settings
+from src.model import User, FitnessRecord, FitnessReport, FitnessGoal, UserProfile
 
 
 class AdminAuth(AuthenticationBackend):
@@ -69,6 +70,21 @@ class FitnessGoalAdmin(ModelView, model=FitnessGoal):
     name_plural = "Fitness Goals"
     icon = "fa-solid fa-bullseye" 
 
+class UserProfileAdmin(ModelView, model=UserProfile):
+    column_list = [
+        "id",
+        "user_id",
+        "first_name",
+        "last_name",
+        "phone",
+        "city",
+        "state",
+        "created_at"
+    ]
+    name = "Profile"
+    name_plural = "User Profiles"
+    icon = "fa-solid fa-address-card"
+
 def setup_admin(app, engine):
     auth = AdminAuth(secret_key=settings.SECRET_KEY)
     admin = Admin(app, engine, title="Blue Falcon Admin Dashboard", authentication_backend=auth)
@@ -76,4 +92,5 @@ def setup_admin(app, engine):
     admin.add_view(FitnessRecordAdmin)
     admin.add_view(FitnessReportAdmin)
     admin.add_view(FitnessGoalAdmin)
+    admin.add_view(UserProfileAdmin)
     return admin
