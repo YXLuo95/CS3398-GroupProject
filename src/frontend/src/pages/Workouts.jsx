@@ -45,17 +45,36 @@ const btnPrimary = {
   color: "white",
   cursor: "pointer",
   fontWeight: "700",
-  boxShadow: "0 6px 16px rgba(47, 123, 255, 0.32)"
+  boxShadow: "0 6px 16px rgba(47, 123, 255, 0.32)",
+  textDecoration: "none",
+  display: "inline-block",
+  textAlign: "center"
 };
 
 export default function Workouts() {
   const isLoggedIn = Boolean(localStorage.getItem("token"));
 
   const workoutPlans = [
-    { title: "Beginner Training", desc: "Start with a structured 4-week progression to learn form and build consistency." },
-    { title: "Strength Training", desc: "Advanced lift cycles with periodized volume for consistent strength gains." },
-    { title: "Fat Loss Training", desc: "High-intensity intervals combined with recovery sets to burn fat efficiently." },
-    { title: "Home Workouts", desc: "Equipment-free workouts designed for small spaces and busy schedules." }
+    {
+      title: "Beginner Training",
+      desc: "Start with a structured 4-week progression to learn form and build consistency.",
+      slug: "beginner-training"
+    },
+    {
+      title: "Strength Training",
+      desc: "Advanced lift cycles with periodized volume for consistent strength gains.",
+      slug: "strength-training"
+    },
+    {
+      title: "Fat Loss Training",
+      desc: "High-intensity intervals combined with recovery sets to burn fat efficiently.",
+      slug: "fat-loss-training"
+    },
+    {
+      title: "Home Workouts",
+      desc: "Equipment-free workouts designed for small spaces and busy schedules.",
+      slug: "home-workouts"
+    }
   ];
 
   return (
@@ -76,7 +95,7 @@ export default function Workouts() {
             >
               <h2 style={{ margin: "0 0 10px", fontSize: "1.2rem" }}>{plan.title}</h2>
               <p style={{ color: "#d9e5ff", lineHeight: "1.5" }}>{plan.desc}</p>
-              <button style={{ ...btnPrimary, marginTop: "16px" }}>View Plan</button>
+              <Link to={`/workouts/${plan.slug}`} style={{ ...btnPrimary, marginTop: "16px" }}>View Plan</Link>
             </article>
           ))}
         </div>

@@ -47,7 +47,7 @@ export default function Navbar() {
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <NavLink to="/" style={linkStyle}>Home</NavLink>
           <NavLink to="/about" style={linkStyle}>About</NavLink>
-          <NavLink to="/quiz" style={linkStyle}>Quiz</NavLink>
+          {!token && <NavLink to="/quiz" style={linkStyle}>Quiz</NavLink>}
           <NavLink to="/workouts" style={linkStyle}>Workouts</NavLink>
           <NavLink to="/nutrition" style={linkStyle}>Nutrition</NavLink>
         </div>

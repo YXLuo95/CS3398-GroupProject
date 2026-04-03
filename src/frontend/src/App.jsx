@@ -16,7 +16,9 @@ import Dashboard from "./pages/Dashboard";
 import Quiz from "./pages/Quiz";
 import Profile from "./pages/Profile";
 import Workouts from "./pages/Workouts";
+import WorkoutDetail from "./pages/WorkoutDetail";
 import Nutrition from "./pages/Nutrition";
+import NutritionDetail from "./pages/NutritionDetail";
 // Otherwise, I created a simple inline placeholder to prevent crashes.
 const Features = () => <div style={{ padding: "60px", textAlign: "center" }}><h1>Features</h1></div>;
 
@@ -42,7 +44,9 @@ function App() {
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/workouts" element={<Workouts />} />
+          <Route path="/workouts/:slug" element={<WorkoutDetail />} />
           <Route path="/nutrition" element={<Nutrition />} />
+          <Route path="/nutrition/:slug" element={<NutritionDetail />} />
         </Routes>
         
       </div>

@@ -40,16 +40,35 @@ const btnPrimary = {
   color: "white",
   cursor: "pointer",
   fontWeight: "700",
-  boxShadow: "0 6px 16px rgba(47, 123, 255, 0.32)"
+  boxShadow: "0 6px 16px rgba(47, 123, 255, 0.32)",
+  textDecoration: "none",
+  display: "inline-block",
+  textAlign: "center"
 };
 
 export default function Nutrition() {
   const isLoggedIn = Boolean(localStorage.getItem("token"));
   const nutritionPlans = [
-    { title: "Weight Loss Nutrition", desc: "Controlled calories, high fiber, and lean protein for consistent fat loss." },
-    { title: "Muscle Gain Nutrition", desc: "Moderate surplus with protein timing and recovery-focused macros." },
-    { title: "Balanced Diet", desc: "Balanced proteins, carbs, and fats for sustainable daily energy and wellness." },
-    { title: "Meal Prep Guide", desc: "Structured weekly meal prep to reduce stress and ensure nutritional adequacy." }
+    {
+      title: "Weight Loss Nutrition",
+      desc: "Controlled calories, high fiber, and lean protein for consistent fat loss.",
+      slug: "weight-loss-nutrition"
+    },
+    {
+      title: "Muscle Gain Nutrition",
+      desc: "Moderate surplus with protein timing and recovery-focused macros.",
+      slug: "muscle-gain-nutrition"
+    },
+    {
+      title: "Balanced Diet",
+      desc: "Balanced proteins, carbs, and fats for sustainable daily energy and wellness.",
+      slug: "balanced-diet"
+    },
+    {
+      title: "Meal Prep Guide",
+      desc: "Structured weekly meal prep to reduce stress and ensure nutritional adequacy.",
+      slug: "meal-prep-guide"
+    }
   ];
 
   return (
@@ -70,7 +89,7 @@ export default function Nutrition() {
             >
               <h2 style={{ margin: "0 0 9px", fontSize: "1.2rem" }}>{item.title}</h2>
               <p style={{ color: "#d9e5ff", lineHeight: "1.5" }}>{item.desc}</p>
-              <button style={{ ...btnPrimary, marginTop: "14px" }}>View Plan</button>
+              <Link to={`/nutrition/${item.slug}`} style={{ ...btnPrimary, marginTop: "14px" }}>View Plan</Link>
             </article>
           ))}
         </div>

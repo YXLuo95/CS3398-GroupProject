@@ -18,15 +18,31 @@ export default function SignUp() {
   }, [navigate]);
 
   const handleSignUp = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      await axios.post(`${API_URL}/api/v1/register`, { username, email, password, is_active: true });
-      navigate('/login');
-    } catch (err) { 
-      setError(err.response?.data?.detail || 'Registration failed'); 
+  e.preventDefault();
+  setError("");
+
+  try {
+    await axios.post(`${API_URL}/api/v1/register`, {
+      username,
+      email,
+      password,
+    });
+
+    navigate("/login");
+  } catch (err) {
+    const detail = err.response?.data?.detail;
+
+    if (Array.isArray(detail)) {
+      setError(detail.map((item) => item.msg).join(", "));
+    } else if (typeof detail === "string") {
+      setError(detail);
+    } else {
+      setError("Registration failed");
     }
-  };
+
+    console.error("Signup error:", err.response?.data || err);
+  }
+};
 
   return (
     <div style={{ padding: "80px 20px", display: 'flex', justifyContent: 'center' }}>

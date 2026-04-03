@@ -1,28 +1,139 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from 'axios';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // =======================================================
-// Typewriter Animation Component
+// Mock Data - Replace with API calls later
 // =======================================================
-const Typewriter = ({ text, speed = 15 }) => {
-  const [displayedText, setDisplayedText] = useState("");
+const mockUser = {
+  name: 'Alex Johnson',
+  email: 'alex@example.com'
+};
 
-  useEffect(() => {
-    let i = 0;
-    setDisplayedText(""); 
-    const timer = setInterval(() => {
-      setDisplayedText((prev) => prev + text.charAt(i));
-      i++;
-      if (i >= text.length) clearInterval(timer);
-    }, speed);
-    return () => clearInterval(timer);
-  }, [text, speed]);
+const mockQuizResults = {
+  goal: 'lose_weight', // Options: lose_weight, gain_muscle, improve_endurance, general_fitness
+  workoutFrequency: 4,
+  dietPreference: 'balanced',
+  calorieTarget: 2200,
+  proteinTarget: 150,
+  carbsTarget: 200,
+  fatsTarget: 73,
+  focusAreas: ['strength', 'cardio', 'fat_loss']
+};
 
-  return <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8' }}>{displayedText}</div>;
+const mockActivityLog = [
+  { id: 1, action: 'Completed quiz', timestamp: '2 hours ago', icon: '✅' },
+  { id: 2, action: 'Viewed workout plan', timestamp: '1 day ago', icon: '💪' },
+  { id: 3, action: 'Logged today\'s workout', timestamp: '2 days ago', icon: '🏋️' },
+  { id: 4, action: 'Updated nutrition goal', timestamp: '3 days ago', icon: '🥗' }
+];
+
+const mockStats = {
+  workoutsCompleted: 12,
+  currentStreak: 5,
+  caloriesTarget: mockQuizResults.calorieTarget,
+  proteinTarget: mockQuizResults.proteinTarget,
+  goalType: mockQuizResults.goal.replace('_', ' ')
+};
+
+// =======================================================
+// Helper Functions
+// =======================================================
+const getGoalDisplay = (goal) => {
+  const goals = {
+    lose_weight: 'Lose Weight',
+    gain_muscle: 'Gain Muscle',
+    improve_endurance: 'Improve Endurance',
+    general_fitness: 'General Fitness'
+  };
+  return goals[goal] || 'General Fitness';
+};
+
+const getMotivationalMessage = (goal) => {
+  const messages = {
+    lose_weight: 'Every step counts towards your transformation!',
+    gain_muscle: 'Building strength, one rep at a time!',
+    improve_endurance: 'Push your limits and discover your potential!',
+    general_fitness: 'Your fitness journey starts here!'
+  };
+  return messages[goal] || 'Your fitness journey starts here!';
+};
+
+const getWorkoutRecommendations = (goal) => {
+  const recommendations = {
+    lose_weight: {
+      split: '4-Day Split',
+      frequency: '4x per week',
+      focus: 'HIIT cardio + strength training',
+      description: 'Combine high-intensity cardio with compound lifts for optimal fat loss'
+    },
+    gain_muscle: {
+      split: 'Push/Pull/Legs',
+      frequency: '5-6x per week',
+      focus: 'Progressive overload + hypertrophy',
+      description: 'Focus on compound movements with progressive weight increases'
+    },
+    improve_endurance: {
+      split: 'Circuit Training',
+      frequency: '5x per week',
+      focus: 'Cardio + functional training',
+      description: 'Build stamina with varied intensity and recovery periods'
+    },
+    general_fitness: {
+      split: 'Full Body',
+      frequency: '3-4x per week',
+      focus: 'Balanced training',
+      description: 'Comprehensive workouts covering all major muscle groups'
+    }
+  };
+  return recommendations[goal] || recommendations.general_fitness;
+};
+
+const getDietRecommendations = (goal) => {
+  const recommendations = {
+    lose_weight: {
+      focus: 'Calorie deficit with high protein',
+      tips: ['Prioritize lean proteins', 'Include complex carbs', 'Healthy fats in moderation']
+    },
+    gain_muscle: {
+      focus: 'Calorie surplus with ample protein',
+      tips: ['High protein intake', 'Complex carbohydrates', 'Healthy fats for hormones']
+    },
+    improve_endurance: {
+      focus: 'Carb-focused with moderate protein',
+      tips: ['Complex carbs for energy', 'Moderate protein', 'Essential fats']
+    },
+    general_fitness: {
+      focus: 'Balanced macronutrients',
+      tips: ['Varied protein sources', 'Whole grain carbs', 'Healthy fats']
+    }
+  };
+  return recommendations[goal] || recommendations.general_fitness;
+};
+
+const getFitnessTips = (goal) => {
+  const tips = {
+    lose_weight: [
+      'Stay in a moderate calorie deficit (300-500 kcal below maintenance)',
+      'Prioritize protein intake to preserve muscle mass',
+      'Include both cardio and strength training for optimal results'
+    ],
+    gain_muscle: [
+      'Focus on progressive overload - gradually increase weights',
+      'Ensure adequate protein intake (1.6-2.2g per kg bodyweight)',
+      'Allow proper recovery between intense training sessions'
+    ],
+    improve_endurance: [
+      'Incorporate both steady-state and interval training',
+      'Stay hydrated and maintain electrolyte balance',
+      'Include mobility work to prevent injuries'
+    ],
+    general_fitness: [
+      'Consistency is key - aim for regular training sessions',
+      'Balance different types of exercise',
+      'Listen to your body and adjust intensity as needed'
+    ]
+  };
+  return tips[goal] || tips.general_fitness;
 };
 
 // =======================================================
@@ -30,279 +141,279 @@ const Typewriter = ({ text, speed = 15 }) => {
 // =======================================================
 export default function Dashboard() {
   const navigate = useNavigate();
-  
-  // -- User & Data States --
-  const [username, setUsername] = useState('');
-  const [quizStatus, setQuizStatus] = useState(null); 
-  const [fullQuizData, setFullQuizData] = useState(null);
-  const [fitnessRecords, setFitnessRecords] = useState([]);
-  const [reports, setReports] = useState([]);
+  const [user] = useState(mockUser);
+  const [quizResults] = useState(mockQuizResults);
+  const [activityLog] = useState(mockActivityLog);
+  const [stats] = useState(mockStats);
 
-  // -- Logging States --
-  const [newWeight, setNewWeight] = useState('');
-  const [isLogging, setIsLogging] = useState(false);
-  const [logError, setLogError] = useState('');
-
-  // -- AI Generation & Polling States --
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [pollingActive, setPollingActive] = useState(false); 
-  const [reportError, setReportError] = useState('');
-  const [queueMessage, setQueueMessage] = useState('');
-
-  const getToken = () => localStorage.getItem('token');
-
-  // -- Data Fetcher --
-  const fetchDashboardData = useCallback(async () => {
-    const token = getToken();
-    if (!token) { navigate('/login'); return; }
-
-    const headers = { Authorization: `Bearer ${token}` };
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.sub) setUsername(payload.sub);
-
-      const statusRes = await axios.get(`${API_URL}/api/v1/onboarding/status`, { headers });
-      setQuizStatus(statusRes.data.completed);
-      
-      if (statusRes.data.completed) {
-        const quizRes = await axios.get(`${API_URL}/api/v1/onboarding/quiz`, { headers });
-        setFullQuizData(quizRes.data);
-      }
-
-      const recordsRes = await axios.get(`${API_URL}/api/v1/records?limit=30`, { headers });
-      setFitnessRecords(recordsRes.data);
-
-      const reportsRes = await axios.get(`${API_URL}/api/v1/reports`, { headers });
-      setReports(reportsRes.data || []);
-      
-    } catch (err) {
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      }
-    }
-  }, [navigate]);
-
-  useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
-
-  // -- Polling for AI Reports --
-  useEffect(() => {
-    let pollInterval;
-    if (pollingActive) {
-      pollInterval = setInterval(async () => {
-        const token = getToken();
-        const headers = { Authorization: `Bearer ${token}` };
-        try {
-          const res = await axios.get(`${API_URL}/api/v1/reports`, { headers });
-          const latestReports = res.data || [];
-          if (latestReports.length > 0) {
-            const latestDate = new Date(latestReports[0].created_at).toLocaleDateString();
-            const today = new Date().toLocaleDateString();
-            if (latestDate === today) {
-              setReports(latestReports);
-              setPollingActive(false); 
-              setIsGenerating(false);  
-              setQueueMessage("");     
-            }
-          }
-        } catch (e) {
-          console.error("Polling error:", e);
-        }
-      }, 5000); 
-    }
-    return () => clearInterval(pollInterval);
-  }, [pollingActive]);
-
-  // -- Handlers --
-  const handleLogRecord = async (e) => {
-    e.preventDefault();
-    if (!fullQuizData) {
-      setLogError("Please complete your Fitness Profile (Quiz) first!");
-      return;
-    }
-    setLogError('');
-    setIsLogging(true);
-    const headers = { Authorization: `Bearer ${getToken()}` };
-    const payload = {
-      age: parseInt(fullQuizData.age),
-      gender: fullQuizData.gender,
-      height_in: parseFloat(fullQuizData.height_in),
-      weight_lbs: parseFloat(newWeight),
-      activity_level: fullQuizData.activity_level,
-      fitness_goal: fullQuizData.goal_type
-    };
-
-    try {
-      await axios.post(`${API_URL}/api/v1/records`, payload, { headers });
-      setNewWeight('');
-      await fetchDashboardData(); 
-    } catch (err) {
-      setLogError('Logging failed. Check backend fields.');
-    } finally {
-      setIsLogging(false);
+  // Shared styles
+  const styles = {
+    container: {
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0b1727 0%, #1e293b 100%)',
+      padding: '20px',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    },
+    card: {
+      background: 'rgba(255, 255, 255, 0.05)',
+      borderRadius: '16px',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+      backdropFilter: 'blur(10px)',
+      overflow: 'hidden'
+    },
+    accentBar: {
+      height: '4px',
+      background: 'linear-gradient(90deg, #3b82f6, #06b6d4)'
+    },
+    button: {
+      padding: '12px 24px',
+      borderRadius: '8px',
+      border: 'none',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      fontSize: '14px'
+    },
+    primaryButton: {
+      background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
+      color: 'white'
+    },
+    secondaryButton: {
+      background: 'rgba(255, 255, 255, 0.1)',
+      color: 'white',
+      border: '1px solid rgba(255, 255, 255, 0.2)'
+    },
+    statCard: {
+      background: 'rgba(0, 0, 0, 0.2)',
+      borderRadius: '12px',
+      padding: '20px',
+      textAlign: 'center',
+      border: '1px solid rgba(255, 255, 255, 0.05)'
     }
   };
 
-  const handleGenerateReport = async () => {
-    setReportError('');
-    setQueueMessage('');
-    setIsGenerating(true);
-    const headers = { Authorization: `Bearer ${getToken()}` };
-
-    try {
-      const res = await axios.post(`${API_URL}/api/v1/reports/generate`, {}, { headers });
-      if (res.status === 202) {
-        setQueueMessage("🤖 Task Queued! AI Coach is analyzing your logs. Hang tight, results will appear automatically...");
-        setPollingActive(true); 
-      }
-    } catch (err) {
-      setReportError(err.response?.data?.detail || 'Error enqueuing report.');
-      setIsGenerating(false);
-    }
-  };
-
-  // -- Derived Data --
-  const hasTwoRecords = fitnessRecords.length >= 2;
-  const hasGeneratedToday = reports.length > 0 && 
-    new Date(reports[0].created_at).toLocaleDateString() === new Date().toLocaleDateString();
-
-  const chartData = [...fitnessRecords].reverse().map(r => ({
-    date: r.created_at ? new Date(r.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Log',
-    weight: r.weight_lbs
-  }));
-
-  // -- Shared Styles --
-  const glassCardStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: '16px',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-    border: '1px solid rgba(255, 255, 255, 0.05)',
-    overflow: 'hidden'
-  };
+  const workoutRecs = getWorkoutRecommendations(quizResults.goal);
+  const dietRecs = getDietRecommendations(quizResults.goal);
+  const fitnessTips = getFitnessTips(quizResults.goal);
 
   return (
-    <div style={{ padding: "60px 40px", minHeight: "100vh", backgroundColor: "#0b1727" }}>
-      <h1 style={{ color: "white", marginBottom: '40px' }}>{username ? `Welcome, ${username}!` : 'Dashboard'}</h1>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px', marginBottom: '30px' }}>
-        
-        {/* Profile Card */}
-        <div style={glassCardStyle}>
-          <div style={{ height: '6px', background: 'linear-gradient(to right, #2f7bff, #3498db)' }} />
-          <div style={{ padding: '24px 28px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ color: "white", margin: 0, fontSize: '1.2rem' }}>🦅 Fitness Profile</h2>
-              <button onClick={() => navigate(quizStatus ? '/quiz?retake=true' : '/quiz')} style={{ padding: "7px 16px", border: "1px solid #2f7bff", color: "#2f7bff", backgroundColor: "transparent", borderRadius: "20px", cursor: "pointer", fontSize: '0.8rem', fontWeight: 'bold' }}>
-                {quizStatus ? "Update" : "Start Quiz"}
-              </button>
-            </div>
-
-            {quizStatus === null ? <p style={{ color: '#94a3b8' }}>Loading...</p> : !quizStatus ? (
-              <p style={{ color: "#f39c12", fontWeight: "bold" }}>⚠️ Complete your profile to get started</p>
-            ) : fullQuizData ? (
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
-                  {[
-                    { label: 'BMI',  value: fullQuizData.bmi,  unit: '',     color: '#3498db' },
-                    { label: 'BMR',  value: fullQuizData.bmr,  unit: 'kcal', color: '#2ecc71' },
-                    { label: 'TDEE', value: fullQuizData.tdee, unit: 'kcal', color: '#9b59b6' },
-                  ].map(m => (
-                    <div key={m.label} style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '14px 10px', textAlign: 'center', border: `1px solid ${m.color}44` }}>
-                      <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: m.color }}>{m.value}</div>
-                      <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '1px' }}>{m.unit}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 'bold', marginTop: '4px' }}>{m.label}</div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  {[
-                    { label: 'Goal',     value: fullQuizData.goal_type?.replace(/_/g, ' ') },
-                    { label: 'Activity', value: fullQuizData.activity_level?.replace(/_/g, ' ') },
-                    { label: 'Weight',   value: `${fullQuizData.weight_lbs} lbs` },
-                    { label: 'Workouts', value: `${fullQuizData.workout_days}x / week` },
-                  ].map(d => (
-                    <div key={d.label} style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.02)' }}>
-                      <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d.label}</div>
-                      <div style={{ fontSize: '0.9rem', color: 'white', fontWeight: 'bold', marginTop: '2px', textTransform: 'capitalize' }}>{d.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Tracker Card */}
-        <div style={{ ...glassCardStyle, padding: '30px' }}>
-          <h2 style={{ color: "white", borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '15px', marginTop: 0 }}>Daily Weight Log</h2>
-          <form onSubmit={handleLogRecord} style={{ marginBottom: '20px', marginTop: '20px' }}>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <input type="number" step="0.1" placeholder="Lbs" value={newWeight} onChange={(e) => setNewWeight(e.target.value)} 
-                style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(0,0,0,0.3)', color: 'white' }} required />
-              <button type="submit" disabled={isLogging} 
-                style={{ padding: "10px 20px", backgroundColor: isLogging ? "#555" : "#2f7bff", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>
-                {isLogging ? 'Saving...' : 'Log'}
-              </button>
-            </div>
-            {logError && <p style={{ color: '#e74c3c', fontSize: '0.8rem', marginTop: '8px' }}>{logError}</p>}
-          </form>
-
-          {fitnessRecords.length > 1 ? (
-            <div style={{ height: '150px', width: '100%' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="date" hide />
-                  <YAxis domain={['auto', 'auto']} hide />
-                  <Tooltip contentStyle={{ backgroundColor: '#0b1727', border: '1px solid #2f7bff', color: 'white' }} itemStyle={{ color: '#2ecc71' }}/>
-                  <Line type="monotone" dataKey="weight" stroke="#2ecc71" strokeWidth={3} dot={{ r: 3, fill: '#0b1727', stroke: '#2ecc71', strokeWidth: 2 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : <p style={{ color: '#64748b', textAlign: 'center' }}>Logging entries to see your progress chart...</p>}
+    <div style={styles.container}>
+      {/* Welcome / Hero Section */}
+      <div style={{ ...styles.card, padding: '40px', marginBottom: '30px', textAlign: 'center' }}>
+        <div style={styles.accentBar} />
+        <h1 style={{ color: 'white', fontSize: '2.5rem', margin: '20px 0', fontWeight: '700' }}>
+          Welcome back, {user.name}! 🦅
+        </h1>
+        <p style={{ color: '#94a3b8', fontSize: '1.2rem', margin: '10px 0 20px' }}>
+          {getMotivationalMessage(quizResults.goal)}
+        </p>
+        <div style={{
+          display: 'inline-block',
+          background: 'rgba(59, 130, 246, 0.1)',
+          color: '#3b82f6',
+          padding: '8px 16px',
+          borderRadius: '20px',
+          fontWeight: '600',
+          border: '1px solid rgba(59, 130, 246, 0.3)'
+        }}>
+          🎯 Goal: {getGoalDisplay(quizResults.goal)}
         </div>
       </div>
 
-      {/* AI Coaching Section */}
-      <div style={{ ...glassCardStyle, padding: '30px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '15px', marginBottom: '20px' }}>
-          <h2 style={{ color: "white", margin: 0 }}>🧠 AI Personal Coach</h2>
-          
-          <button 
-            onClick={handleGenerateReport}
-            disabled={!hasTwoRecords || (hasGeneratedToday && !pollingActive) || isGenerating}
-            style={{ 
-              padding: "10px 20px", 
-              backgroundColor: (!hasTwoRecords || (hasGeneratedToday && !pollingActive) || isGenerating) ? "rgba(255,255,255,0.1)" : "#9b59b6", 
-              color: (!hasTwoRecords || (hasGeneratedToday && !pollingActive) || isGenerating) ? "#64748b" : "white", 
-              border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", transition: "all 0.3s ease"
-            }}
-          >
-            {isGenerating ? '🤖 Analysis in Progress...' : '✨ Generate Insight'}
-          </button>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px', marginBottom: '30px' }}>
+
+        {/* Personalized Workout Recommendations */}
+        <div style={styles.card}>
+          <div style={styles.accentBar} />
+          <div style={{ padding: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ color: 'white', margin: 0, fontSize: '1.5rem' }}>💪 Workout Plan</h2>
+              <button
+                style={{ ...styles.button, ...styles.primaryButton }}
+                onClick={() => navigate('/workouts')}
+              >
+                View Full Plan
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
+              <div style={styles.statCard}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3b82f6' }}>{workoutRecs.split}</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Workout Split</div>
+              </div>
+              <div style={styles.statCard}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#06b6d4' }}>{workoutRecs.frequency}</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Frequency</div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <h3 style={{ color: 'white', fontSize: '1.1rem', margin: '0 0 8px 0' }}>Focus Areas</h3>
+              <div style={{ color: '#cbd5e1', fontSize: '0.95rem' }}>{workoutRecs.focus}</div>
+            </div>
+
+            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.5' }}>
+              {workoutRecs.description}
+            </p>
+          </div>
         </div>
 
-        {reportError && <p style={{ color: '#e74c3c' }}>{reportError}</p>}
-        {queueMessage && (
-          <div style={{ padding: '15px', backgroundColor: 'rgba(52, 152, 219, 0.1)', color: '#3498db', borderRadius: '6px', marginBottom: '20px', borderLeft: '5px solid #3498db' }}>
-            {queueMessage}
-          </div>
-        )}
+        {/* Personalized Diet Plan */}
+        <div style={styles.card}>
+          <div style={styles.accentBar} />
+          <div style={{ padding: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ color: 'white', margin: 0, fontSize: '1.5rem' }}>🥗 Nutrition Plan</h2>
+              <button
+                style={{ ...styles.button, ...styles.primaryButton }}
+                onClick={() => navigate('/nutrition')}
+              >
+                View Full Plan
+              </button>
+            </div>
 
-        {reports.length > 0 ? (
-          <div style={{ marginTop: '20px', backgroundColor: 'rgba(0,0,0,0.2)', padding: '25px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <h4 style={{ margin: '0 0 15px 0', color: '#94a3b8' }}>
-              Latest Insight — {new Date(reports[0].created_at).toLocaleDateString()}
-            </h4>
-            <div style={{ color: '#e2e8f0', fontSize: '1.05rem' }}>
-              <Typewriter text={reports[0].report_content} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
+              <div style={styles.statCard}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#10b981' }}>{quizResults.calorieTarget}</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Calories</div>
+              </div>
+              <div style={styles.statCard}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#f59e0b' }}>{quizResults.proteinTarget}g</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Protein</div>
+              </div>
+              <div style={styles.statCard}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#8b5cf6' }}>{quizResults.fatsTarget}g</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Fats</div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <h3 style={{ color: 'white', fontSize: '1.1rem', margin: '0 0 8px 0' }}>Focus</h3>
+              <div style={{ color: '#cbd5e1', fontSize: '0.95rem' }}>{dietRecs.focus}</div>
+            </div>
+
+            <div>
+              <h3 style={{ color: 'white', fontSize: '1.1rem', margin: '0 0 10px 0' }}>Key Tips</h3>
+              <ul style={{ color: '#94a3b8', fontSize: '0.9rem', paddingLeft: '20px', margin: 0 }}>
+                {dietRecs.tips.map((tip, index) => (
+                  <li key={index} style={{ marginBottom: '5px' }}>{tip}</li>
+                ))}
+              </ul>
             </div>
           </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No reports found. Submit your data to start!</div>
-        )}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', marginBottom: '30px' }}>
+
+        {/* Activity Log Section */}
+        <div style={styles.card}>
+          <div style={styles.accentBar} />
+          <div style={{ padding: '30px' }}>
+            <h2 style={{ color: 'white', margin: '0 0 20px 0', fontSize: '1.5rem' }}>📋 Recent Activity</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {activityLog.map((activity) => (
+                <div key={activity.id} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '15px',
+                  background: 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.05)'
+                }}>
+                  <span style={{ fontSize: '1.5rem', marginRight: '15px' }}>{activity.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: 'white', fontWeight: '500' }}>{activity.action}</div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{activity.timestamp}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Progress / Stats Section */}
+        <div style={styles.card}>
+          <div style={styles.accentBar} />
+          <div style={{ padding: '30px' }}>
+            <h2 style={{ color: 'white', margin: '0 0 20px 0', fontSize: '1.5rem' }}>📊 Your Progress</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
+              <div style={styles.statCard}>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>{stats.workoutsCompleted}</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Workouts Completed</div>
+              </div>
+              <div style={styles.statCard}>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>{stats.currentStreak}</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Day Streak</div>
+              </div>
+              <div style={styles.statCard}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#06b6d4' }}>{stats.caloriesTarget}</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Daily Calories</div>
+              </div>
+              <div style={styles.statCard}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#8b5cf6' }}>{stats.proteinTarget}g</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Daily Protein</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions Section */}
+        <div style={styles.card}>
+          <div style={styles.accentBar} />
+          <div style={{ padding: '30px' }}>
+            <h2 style={{ color: 'white', margin: '0 0 20px 0', fontSize: '1.5rem' }}>⚡ Quick Actions</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <button
+                style={{ ...styles.button, ...styles.primaryButton, height: '60px' }}
+                onClick={() => navigate('/workouts')}
+              >
+                🏋️ Start Workout
+              </button>
+              <button
+                style={{ ...styles.button, ...styles.secondaryButton, height: '60px' }}
+                onClick={() => navigate('/nutrition')}
+              >
+                🥗 View Nutrition
+              </button>
+              <button
+                style={{ ...styles.button, ...styles.secondaryButton, height: '60px' }}
+                onClick={() => navigate('/quiz')}
+              >
+                📝 Retake Quiz
+              </button>
+              <button
+                style={{ ...styles.button, ...styles.secondaryButton, height: '60px' }}
+                onClick={() => navigate('/profile')}
+              >
+                👤 Update Profile
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Tips / Recommendations Section */}
+        <div style={styles.card}>
+          <div style={styles.accentBar} />
+          <div style={{ padding: '30px' }}>
+            <h2 style={{ color: 'white', margin: '0 0 20px 0', fontSize: '1.5rem' }}>💡 Fitness Tips</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {fitnessTips.map((tip, index) => (
+                <div key={index} style={{
+                  padding: '15px',
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(59, 130, 246, 0.2)'
+                }}>
+                  <div style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                    {tip}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
