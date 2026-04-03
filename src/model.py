@@ -55,6 +55,8 @@ class User(TimestampMixin, table=True):
     sa_relationship_kwargs={"uselist": False},
     back_populates="user"
     )
+    #added relation for chat messages T3S-59
+    chat_messages: List["ChatMessage"] = Relationship(back_populates="user")
 
 class FitnessRecord(TimestampMixin, table=True):
     __tablename__ = "fitness_records"
@@ -139,3 +141,15 @@ class UserProfile(TimestampMixin, table=True):
     zip_code: Optional[str] = None
 
     user: Optional["User"] = Relationship(back_populates="profile")    
+
+
+# added for chat feature
+class ChatMessage(TimestampMixin, table=True):
+    __tablename__ = "chat_messages"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id")
+    username: str = Field(index=True)
+    content: str = Field(sa_column=Column(TEXT))
+
+    user: Optional["User"] = Relationship(back_populates="chat_messages")
