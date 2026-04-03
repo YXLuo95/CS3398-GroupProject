@@ -156,6 +156,9 @@ setup_admin(app, engine)
 from src.api.quiz import router as quiz_router
 app.include_router(quiz_router, prefix="/api/v1/onboarding", tags=["onboarding"])
 
+from src.api.profile import router as profile_router
+app.include_router(profile_router, prefix=settings.API_V1_STR, tags=["User Profile"])
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
