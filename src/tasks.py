@@ -15,8 +15,8 @@ async def llm_queue_worker(app):
     Ensures that only one LLM inference runs at a time on the GPU.
     """
     logger.info("[Worker] Dedicated background worker started.")
-    try:
-        while True:
+    while True:
+        try:
             # BLPOP blocks until a task is available
             task_data = await app.state.redis_queue.blpop("fitness_report_queue", timeout=0)
             
@@ -27,16 +27,14 @@ async def llm_queue_worker(app):
                 user_id = data.get('user_id')
                 logger.info(f"[Worker] Processing report for user_id: {user_id}")
                 
-                # Execute the inference (This will dynamically call either real LLM or Mock based on app.state)
+                # Execute the inference
                 report_content = await app.state.generate_report(
                     user_age=data.get('age'),
                     gender=data.get('gender'),
                     data_summary=data.get('summary')
                 )
                 
-                # ==========================================
                 # Save the generated report to the Database
-                # ==========================================
                 try:
                     async with AsyncSession(engine) as session:
                         new_report = FitnessReport(
@@ -54,9 +52,10 @@ async def llm_queue_worker(app):
                 
                 except Exception as db_err:
                     logger.error(f"[Worker Error] Failed to save report to DB for user_id {user_id}: {db_err}")
-                
-    except asyncio.CancelledError:
-        logger.info("[Worker] Worker task is being safely cancelled...")
-    except Exception as e:
-        logger.error(f"[Worker Error] Unexpected error in worker: {e}")
-        await asyncio.sleep(5)  # Pause before retrying to avoid tight error loops
+
+        except asyncio.CancelledError:
+            logger.info("[Worker] Worker task is being safely cancelled...")
+            break  # clean exit on cancellation
+        except Exception as e:
+            logger.error(f"[Worker Error] Unexpected error in worker: {e}")
+            await asyncio.sleep(5)  # wait before retrying to avoid tight error loops

@@ -74,7 +74,7 @@ async def lifespan(app: FastAPI):
             import ollama
             from src.core.llm import generate_fitness_report
             
-            client = ollama.AsyncClient(host='http://localhost:11434')
+            client = ollama.AsyncClient(host=settings.OLLAMA_HOST)
             await client.list() 
             
             # replace the mock function with the real LLM function for the worker to call
