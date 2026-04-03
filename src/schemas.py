@@ -132,3 +132,21 @@ class FitnessGoalRead(BaseModel):
 # Simple status check response
 class QuizStatusRead(BaseModel):
     completed: bool
+
+
+#==========================================
+# 6. User Profile Schemas
+#==========================================
+class UserProfileCreate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+
+class UserProfileRead(UserProfileCreate):
+    username: str
+    email: str
