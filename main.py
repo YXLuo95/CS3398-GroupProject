@@ -58,11 +58,8 @@ async def lifespan(app: FastAPI):
             decode_responses=True
         )
         
-        try:
-            await app.state.redis_auth.ping()
-            await app.state.redis_queue.ping()
-        except Exception:
-            print("⚠️ Redis not running — continuing without it")
+        await app.state.redis_auth.ping()
+        await app.state.redis_queue.ping()
 
 
 
@@ -82,7 +79,7 @@ async def lifespan(app: FastAPI):
             import ollama
             from src.core.llm import generate_fitness_report
             
-            client = ollama.AsyncClient(host='http://localhost:11434')
+            client = ollama.AsyncClient(host=settings.OLLAMA_HOST)
             await client.list() 
             
             # replace the mock function with the real LLM function for the worker to call
@@ -163,6 +160,12 @@ setup_admin(app, engine)
 
 from src.api.quiz import router as quiz_router
 app.include_router(quiz_router, prefix="/api/v1/onboarding", tags=["onboarding"])
+
+from src.api.profile import router as profile_router
+app.include_router(profile_router, prefix=settings.API_V1_STR, tags=["User Profile"])
+
+from src.api.chat import router as chat_router
+app.include_router(chat_router, prefix=settings.API_V1_STR, tags=["Chat"])
 
 
 if __name__ == "__main__":
