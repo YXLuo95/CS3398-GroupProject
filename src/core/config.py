@@ -12,13 +12,15 @@ class Settings(BaseSettings):
     SECRET_KEY: str 
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-
+    
+    ADMIN_PASSWORD: str = "admin123"  # default admin password, should be overridden in production
     # LLM (Large Language Model) configuration settings, 
     # including a flag to enable or disable the use of LLMs in the application, and a configuration option for specifying the name of the local model to use if LLMs are enabled. This allows for flexibility in choosing between using a local model or an external API for generating fitness reports based on user data.
     ENABLE_LLM_MODEL: bool = True
     # LOCAL_MODEL_NAME is set to "llama3" as a placeholder, 
     # and can be updated to the actual name of the local model being used in the application (e.g., "gpt-4", "llama3", etc.) when the LLM integration is implemented.
     LOCAL_MODEL_NAME: str = "llama3" 
+    OLLAMA_HOST: str = "http://localhost:11434"
 
     # Redis configuration settings, including the host, port, and password for connecting to the Redis server, 
     # as well as the database indices for different purposes (authentication, LLM rate limiting, and task queue management). This allows for organized and efficient use of Redis for various functionalities in the application.

@@ -23,3 +23,4 @@ ollama==0.3.3
 
 # Admin UI
 sqladmin==0.16.1
+itsdangerous

@@ -50,6 +50,13 @@ class User(TimestampMixin, table=True):
         sa_relationship_kwargs={"uselist": False},
         back_populates="user"
     )
+    ##added relation for user profile TS3-55
+    profile: Optional["UserProfile"] = Relationship(
+    sa_relationship_kwargs={"uselist": False},
+    back_populates="user"
+    )
+    #added relation for chat messages T3S-59
+    chat_messages: List["ChatMessage"] = Relationship(back_populates="user")
 
 class FitnessRecord(TimestampMixin, table=True):
     __tablename__ = "fitness_records"
@@ -113,3 +120,36 @@ class FitnessGoal(TimestampMixin, table=True):
     quiz_completed: bool = Field(default=False)
 
     user: Optional["User"] = Relationship(back_populates="fitness_goal")
+
+
+## new table for user profile
+## using the same template like other tables,
+## only replace attrubutes with user profile related info
+class UserProfile(TimestampMixin, table=True):
+    __tablename__ = "user_profiles"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", unique=True, index=True)
+
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+
+    user: Optional["User"] = Relationship(back_populates="profile")    
+
+
+# added for chat feature
+class ChatMessage(TimestampMixin, table=True):
+    __tablename__ = "chat_messages"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id")
+    username: str = Field(index=True)
+    content: str = Field(sa_column=Column(TEXT))
+
+    user: Optional["User"] = Relationship(back_populates="chat_messages")

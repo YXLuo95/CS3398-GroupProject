@@ -15,6 +15,7 @@ import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Quiz from "./pages/Quiz";
 import Profile from "./pages/Profile";
+import Chat from "./pages/Chat";
 import Workouts from "./pages/Workouts";
 import WorkoutDetail from "./pages/WorkoutDetail";
 import Nutrition from "./pages/Nutrition";
@@ -43,10 +44,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/workouts" element={<Workouts />} />
-          <Route path="/workouts/:slug" element={<WorkoutDetail />} />
-          <Route path="/nutrition" element={<Nutrition />} />
-          <Route path="/nutrition/:slug" element={<NutritionDetail />} />
+          <Route path="/chat" element={<Chat />} />
         </Routes>
         
       </div>

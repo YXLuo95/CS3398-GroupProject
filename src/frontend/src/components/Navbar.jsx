@@ -57,6 +57,7 @@ export default function Navbar() {
           {token ? (
             <>
               <NavLink to="/dashboard" style={linkStyle}>Dashboard</NavLink>
+              <NavLink to="/chat" style={linkStyle}>Chat</NavLink>
               <button onClick={handleLogout} style={{ color: "white", backgroundColor: "#e74c3c", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>
                 Logout
               </button>
