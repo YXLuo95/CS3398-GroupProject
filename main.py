@@ -57,8 +57,13 @@ async def lifespan(app: FastAPI):
             password=settings.REDIS_PASSWORD,
             decode_responses=True
         )
+        
         await app.state.redis_auth.ping()
         await app.state.redis_queue.ping()
+
+
+
+        
         logger.info("[Booting] Async Redis connected (Auth & Queue).")
     except Exception as e:
         logger.error(f"[Booting] Redis failed: {e}")

@@ -24,12 +24,17 @@ const cardGrid = {
 };
 
 const cardStyle = {
-  background: "linear-gradient(145deg, rgba(49, 95, 202, 0.25), rgba(10, 22, 44, 0.7))",
+  background: "linear-gradient(135deg, rgba(49, 95, 202, 0.25), rgba(10, 22, 44, 0.7))",
   border: "1px solid rgba(115, 151, 255, 0.35)",
   borderRadius: "14px",
   boxShadow: "0 12px 30px rgba(0,0,0,0.35)",
   padding: "18px",
   transition: "transform 0.3s ease, box-shadow 0.3s ease"
+};
+
+const cardHover = {
+  transform: "translateY(-4px)",
+  boxShadow: "0 16px 36px rgba(0,0,0,0.45)"
 };
 
 const btnPrimary = {
@@ -40,51 +45,72 @@ const btnPrimary = {
   color: "white",
   cursor: "pointer",
   fontWeight: "700",
-  boxShadow: "0 6px 16px rgba(47, 123, 255, 0.32)"
+  boxShadow: "0 6px 16px rgba(47, 123, 255, 0.32)",
+  textDecoration: "none",
+  display: "inline-block",
+  textAlign: "center"
 };
 
-export default function About() {
+export default function Workouts() {
   const isLoggedIn = Boolean(localStorage.getItem("token"));
 
-  const aboutPoints = [
-    { title: "Mission", text: "Empower users with simple, scalable fitness routines and reliable progress tracking for all levels." },
-    { title: "Vision", text: "Build a supportive digital environment that helps people grow healthy habits sustainably." },
-    { title: "Values", text: "Clarity, accessibility, and continuous improvement through data-informed coaching and community focus." }
+  const workoutPlans = [
+    {
+      title: "Beginner Training",
+      desc: "Start with a structured 4-week progression to learn form and build consistency.",
+      slug: "beginner-training"
+    },
+    {
+      title: "Strength Training",
+      desc: "Advanced lift cycles with periodized volume for consistent strength gains.",
+      slug: "strength-training"
+    },
+    {
+      title: "Fat Loss Training",
+      desc: "High-intensity intervals combined with recovery sets to burn fat efficiently.",
+      slug: "fat-loss-training"
+    },
+    {
+      title: "Home Workouts",
+      desc: "Equipment-free workouts designed for small spaces and busy schedules.",
+      slug: "home-workouts"
+    }
   ];
 
   return (
     <div style={pageStyle}>
-      <h1 style={{ fontSize: "2.4rem", marginBottom: "8px" }}>About Falcon Fitness</h1>
+      <h1 style={{ fontSize: "2.4rem", marginBottom: "8px" }}>Workout Plans</h1>
       <p style={{ color: "#c9d5e8", marginBottom: "24px", maxWidth: "880px" }}>
-        Falcon Fitness is built to make health and fitness approachable. Enjoy a unified experience across workouts, nutrition, and personal progress.
+        Choose from expert-crafted workouts that adapt to your goals and experience. Track progress and stay motivated with incremental milestones.
       </p>
 
       <section style={sectionStyle}>
         <div style={cardGrid}>
-          {aboutPoints.map((item) => (
+          {workoutPlans.map((plan) => (
             <article
-              key={item.title}
+              key={plan.title}
               style={cardStyle}
-              onMouseOver={(e) => Object.assign(e.currentTarget.style, { transform: "translateY(-4px)", boxShadow: "0 16px 36px rgba(0,0,0,0.45)" })}
+              onMouseOver={(e) => Object.assign(e.currentTarget.style, cardHover)}
               onMouseOut={(e) => Object.assign(e.currentTarget.style, { transform: "none", boxShadow: "0 12px 30px rgba(0,0,0,0.35)" })}
             >
-              <h2 style={{ margin: "0 0 10px", fontSize: "1.2rem" }}>{item.title}</h2>
-              <p style={{ color: "#d9e5ff", lineHeight: "1.5" }}>{item.text}</p>
+              <h2 style={{ margin: "0 0 10px", fontSize: "1.2rem" }}>{plan.title}</h2>
+              <p style={{ color: "#d9e5ff", lineHeight: "1.5" }}>{plan.desc}</p>
+              <Link to={`/workouts/${plan.slug}`} style={{ ...btnPrimary, marginTop: "16px" }}>View Plan</Link>
             </article>
           ))}
         </div>
       </section>
 
       <section style={sectionStyle}>
-        <h2 style={{ marginBottom: "10px" }}>Get Started</h2>
+        <h2 style={{ marginBottom: "10px" }}>Your Personalized Workout Plan</h2>
         {isLoggedIn ? (
           <p style={{ color: "#d9e5ff" }}>
-            Great to have you back! Explore your dashboard for personalized plan recommendations, progress tracking, and 1:1 goal coaching.
+            Your custom plan is ready! Visit your dashboard to track workouts, progress, and recovery stats.
           </p>
         ) : (
           <>
             <p style={{ color: "#d9e5ff", marginBottom: "16px" }}>
-              Create an account to receive tailored workout + nutrition recommendations and unlock milestone-based achievements.
+              Log in to view your customized workout plan based on your goals.
             </p>
             <div style={{ display: "flex", gap: "12px" }}>
               <Link to="/login" style={{ ...btnPrimary, textDecoration: "none", textAlign: "center" }}>Login</Link>
@@ -96,3 +122,4 @@ export default function About() {
     </div>
   );
 }
+
