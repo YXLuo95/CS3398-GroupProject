@@ -57,6 +57,8 @@ class User(TimestampMixin, table=True):
     )
     #added relation for chat messages T3S-59
     chat_messages: List["ChatMessage"] = Relationship(back_populates="user")
+    #added relation for workout plans TS3-41
+    workout_plans: List["WorkoutPlan"] = Relationship(back_populates="user")
 
 class FitnessRecord(TimestampMixin, table=True):
     __tablename__ = "fitness_records"
@@ -164,6 +166,7 @@ class WorkoutPlan(TimestampMixin, table=True):
 
     fitness_goal: Optional["FitnessGoal"] = Relationship(back_populates="workout_plan")
     exercises: List["Exercise"] = Relationship(back_populates="workout_plan")
+    user: Optional["User"] = Relationship(back_populates="workout_plans")
 
 
 class Exercise(SQLModel, table=True):

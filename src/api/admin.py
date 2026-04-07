@@ -1,11 +1,23 @@
 from sqladmin import Admin, ModelView
-from src.model import User, FitnessRecord, FitnessReport , FitnessGoal
 from starlette.requests import Request
 from sqladmin.authentication import AuthenticationBackend
 from src.core.config import settings
-from src.model import User, FitnessRecord, FitnessReport, FitnessGoal, UserProfile
-from src.model import User, FitnessRecord, FitnessReport, FitnessGoal, UserProfile, ChatMessage
 
+
+
+
+## import all tables at the same place
+from src.model import (
+    User, 
+    FitnessRecord, 
+    FitnessReport, 
+    FitnessGoal, 
+    UserProfile, 
+    ChatMessage,
+    WorkoutPlan,
+    Exercise,
+    CompletedWorkout
+)
 class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool:
         form = await request.form()
@@ -91,6 +103,42 @@ class ChatMessageAdmin(ModelView, model=ChatMessage):
     name_plural = "Chat Messages"
     icon = "fa-solid fa-comments"
 
+
+#new admin views for workout plans and exercises TS3-41
+class WorkoutPlanAdmin(ModelView, model=WorkoutPlan):
+    column_list = [
+        "id", "user_id", "fitness_goal_id", "generated_at", "created_at"
+    ]
+    name = "Workout Plan"
+    name_plural = "Workout Plans"
+    icon = "fa-solid fa-calendar-days"
+
+class ExerciseAdmin(ModelView, model=Exercise):
+    column_list = [
+        "id", "plan_id", "day", "name", "muscle_group", "difficulty"
+    ]
+    name = "Exercise"
+    name_plural = "Exercises"
+    icon = "fa-solid fa-dumbbell"
+
+class CompletedWorkoutAdmin(ModelView, model=CompletedWorkout):
+    column_list = [
+        "id", "user_id", "plan_id", "day", "completed_at"
+    ]
+    name = "Completed Workout"
+    name_plural = "Completed Workouts"
+    icon = "fa-solid fa-check-double"
+
+
+
+
+
+
+
+
+
+
+
 def setup_admin(app, engine):
     auth = AdminAuth(secret_key=settings.SECRET_KEY)
     admin = Admin(app, engine, title="Blue Falcon Admin Dashboard", authentication_backend=auth)
@@ -100,4 +148,8 @@ def setup_admin(app, engine):
     admin.add_view(FitnessGoalAdmin)
     admin.add_view(UserProfileAdmin)
     admin.add_view(ChatMessageAdmin)
+    #added admin views for workout plans and exercises TS3-41
+    admin.add_view(WorkoutPlanAdmin)
+    admin.add_view(ExerciseAdmin)
+    admin.add_view(CompletedWorkoutAdmin)   
     return admin
