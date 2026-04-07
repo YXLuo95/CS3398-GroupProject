@@ -176,13 +176,22 @@ function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet,
           )}
           {/* 4. Swap button */}
           <button
-            className="ff-btn ff-btn-ghost ff-btn-sm"
-            style={{ padding: "2px 8px", fontSize: "0.75rem" }}
+            className="ff-swap-btn"
             onClick={handleSwap}
             disabled={swapping}
             title="Swap for alternative exercise"
+            style={{
+              width: 28, height: 28, borderRadius: "50%", border: "1px solid var(--ff-border-dim)",
+              background: swapping ? "var(--ff-accent-soft)" : "transparent",
+              color: swapping ? "var(--ff-accent)" : "var(--ff-text-muted)",
+              cursor: swapping ? "default" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "0.95rem", lineHeight: 1, flexShrink: 0,
+              transition: "all 0.2s",
+              animation: swapping ? "ff-spin 0.8s linear infinite" : "none",
+            }}
           >
-            {swapping ? "..." : "⟳"}
+            ↻
           </button>
           {hasDetails && (
             <span style={{ color: "var(--ff-text-muted)", fontSize: "0.8rem" }}>
@@ -502,10 +511,20 @@ export default function Workouts() {
     ? [...new Set(plan.exercises.map((e) => e.muscle_group))].sort()
     : [];
 
-  // Filter training days by selected muscle group
+  // When filtering, show only training days with matching exercises (no rest days)
   const visibleDays = selectedMuscle === "all"
     ? allDays
-    : allDays.filter((day) => byDay[day]?.some((ex) => ex.muscle_group === selectedMuscle));
+    : trainingDays.filter((day) => byDay[day]?.some((ex) => ex.muscle_group === selectedMuscle));
+
+  // Filter exercises within each day based on selected muscle group
+  const filteredByDay = selectedMuscle === "all"
+    ? byDay
+    : Object.fromEntries(
+        Object.entries(byDay).map(([day, exs]) => [
+          day,
+          exs.filter((ex) => ex.muscle_group === selectedMuscle),
+        ])
+      );
 
   const today = todayPlanDay();
 
@@ -630,11 +649,11 @@ export default function Workouts() {
           {/* Days */}
           <div className="ff-stack" style={{ gap: "1.2rem" }}>
             {visibleDays.map((day) =>
-              byDay[day] ? (
+              filteredByDay[day]?.length > 0 ? (
                 <DaySection
                   key={day}
                   day={day}
-                  exercises={byDay[day]}
+                  exercises={filteredByDay[day]}
                   completedDays={completedDays}
                   onMarkComplete={handleMarkComplete}
                   onUnmark={handleUnmark}
@@ -659,6 +678,8 @@ export default function Workouts() {
           0%, 100% { transform: scale(1);   box-shadow: 0 0 0   0   var(--ff-accent-glow); }
           50%       { transform: scale(1.08); box-shadow: 0 0 22px 6px var(--ff-accent-glow); }
         }
+        @keyframes ff-spin { to { transform: rotate(360deg); } }
+        .ff-swap-btn:hover { background: var(--ff-accent-soft) !important; border-color: var(--ff-accent) !important; color: var(--ff-accent) !important; transform: rotate(20deg); }
       `}</style>
     </AppPage>
   );
