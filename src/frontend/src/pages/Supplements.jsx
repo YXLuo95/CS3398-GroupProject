@@ -1,99 +1,106 @@
 import { Link } from "react-router-dom";
+import AppPage from "../components/ui/AppPage";
+import SectionCard from "../components/ui/SectionCard";
 
-const pageStyle = {
-  minHeight: "100vh",
-  background: "radial-gradient(circle at 30% 20%, #29426d, #0b1727 58%, #050b17)",
-  color: "white",
-  padding: "36px 40px",
-  fontFamily: "Inter, Arial, sans-serif"
-};
+const supplements = [
+  {
+    emoji: "🥤",
+    title: "Protein Powder",
+    tag: "RECOVERY",
+    tagClass: "ff-tag-blue",
+    desc: "Whey, casein or plant-based blends to support muscle repair, recovery, and daily protein targets.",
+    detail: "Aim for 20–40g post-workout. Whey absorbs fast; casein is ideal before bed.",
+  },
+  {
+    emoji: "⚡",
+    title: "Creatine Monohydrate",
+    tag: "STRENGTH",
+    tagClass: "ff-tag-green",
+    desc: "Clinically proven to boost strength, power output, and training volume with safe daily dosing.",
+    detail: "3–5g/day. No loading phase needed. Consistent daily intake is key.",
+  },
+  {
+    emoji: "💊",
+    title: "Multivitamins",
+    tag: "DAILY HEALTH",
+    tagClass: "ff-tag-amber",
+    desc: "Micronutrient coverage for immunity, recovery, energy metabolism, and overall health maintenance.",
+    detail: "Take with a meal for better absorption. Choose a formula with D3, K2, and zinc.",
+  },
+  {
+    emoji: "🔥",
+    title: "Pre-Workout",
+    tag: "PERFORMANCE",
+    tagClass: "ff-tag-purple",
+    desc: "Caffeine, beta-alanine, and citrulline formula to improve focus, endurance, and training intensity.",
+    detail: "Use 30 min before training. Cycle off every 6–8 weeks to avoid tolerance.",
+  },
+];
 
-const sectionStyle = {
-  background: "linear-gradient(135deg, rgba(70, 149, 248, 0.08), rgba(7, 17, 37, 0.86))",
-  border: "1px solid rgba(93, 173, 255, 0.23)",
-  borderRadius: "16px",
-  backdropFilter: "blur(10px)",
-  padding: "24px",
-  marginBottom: "26px"
-};
-
-const cardGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: "16px"
-};
-
-const cardStyle = {
-  border: "1px solid rgba(112, 165, 255, 0.3)",
-  borderRadius: "14px",
-  background: "linear-gradient(145deg, rgba(47, 109, 206, 0.2), rgba(9, 22, 43, 0.75))",
-  padding: "18px",
-  boxShadow: "0 10px 26px rgba(0,0,0,0.33)",
-  transition: "transform 0.27s ease, box-shadow 0.27s ease"
-};
-
-const btnPrimary = {
-  padding: "10px 16px",
-  borderRadius: "8px",
-  border: "none",
-  background: "linear-gradient(90deg, #2f7bff, #1765db)",
-  color: "white",
-  cursor: "pointer",
-  fontWeight: "700",
-  boxShadow: "0 6px 16px rgba(47, 123, 255, 0.32)"
-};
+const disclaimer = "These recommendations are informational only. Consult a healthcare provider before adding supplements to your routine.";
 
 export default function Supplements() {
   const isLoggedIn = Boolean(localStorage.getItem("token"));
-  const supplements = [
-    { title: "Protein Powder", desc: "Whey, casein or plant blends to support recovery and muscle repair." },
-    { title: "Creatine", desc: "Boosts strength, power output, and training volume with safe dosing." },
-    { title: "Multivitamins", desc: "Daily micronutrient support for recovery, immunity, and overall health." },
-    { title: "Pre-Workout", desc: "Energy formula to improve workout focus and endurance." }
-  ];
 
   return (
-    <div style={pageStyle}>
-      <h1 style={{ fontSize: "2.4rem", marginBottom: "8px" }}>Supplements Guide</h1>
-      <p style={{ color: "#cfdff3", marginBottom: "22px", maxWidth: "880px" }}>
-        Evidence-based supplements help close dietary gaps and boost training results when used responsibly.
-      </p>
-
-      <section style={sectionStyle}>
-        <div style={cardGrid}>
-          {supplements.map((item) => (
+    <AppPage
+      eyebrow="SUPPLEMENTS"
+      title="Evidence-Based"
+      accent="Supplement Guide"
+      subtitle="Science-backed supplements help close nutritional gaps and amplify training results when used responsibly alongside a solid diet."
+    >
+      {/* Supplement cards */}
+      <SectionCard title="Core Supplements">
+        <div className="ff-grid ff-grid-2">
+          {supplements.map((s) => (
             <article
-              key={item.title}
-              style={cardStyle}
-              onMouseOver={(e) => Object.assign(e.currentTarget.style, { transform: "translateY(-5px)", boxShadow: "0 14px 32px rgba(0,0,0,0.43)" })}
-              onMouseOut={(e) => Object.assign(e.currentTarget.style, { transform: "none", boxShadow: "0 10px 26px rgba(0,0,0,0.33)" })}
+              key={s.title}
+              className="ff-card ff-card-hover"
+              style={{ borderRadius: 14, overflow: "hidden" }}
             >
-              <h2 style={{ margin: "0 0 9px", fontSize: "1.2rem" }}>{item.title}</h2>
-              <p style={{ color: "#dde8ff", lineHeight: "1.5" }}>{item.desc}</p>
-              <button style={{ ...btnPrimary, marginTop: "14px" }}>Learn More</button>
+              <div style={{ padding: "1.3rem", display: "flex", flexDirection: "column", gap: "0.65rem", height: "100%" }}>
+                <div className="ff-flex-between">
+                  <span style={{ fontSize: "1.8rem" }}>{s.emoji}</span>
+                  <span className={`ff-tag ${s.tagClass}`}>{s.tag}</span>
+                </div>
+                <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#f8fbff" }}>{s.title}</h3>
+                <p style={{ margin: 0, color: "#a7b4c9", fontSize: "0.88rem", lineHeight: 1.6, flex: 1 }}>{s.desc}</p>
+                <div className="ff-inset" style={{ marginTop: "0.3rem" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Dosing tip</span>
+                  <p style={{ margin: "0.3rem 0 0", color: "#a7b4c9", fontSize: "0.82rem", lineHeight: 1.55 }}>{s.detail}</p>
+                </div>
+              </div>
             </article>
           ))}
         </div>
-      </section>
+        <p style={{ marginTop: "1.2rem", color: "#64748b", fontSize: "0.78rem", lineHeight: 1.6 }}>
+          ⚠️ {disclaimer}
+        </p>
+      </SectionCard>
 
-      <section style={sectionStyle}>
-        <h2 style={{ marginBottom: "10px" }}>Recommended for You</h2>
+      {/* Personalized CTA */}
+      <SectionCard title={isLoggedIn ? "Your Personalized Stack" : "Get a Custom Recommendation"}>
         {isLoggedIn ? (
-          <p style={{ color: "#dde8ff" }}>
-            Profile-based supplement picks are ready. Check your dashboard for personalized stacks.
-          </p>
+          <>
+            <p className="ff-muted" style={{ lineHeight: 1.7 }}>
+              Based on your fitness goal and quiz results, your dashboard includes a personalized supplement priority list.
+            </p>
+            <div className="ff-actions">
+              <Link to="/dashboard" className="ff-btn ff-btn-primary">Go to Dashboard →</Link>
+            </div>
+          </>
         ) : (
           <>
-            <p style={{ color: "#dde8ff", marginBottom: "16px" }}>
-              Create a profile to get supplement suggestions based on your fitness goals.
+            <p className="ff-muted" style={{ lineHeight: 1.7, marginBottom: "0.6rem" }}>
+              Complete the fitness quiz to receive supplement recommendations matched to your goal and training load.
             </p>
-            <div style={{ display: "flex", gap: "12px" }}>
-              <Link to="/login" style={{ ...btnPrimary, textDecoration: "none", textAlign: "center" }}>Login</Link>
-              <Link to="/signup" style={{ ...btnPrimary, background: "linear-gradient(90deg, #4ade80, #22c55e)", color: "#0b1727", textDecoration: "none", textAlign: "center" }}>Sign Up</Link>
+            <div className="ff-flex" style={{ gap: "0.75rem", flexWrap: "wrap", marginTop: "1rem" }}>
+              <Link to="/signup" className="ff-btn ff-btn-green">Take the Quiz Free</Link>
+              <Link to="/login"  className="ff-btn ff-btn-ghost">Login</Link>
             </div>
           </>
         )}
-      </section>
-    </div>
+      </SectionCard>
+    </AppPage>
   );
 }
