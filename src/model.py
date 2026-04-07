@@ -182,3 +182,13 @@ class Exercise(SQLModel, table=True):
     youtube_url: Optional[str] = Field(default=None)
 
     workout_plan: Optional["WorkoutPlan"] = Relationship(back_populates="exercises")
+
+
+class CompletedWorkout(SQLModel, table=True):
+    __tablename__ = "completed_workouts"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    plan_id: int = Field(foreign_key="workout_plans.id", index=True)
+    day: int = Field(ge=1, le=7)
+    completed_at: datetime = Field(default_factory=utc_now)

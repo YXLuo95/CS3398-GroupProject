@@ -187,3 +187,17 @@ class WorkoutPlanRead(BaseModel):
     exercises: List[ExerciseRead]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CompletedWorkoutCreate(BaseModel):
+    day: int = Field(ge=1, le=7)
+
+
+class CompletedWorkoutRead(BaseModel):
+    id: int
+    user_id: int
+    plan_id: int
+    day: int
+    completed_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
