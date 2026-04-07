@@ -1,16 +1,40 @@
-// Footer component
-// This shows at the bottom of every page (through Layout.jsx).
+import { Link } from "react-router-dom";
+
 export default function Footer() {
   return (
-    // Footer container with a top border
-    <footer style={{ borderTop: "1px solid #ddd", padding: "12px 16px" }}>
+    <footer className="ff-footer">
+      <div className="ff-footer-inner">
 
-      {/* Center the footer content and limit width like the navbar */}
-      <div style={{ maxWidth: "1100px", margin: "0 auto", fontSize: "14px" }}>
-        {/* Automatically shows the current year */}
-        © {new Date().getFullYear()} Blue Falcons Inc.
+        {/* Brand */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ fontWeight: 700, color: "#f8fbff", fontSize: "0.95rem" }}>Falcon Fitness</span>
+          <span style={{ color: "#64748b", fontSize: "0.82rem" }}>
+            &copy; {new Date().getFullYear()} Falcon Fitness Inc.
+          </span>
+        </div>
+
+        {/* Footer links */}
+        <nav style={{ display: "flex", gap: "1.4rem", flexWrap: "wrap" }}>
+          {[
+            { to: "/", label: "Home" },
+            { to: "/about", label: "About" },
+            { to: "/workouts", label: "Workouts" },
+            { to: "/nutrition", label: "Nutrition" },
+            { to: "/supplements", label: "Supplements" },
+          ].map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              style={{ color: "#64748b", textDecoration: "none", fontSize: "0.84rem", transition: "color 0.18s" }}
+              onMouseOver={(e) => (e.target.style.color = "#a7b4c9")}
+              onMouseOut={(e)  => (e.target.style.color = "#64748b")}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+
       </div>
-
     </footer>
   );
 }

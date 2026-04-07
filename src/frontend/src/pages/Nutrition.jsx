@@ -1,115 +1,121 @@
 import { Link } from "react-router-dom";
+import AppPage from "../components/ui/AppPage";
+import SectionCard from "../components/ui/SectionCard";
 
-const pageStyle = {
-  minHeight: "100vh",
-  background: "radial-gradient(circle at 23% 20%, #1e3b61, #0b1727 55%, #060c1a)",
-  color: "white",
-  padding: "36px 40px",
-  fontFamily: "Inter, Arial, sans-serif"
-};
-
-const sectionStyle = {
-  background: "linear-gradient(135deg, rgba(56, 110, 204, 0.08), rgba(7, 17, 37, 0.9))",
-  border: "1px solid rgba(87, 143, 240, 0.2)",
-  borderRadius: "16px",
-  backdropFilter: "blur(12px)",
-  padding: "24px",
-  marginBottom: "26px"
-};
-
-const cardGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: "16px"
-};
-
-const cardBase = {
-  background: "linear-gradient(145deg, rgba(58, 119, 215, 0.2), rgba(11, 24, 48, 0.8))",
-  border: "1px solid rgba(112, 158, 255, 0.35)",
-  borderRadius: "14px",
-  padding: "18px",
-  boxShadow: "0 10px 26px rgba(0,0,0,0.35)",
-  transition: "transform 0.28s ease, box-shadow 0.28s ease"
-};
-
-const btnPrimary = {
-  padding: "10px 16px",
-  borderRadius: "8px",
-  border: "none",
-  background: "linear-gradient(90deg, #2f7bff, #1765db)",
-  color: "white",
-  cursor: "pointer",
-  fontWeight: "700",
-  boxShadow: "0 6px 16px rgba(47, 123, 255, 0.32)",
-  textDecoration: "none",
-  display: "inline-block",
-  textAlign: "center"
-};
+const nutritionPlans = [
+  {
+    emoji: "🔥",
+    title: "Weight Loss Nutrition",
+    tag: "DEFICIT",
+    tagClass: "ff-tag-amber",
+    macros: { cal: "1800", protein: "160g", carbs: "160g", fat: "55g" },
+    desc: "High-fiber, high-protein approach with controlled calories for sustainable, consistent fat loss.",
+    slug: "weight-loss-nutrition",
+  },
+  {
+    emoji: "💪",
+    title: "Muscle Gain Nutrition",
+    tag: "SURPLUS",
+    tagClass: "ff-tag-blue",
+    macros: { cal: "2800", protein: "200g", carbs: "320g", fat: "80g" },
+    desc: "Moderate calorie surplus, strategic protein timing, and recovery-focused macronutrient splits.",
+    slug: "muscle-gain-nutrition",
+  },
+  {
+    emoji: "⚖️",
+    title: "Balanced Diet",
+    tag: "MAINTENANCE",
+    tagClass: "ff-tag-green",
+    macros: { cal: "2200", protein: "150g", carbs: "250g", fat: "70g" },
+    desc: "Balanced macros for sustainable daily energy, long-term wellness, and consistent performance.",
+    slug: "balanced-diet",
+  },
+  {
+    emoji: "🥡",
+    title: "Meal Prep Guide",
+    tag: "PRACTICAL",
+    tagClass: "ff-tag-purple",
+    macros: null,
+    desc: "Structured weekly meal prep system to reduce friction and ensure consistent nutritional adequacy.",
+    slug: "meal-prep-guide",
+  },
+];
 
 export default function Nutrition() {
   const isLoggedIn = Boolean(localStorage.getItem("token"));
-  const nutritionPlans = [
-    {
-      title: "Weight Loss Nutrition",
-      desc: "Controlled calories, high fiber, and lean protein for consistent fat loss.",
-      slug: "weight-loss-nutrition"
-    },
-    {
-      title: "Muscle Gain Nutrition",
-      desc: "Moderate surplus with protein timing and recovery-focused macros.",
-      slug: "muscle-gain-nutrition"
-    },
-    {
-      title: "Balanced Diet",
-      desc: "Balanced proteins, carbs, and fats for sustainable daily energy and wellness.",
-      slug: "balanced-diet"
-    },
-    {
-      title: "Meal Prep Guide",
-      desc: "Structured weekly meal prep to reduce stress and ensure nutritional adequacy.",
-      slug: "meal-prep-guide"
-    }
-  ];
 
   return (
-    <div style={pageStyle}>
-      <h1 style={{ fontSize: "2.4rem", marginBottom: "8px" }}>Nutrition Plans</h1>
-      <p style={{ color: "#cfdbed", marginBottom: "22px", maxWidth: "880px" }}>
-        Effective nutrition is the foundation of progress. Select a plan and get data-backed meal recommendations.
-      </p>
-
-      <section style={sectionStyle}>
-        <div style={cardGrid}>
-          {nutritionPlans.map((item) => (
+    <AppPage
+      eyebrow="NUTRITION"
+      title="Nutrition"
+      accent="Plans"
+      subtitle="Effective nutrition is the foundation of every result. Select a plan and get data-backed meal guidance tailored to your goals."
+    >
+      {/* Plans grid */}
+      <SectionCard title="Choose Your Nutrition Strategy">
+        <div className="ff-grid ff-grid-2">
+          {nutritionPlans.map((plan) => (
             <article
-              key={item.title}
-              style={cardBase}
-              onMouseOver={(e) => Object.assign(e.currentTarget.style, { transform: "translateY(-5px)", boxShadow: "0 14px 32px rgba(0,0,0,0.42)" })}
-              onMouseOut={(e) => Object.assign(e.currentTarget.style, { transform: "none", boxShadow: "0 10px 26px rgba(0,0,0,0.35)" })}
+              key={plan.slug}
+              className="ff-card ff-card-hover"
+              style={{ borderRadius: 14, overflow: "hidden" }}
             >
-              <h2 style={{ margin: "0 0 9px", fontSize: "1.2rem" }}>{item.title}</h2>
-              <p style={{ color: "#d9e5ff", lineHeight: "1.5" }}>{item.desc}</p>
-              <Link to={`/nutrition/${item.slug}`} style={{ ...btnPrimary, marginTop: "14px" }}>View Plan</Link>
+              <div style={{ padding: "1.3rem", display: "flex", flexDirection: "column", gap: "0.65rem", height: "100%" }}>
+                <div className="ff-flex-between">
+                  <span style={{ fontSize: "1.8rem" }}>{plan.emoji}</span>
+                  <span className={`ff-tag ${plan.tagClass}`}>{plan.tag}</span>
+                </div>
+                <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#f8fbff" }}>{plan.title}</h3>
+                <p style={{ margin: 0, color: "#a7b4c9", fontSize: "0.88rem", lineHeight: 1.6, flex: 1 }}>{plan.desc}</p>
+
+                {plan.macros && (
+                  <div className="ff-grid ff-grid-4" style={{ gap: "0.5rem", marginTop: "0.3rem" }}>
+                    {Object.entries(plan.macros).map(([k, v]) => (
+                      <div key={k} className="ff-inset" style={{ padding: "0.5rem 0.4rem", textAlign: "center" }}>
+                        <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#f8fbff" }}>{v}</div>
+                        <div style={{ fontSize: "0.68rem", color: "#a7b4c9", textTransform: "uppercase" }}>{k}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <Link
+                  to={`/nutrition/${plan.slug}`}
+                  className="ff-btn ff-btn-primary ff-btn-sm"
+                  style={{ alignSelf: "flex-start", marginTop: "0.4rem" }}
+                >
+                  View Plan →
+                </Link>
+              </div>
             </article>
           ))}
         </div>
-      </section>
+      </SectionCard>
 
-      <section style={sectionStyle}>
-        <h2 style={{ marginBottom: "10px" }}>Your Personalized Nutrition Plan</h2>
+      {/* CTA */}
+      <SectionCard title={isLoggedIn ? "Your AI Nutrition Plan" : "Get a Personalized Plan"}>
         {isLoggedIn ? (
-          <p style={{ color: "#d9e5ff" }}>Profile-based macronutrient and meal timing suggestions are available on your dashboard.</p>
+          <>
+            <p className="ff-muted" style={{ lineHeight: 1.7 }}>
+              Profile-based macronutrients and meal timing suggestions are ready on your dashboard.
+            </p>
+            <div className="ff-actions">
+              <Link to="/dashboard" className="ff-btn ff-btn-primary">Open Dashboard →</Link>
+            </div>
+          </>
         ) : (
           <>
-            <p style={{ color: "#d9e5ff", marginBottom: "16px" }}>Sign in to access meal plans tailored to your profile.</p>
-            <div style={{ display: "flex", gap: "12px" }}>
-              <Link to="/login" style={{ ...btnPrimary, textDecoration: "none", textAlign: "center" }}>Login</Link>
-              <Link to="/signup" style={{ ...btnPrimary, background: "linear-gradient(90deg, #4ade80, #22c55e)", color: "#0b1727", textDecoration: "none", textAlign: "center" }}>Sign Up</Link>
+            <p className="ff-muted" style={{ lineHeight: 1.7, marginBottom: "0.6rem" }}>
+              Sign up to unlock AI-driven meal plans calibrated to your body stats, goal, and dietary preferences.
+            </p>
+            <div className="ff-flex" style={{ gap: "0.75rem", flexWrap: "wrap", marginTop: "1rem" }}>
+              <Link to="/signup" className="ff-btn ff-btn-green">Start Free</Link>
+              <Link to="/login"  className="ff-btn ff-btn-ghost">Login</Link>
             </div>
           </>
         )}
-      </section>
-    </div>
+      </SectionCard>
+    </AppPage>
   );
 }
 

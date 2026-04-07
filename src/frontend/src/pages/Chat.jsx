@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import AppPage from "../components/ui/AppPage";
+import SectionCard from "../components/ui/SectionCard";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const WS_URL = API_URL.replace("http", "ws");
@@ -81,86 +83,41 @@ export default function Chat() {
     if (e.key === "Enter") sendMessage();
   };
 
-  // -- Shared Styles (matching Dashboard) --
-  const glassCardStyle = {
-    backgroundColor: "rgba(255, 255, 255, 0.03)",
-    borderRadius: "16px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-    border: "1px solid rgba(255, 255, 255, 0.05)",
-    overflow: "hidden",
-  };
-
   return (
-    <div
-      style={{
-        padding: "60px 40px",
-        minHeight: "100vh",
-        backgroundColor: "#0b1727",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "30px",
-        }}
-      >
-        <h1 style={{ color: "white", margin: 0 }}>💬 Falcon Chat</h1>
-        <span
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            color: connected ? "#2ecc71" : "#e74c3c",
-            fontSize: "0.85rem",
-            fontWeight: "bold",
-          }}
-        >
+    <AppPage
+      eyebrow="CHAT"
+      title="AI Fitness"
+      accent="Assistant"
+      subtitle="Ask anything about workouts, nutrition, or your fitness goals."
+      actions={
+        <span className={`ff-tag ${connected ? "ff-tag-green" : "ff-tag-amber"}`}>
           <span
             style={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "50%",
-              backgroundColor: connected ? "#2ecc71" : "#e74c3c",
               display: "inline-block",
-              boxShadow: connected
-                ? "0 0 8px rgba(46, 204, 113, 0.6)"
-                : "0 0 8px rgba(231, 76, 60, 0.6)",
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              backgroundColor: connected ? "#22c55e" : "#f59e0b",
+              marginRight: 6,
             }}
           />
           {connected ? "Connected" : "Disconnected"}
         </span>
-      </div>
-
-      {/* Chat Card */}
-      <div style={glassCardStyle}>
+      }
+    >
+      <SectionCard title="Conversation" noPad>
+        {/* Messages scroll area */}
         <div
           style={{
-            height: "6px",
-            background: "linear-gradient(to right, #2f7bff, #9b59b6)",
-          }}
-        />
-
-        {/* Messages Area */}
-        <div
-          style={{
-            height: "500px",
+            height: "480px",
             overflowY: "auto",
-            padding: "20px 28px",
+            padding: "20px 24px",
           }}
         >
           {messages.length === 0 && (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "40px",
-                color: "#64748b",
-              }}
-            >
+            <p style={{ textAlign: "center", color: "var(--ff-text-muted)", padding: "40px 0" }}>
               No messages yet. Start the conversation!
-            </div>
+            </p>
           )}
 
           {messages.map((msg, i) => {
@@ -170,16 +127,7 @@ export default function Chat() {
             if (isSystem) {
               return (
                 <div key={i} style={{ textAlign: "center", margin: "12px 0" }}>
-                  <span
-                    style={{
-                      color: "#64748b",
-                      fontSize: "0.75rem",
-                      fontStyle: "italic",
-                      backgroundColor: "rgba(0,0,0,0.2)",
-                      padding: "4px 14px",
-                      borderRadius: "20px",
-                    }}
-                  >
+                  <span className="ff-tag" style={{ fontStyle: "italic" }}>
                     {msg.content}
                   </span>
                 </div>
@@ -192,18 +140,18 @@ export default function Chat() {
                 style={{
                   display: "flex",
                   justifyContent: isMe ? "flex-end" : "flex-start",
-                  marginBottom: "12px",
+                  marginBottom: 12,
                 }}
               >
                 <div
                   style={{
                     maxWidth: "70%",
                     backgroundColor: isMe
-                      ? "rgba(47, 123, 255, 0.15)"
-                      : "rgba(255, 255, 255, 0.05)",
+                      ? "var(--ff-accent-soft)"
+                      : "var(--ff-surface-3)",
                     border: isMe
-                      ? "1px solid rgba(47, 123, 255, 0.3)"
-                      : "1px solid rgba(255, 255, 255, 0.08)",
+                      ? "1px solid rgba(59,130,246,0.3)"
+                      : "1px solid rgba(255,255,255,0.06)",
                     borderRadius: isMe
                       ? "16px 16px 4px 16px"
                       : "16px 16px 16px 4px",
@@ -214,37 +162,27 @@ export default function Chat() {
                     <div
                       style={{
                         fontSize: "0.75rem",
-                        fontWeight: "bold",
-                        color: "#3498db",
-                        marginBottom: "4px",
+                        fontWeight: 700,
+                        color: "#7dd3fc",
+                        marginBottom: 4,
                       }}
                     >
                       {msg.username}
                     </div>
                   )}
-                  <div
-                    style={{
-                      color: "#e2e8f0",
-                      fontSize: "0.95rem",
-                      lineHeight: "1.5",
-                      wordBreak: "break-word",
-                    }}
-                  >
+                  <div style={{ color: "var(--ff-text)", fontSize: "0.95rem", lineHeight: 1.5, wordBreak: "break-word" }}>
                     {msg.content}
                   </div>
                   <div
                     style={{
                       fontSize: "0.65rem",
-                      color: "#475569",
-                      marginTop: "6px",
+                      color: "var(--ff-text-muted)",
+                      marginTop: 6,
                       textAlign: isMe ? "right" : "left",
                     }}
                   >
                     {msg.timestamp
-                      ? new Date(msg.timestamp).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
+                      ? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                       : ""}
                   </div>
                 </div>
@@ -254,53 +192,34 @@ export default function Chat() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
+        {/* Input row */}
         <div
           style={{
-            padding: "16px 28px 20px",
-            borderTop: "1px solid rgba(255, 255, 255, 0.05)",
             display: "flex",
-            gap: "12px",
+            gap: 12,
+            padding: "16px 24px 20px",
+            borderTop: "1px solid rgba(255,255,255,0.05)",
           }}
         >
           <input
+            className="ff-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={connected ? "Type a message..." : "Reconnecting..."}
+            placeholder={connected ? "Type a message…" : "Reconnecting…"}
             disabled={!connected}
-            style={{
-              flex: 1,
-              padding: "14px 18px",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "12px",
-              backgroundColor: "rgba(0, 0, 0, 0.3)",
-              color: "white",
-              fontSize: "0.95rem",
-              outline: "none",
-            }}
+            style={{ flex: 1 }}
           />
           <button
             onClick={sendMessage}
             disabled={!connected || !input.trim()}
-            style={{
-              padding: "14px 28px",
-              border: "none",
-              borderRadius: "12px",
-              backgroundColor:
-                connected && input.trim()
-                  ? "#2f7bff"
-                  : "rgba(255, 255, 255, 0.1)",
-              color: connected && input.trim() ? "white" : "#64748b",
-              cursor: connected && input.trim() ? "pointer" : "not-allowed",
-              fontSize: "0.95rem",
-              fontWeight: "bold",
-            }}
+            className="ff-btn ff-btn-primary"
+            style={{ opacity: connected && input.trim() ? 1 : 0.45 }}
           >
             Send
           </button>
         </div>
-      </div>
-    </div>
+      </SectionCard>
+    </AppPage>
   );
 }

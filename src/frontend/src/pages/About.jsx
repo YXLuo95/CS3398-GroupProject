@@ -1,98 +1,107 @@
 import { Link } from "react-router-dom";
+import AppPage from "../components/ui/AppPage";
+import SectionCard from "../components/ui/SectionCard";
 
-const pageStyle = {
-  minHeight: "100vh",
-  background: "radial-gradient(circle at 20% 15%, #1b2a45, #0b1727 52%, #070f1e)",
-  color: "white",
-  padding: "36px 40px",
-  fontFamily: "Inter, Arial, sans-serif"
-};
+const pillars = [
+  {
+    emoji: "🎯",
+    title: "Mission",
+    text: "Empower users with simple, scalable fitness routines and reliable progress tracking for all levels.",
+    tagClass: "ff-tag-blue",
+    tag: "PURPOSE",
+  },
+  {
+    emoji: "🔭",
+    title: "Vision",
+    text: "Build a supportive digital environment that helps people grow healthy habits sustainably and with confidence.",
+    tagClass: "ff-tag-green",
+    tag: "FUTURE",
+  },
+  {
+    emoji: "💡",
+    title: "Values",
+    text: "Clarity, accessibility, and continuous improvement through data-informed coaching and community focus.",
+    tagClass: "ff-tag-amber",
+    tag: "FOUNDATION",
+  },
+];
 
-const sectionStyle = {
-  background: "linear-gradient(135deg, rgba(63, 150, 255, 0.08), rgba(7, 17, 37, 0.8))",
-  border: "1px solid rgba(109, 171, 255, 0.25)",
-  borderRadius: "16px",
-  backdropFilter: "blur(10px)",
-  padding: "24px",
-  marginBottom: "26px"
-};
-
-const cardGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: "16px"
-};
-
-const cardStyle = {
-  background: "linear-gradient(145deg, rgba(49, 95, 202, 0.25), rgba(10, 22, 44, 0.7))",
-  border: "1px solid rgba(115, 151, 255, 0.35)",
-  borderRadius: "14px",
-  boxShadow: "0 12px 30px rgba(0,0,0,0.35)",
-  padding: "18px",
-  transition: "transform 0.3s ease, box-shadow 0.3s ease"
-};
-
-const btnPrimary = {
-  padding: "10px 16px",
-  borderRadius: "8px",
-  border: "none",
-  background: "linear-gradient(90deg, #2f7bff, #1d5fda)",
-  color: "white",
-  cursor: "pointer",
-  fontWeight: "700",
-  boxShadow: "0 6px 16px rgba(47, 123, 255, 0.32)"
-};
+const benefits = [
+  { icon: "⚡", label: "Adaptive Programs",    desc: "Plans that evolve as your fitness improves." },
+  { icon: "📊", label: "Progress Analytics",   desc: "Track every metric that matters to your goal." },
+  { icon: "🥗", label: "Nutrition Guidance",   desc: "Macro-optimized meal plans matched to your plan." },
+  { icon: "🤝", label: "Coach-Ready Insights", desc: "Export your data or share with a personal trainer." },
+];
 
 export default function About() {
   const isLoggedIn = Boolean(localStorage.getItem("token"));
 
-  const aboutPoints = [
-    { title: "Mission", text: "Empower users with simple, scalable fitness routines and reliable progress tracking for all levels." },
-    { title: "Vision", text: "Build a supportive digital environment that helps people grow healthy habits sustainably." },
-    { title: "Values", text: "Clarity, accessibility, and continuous improvement through data-informed coaching and community focus." }
-  ];
-
   return (
-    <div style={pageStyle}>
-      <h1 style={{ fontSize: "2.4rem", marginBottom: "8px" }}>About Falcon Fitness</h1>
-      <p style={{ color: "#c9d5e8", marginBottom: "24px", maxWidth: "880px" }}>
-        Falcon Fitness is built to make health and fitness approachable. Enjoy a unified experience across workouts, nutrition, and personal progress.
-      </p>
-
-      <section style={sectionStyle}>
-        <div style={cardGrid}>
-          {aboutPoints.map((item) => (
+    <AppPage
+      eyebrow="ABOUT"
+      title="Built for"
+      accent="Serious Athletes"
+      subtitle="Falcon Fitness is a fitness-technology platform that unifies workouts, nutrition, and progress tracking into one seamless experience."
+    >
+      {/* Pillars grid */}
+      <SectionCard title="Our Foundation">
+        <div className="ff-grid ff-grid-3">
+          {pillars.map((p) => (
             <article
-              key={item.title}
-              style={cardStyle}
-              onMouseOver={(e) => Object.assign(e.currentTarget.style, { transform: "translateY(-4px)", boxShadow: "0 16px 36px rgba(0,0,0,0.45)" })}
-              onMouseOut={(e) => Object.assign(e.currentTarget.style, { transform: "none", boxShadow: "0 12px 30px rgba(0,0,0,0.35)" })}
+              key={p.title}
+              className="ff-card ff-card-hover"
+              style={{ borderRadius: 14, overflow: "hidden" }}
             >
-              <h2 style={{ margin: "0 0 10px", fontSize: "1.2rem" }}>{item.title}</h2>
-              <p style={{ color: "#d9e5ff", lineHeight: "1.5" }}>{item.text}</p>
+              <div style={{
+                padding: "1.2rem 1.3rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.6rem",
+                height: "100%",
+              }}>
+                <span style={{ fontSize: "2rem" }}>{p.emoji}</span>
+                <span className={`ff-tag ${p.tagClass}`} style={{ alignSelf: "flex-start" }}>{p.tag}</span>
+                <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#f8fbff" }}>{p.title}</h3>
+                <p style={{ margin: 0, color: "#a7b4c9", fontSize: "0.9rem", lineHeight: 1.6 }}>{p.text}</p>
+              </div>
             </article>
           ))}
         </div>
-      </section>
+      </SectionCard>
 
-      <section style={sectionStyle}>
-        <h2 style={{ marginBottom: "10px" }}>Get Started</h2>
+      {/* Benefits */}
+      <SectionCard title="What You Get" subtitle="Everything you need to hit your fitness goals, in one app.">
+        <div className="ff-grid ff-grid-2" style={{ marginTop: "0.4rem" }}>
+          {benefits.map((b) => (
+            <div key={b.label} className="ff-inset ff-flex" style={{ gap: "1rem" }}>
+              <span style={{ fontSize: "1.6rem", flexShrink: 0 }}>{b.icon}</span>
+              <div>
+                <div style={{ fontWeight: 700, color: "#f8fbff", fontSize: "0.95rem", marginBottom: "0.2rem" }}>{b.label}</div>
+                <div style={{ color: "#a7b4c9", fontSize: "0.85rem" }}>{b.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      {/* CTA */}
+      <SectionCard title={isLoggedIn ? "Welcome Back" : "Ready to Start?"}>
         {isLoggedIn ? (
-          <p style={{ color: "#d9e5ff" }}>
-            Great to have you back! Explore your dashboard for personalized plan recommendations, progress tracking, and 1:1 goal coaching.
+          <p className="ff-muted" style={{ lineHeight: 1.7 }}>
+            Great to have you! Head to your dashboard for personalized plan recommendations, progress tracking, and goal coaching.
           </p>
         ) : (
           <>
-            <p style={{ color: "#d9e5ff", marginBottom: "16px" }}>
-              Create an account to receive tailored workout + nutrition recommendations and unlock milestone-based achievements.
+            <p className="ff-muted" style={{ lineHeight: 1.7, marginBottom: "1.2rem" }}>
+              Create a free account to get tailored workout and nutrition recommendations.
             </p>
-            <div style={{ display: "flex", gap: "12px" }}>
-              <Link to="/login" style={{ ...btnPrimary, textDecoration: "none", textAlign: "center" }}>Login</Link>
-              <Link to="/signup" style={{ ...btnPrimary, background: "linear-gradient(90deg, #4ade80, #22c55e)", color: "#0b1727", textDecoration: "none", textAlign: "center" }}>Sign Up</Link>
+            <div className="ff-flex" style={{ gap: "0.75rem", flexWrap: "wrap" }}>
+              <Link to="/signup" className="ff-btn ff-btn-primary">Get Started Free</Link>
+              <Link to="/login"  className="ff-btn ff-btn-ghost">Login</Link>
             </div>
           </>
         )}
-      </section>
-    </div>
+      </SectionCard>
+    </AppPage>
   );
 }

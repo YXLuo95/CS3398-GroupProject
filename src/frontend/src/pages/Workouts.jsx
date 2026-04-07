@@ -1,125 +1,105 @@
 import { Link } from "react-router-dom";
+import AppPage from "../components/ui/AppPage";
+import SectionCard from "../components/ui/SectionCard";
 
-const pageStyle = {
-  minHeight: "100vh",
-  background: "radial-gradient(circle at 20% 15%, #1b2a45, #0b1727 52%, #070f1e)",
-  color: "white",
-  padding: "36px 40px",
-  fontFamily: "Inter, Arial, sans-serif"
-};
-
-const sectionStyle = {
-  background: "linear-gradient(135deg, rgba(63, 150, 255, 0.08), rgba(7, 17, 37, 0.8))",
-  border: "1px solid rgba(109, 171, 255, 0.25)",
-  borderRadius: "16px",
-  backdropFilter: "blur(10px)",
-  padding: "24px",
-  marginBottom: "26px"
-};
-
-const cardGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: "16px"
-};
-
-const cardStyle = {
-  background: "linear-gradient(135deg, rgba(49, 95, 202, 0.25), rgba(10, 22, 44, 0.7))",
-  border: "1px solid rgba(115, 151, 255, 0.35)",
-  borderRadius: "14px",
-  boxShadow: "0 12px 30px rgba(0,0,0,0.35)",
-  padding: "18px",
-  transition: "transform 0.3s ease, box-shadow 0.3s ease"
-};
-
-const cardHover = {
-  transform: "translateY(-4px)",
-  boxShadow: "0 16px 36px rgba(0,0,0,0.45)"
-};
-
-const btnPrimary = {
-  padding: "10px 16px",
-  borderRadius: "8px",
-  border: "none",
-  background: "linear-gradient(90deg, #2f7bff, #1d5fda)",
-  color: "white",
-  cursor: "pointer",
-  fontWeight: "700",
-  boxShadow: "0 6px 16px rgba(47, 123, 255, 0.32)",
-  textDecoration: "none",
-  display: "inline-block",
-  textAlign: "center"
-};
+const workoutPlans = [
+  {
+    emoji: "🏃",
+    title: "Beginner Training",
+    tag: "4 WEEKS",
+    tagClass: "ff-tag-green",
+    desc: "Structured 4-week progression to learn form, build consistency, and develop the training habit.",
+    slug: "beginner-training",
+  },
+  {
+    emoji: "🏋️",
+    title: "Strength Training",
+    tag: "ADVANCED",
+    tagClass: "ff-tag-blue",
+    desc: "Periodized volume cycles for consistent strength gains using compound lifts and progressive overload.",
+    slug: "strength-training",
+  },
+  {
+    emoji: "🔥",
+    title: "Fat Loss Training",
+    tag: "HIIT + WEIGHTS",
+    tagClass: "ff-tag-amber",
+    desc: "High-intensity intervals combined with recovery sets to maximize calorie burn and preserve muscle.",
+    slug: "fat-loss-training",
+  },
+  {
+    emoji: "🏠",
+    title: "Home Workouts",
+    tag: "NO EQUIPMENT",
+    tagClass: "ff-tag-purple",
+    desc: "Equipment-free workouts optimized for small spaces — as effective as the gym, on your schedule.",
+    slug: "home-workouts",
+  },
+];
 
 export default function Workouts() {
   const isLoggedIn = Boolean(localStorage.getItem("token"));
 
-  const workoutPlans = [
-    {
-      title: "Beginner Training",
-      desc: "Start with a structured 4-week progression to learn form and build consistency.",
-      slug: "beginner-training"
-    },
-    {
-      title: "Strength Training",
-      desc: "Advanced lift cycles with periodized volume for consistent strength gains.",
-      slug: "strength-training"
-    },
-    {
-      title: "Fat Loss Training",
-      desc: "High-intensity intervals combined with recovery sets to burn fat efficiently.",
-      slug: "fat-loss-training"
-    },
-    {
-      title: "Home Workouts",
-      desc: "Equipment-free workouts designed for small spaces and busy schedules.",
-      slug: "home-workouts"
-    }
-  ];
-
   return (
-    <div style={pageStyle}>
-      <h1 style={{ fontSize: "2.4rem", marginBottom: "8px" }}>Workout Plans</h1>
-      <p style={{ color: "#c9d5e8", marginBottom: "24px", maxWidth: "880px" }}>
-        Choose from expert-crafted workouts that adapt to your goals and experience. Track progress and stay motivated with incremental milestones.
-      </p>
-
-      <section style={sectionStyle}>
-        <div style={cardGrid}>
+    <AppPage
+      eyebrow="TRAINING"
+      title="Workout"
+      accent="Plans"
+      subtitle="Expert-crafted programs that adapt to your goals, experience level, and available time."
+    >
+      {/* Plans grid */}
+      <SectionCard title="Choose Your Program">
+        <div className="ff-grid ff-grid-2">
           {workoutPlans.map((plan) => (
             <article
-              key={plan.title}
-              style={cardStyle}
-              onMouseOver={(e) => Object.assign(e.currentTarget.style, cardHover)}
-              onMouseOut={(e) => Object.assign(e.currentTarget.style, { transform: "none", boxShadow: "0 12px 30px rgba(0,0,0,0.35)" })}
+              key={plan.slug}
+              className="ff-card ff-card-hover"
+              style={{ borderRadius: 14, overflow: "hidden" }}
             >
-              <h2 style={{ margin: "0 0 10px", fontSize: "1.2rem" }}>{plan.title}</h2>
-              <p style={{ color: "#d9e5ff", lineHeight: "1.5" }}>{plan.desc}</p>
-              <Link to={`/workouts/${plan.slug}`} style={{ ...btnPrimary, marginTop: "16px" }}>View Plan</Link>
+              <div style={{ padding: "1.3rem", display: "flex", flexDirection: "column", gap: "0.65rem", height: "100%" }}>
+                <div className="ff-flex-between">
+                  <span style={{ fontSize: "1.8rem" }}>{plan.emoji}</span>
+                  <span className={`ff-tag ${plan.tagClass}`}>{plan.tag}</span>
+                </div>
+                <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#f8fbff" }}>{plan.title}</h3>
+                <p style={{ margin: 0, color: "#a7b4c9", fontSize: "0.88rem", lineHeight: 1.6, flex: 1 }}>{plan.desc}</p>
+                <Link
+                  to={`/workouts/${plan.slug}`}
+                  className="ff-btn ff-btn-primary ff-btn-sm"
+                  style={{ alignSelf: "flex-start", marginTop: "0.4rem" }}
+                >
+                  View Plan →
+                </Link>
+              </div>
             </article>
           ))}
         </div>
-      </section>
+      </SectionCard>
 
-      <section style={sectionStyle}>
-        <h2 style={{ marginBottom: "10px" }}>Your Personalized Workout Plan</h2>
+      {/* Personalized CTA */}
+      <SectionCard title={isLoggedIn ? "Your Custom Plan" : "Unlock Your Personal Plan"}>
         {isLoggedIn ? (
-          <p style={{ color: "#d9e5ff" }}>
-            Your custom plan is ready! Visit your dashboard to track workouts, progress, and recovery stats.
-          </p>
+          <>
+            <p className="ff-muted" style={{ lineHeight: 1.7 }}>
+              Your AI-adapted plan is ready. Head to the dashboard to track workouts, log sets, and review progress.
+            </p>
+            <div className="ff-actions">
+              <Link to="/dashboard" className="ff-btn ff-btn-primary">Open Dashboard →</Link>
+            </div>
+          </>
         ) : (
           <>
-            <p style={{ color: "#d9e5ff", marginBottom: "16px" }}>
-              Log in to view your customized workout plan based on your goals.
+            <p className="ff-muted" style={{ lineHeight: 1.7, marginBottom: "0.6rem" }}>
+              Take the 5-minute fitness quiz to get a program built around your body, goals, and schedule.
             </p>
-            <div style={{ display: "flex", gap: "12px" }}>
-              <Link to="/login" style={{ ...btnPrimary, textDecoration: "none", textAlign: "center" }}>Login</Link>
-              <Link to="/signup" style={{ ...btnPrimary, background: "linear-gradient(90deg, #4ade80, #22c55e)", color: "#0b1727", textDecoration: "none", textAlign: "center" }}>Sign Up</Link>
+            <div className="ff-flex" style={{ gap: "0.75rem", flexWrap: "wrap", marginTop: "1rem" }}>
+              <Link to="/signup" className="ff-btn ff-btn-green">Get My Free Plan</Link>
+              <Link to="/login"  className="ff-btn ff-btn-ghost">Login</Link>
             </div>
           </>
         )}
-      </section>
-    </div>
+      </SectionCard>
+    </AppPage>
   );
 }
 
