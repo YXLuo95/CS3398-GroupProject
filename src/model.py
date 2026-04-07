@@ -197,3 +197,13 @@ class CompletedWorkout(SQLModel, table=True):
     plan_id: int = Field(foreign_key="workout_plans.id", index=True)
     day: int = Field(ge=1, le=7)
     completed_at: datetime = Field(default_factory=utc_now)
+
+
+class WorkoutSet(SQLModel, table=True):
+    __tablename__ = "workout_sets"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    exercise_id: int = Field(foreign_key="exercises.id", index=True)
+    set_number: int
+    logged_at: datetime = Field(default_factory=utc_now)

@@ -255,6 +255,21 @@ def _pick(muscle_group: str, difficulty: str, count: int, offset: int = 0) -> li
     return [options[(offset + i) % len(options)] for i in range(min(count, len(options)))]
 
 
+def get_image_url(name: str) -> str | None:
+    return _image_url(name)
+
+
+def get_swap_exercise(muscle_group: str, difficulty: str, exclude_name: str):
+    """Return a random alternative (name, image_url) tuple or None."""
+    import random
+    options = _LIBRARY.get(muscle_group, {}).get(difficulty, [])
+    alternatives = [raw for raw in options if raw[0] != exclude_name]
+    if not alternatives:
+        return None
+    raw = random.choice(alternatives)
+    return raw[0], _image_url(raw[0])
+
+
 def generate_workout_plan(fitness_goal: FitnessGoal) -> List[Exercise]:
     """
     Generate a list of Exercise objects for a given FitnessGoal.

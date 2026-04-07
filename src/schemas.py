@@ -203,3 +203,17 @@ class CompletedWorkoutRead(BaseModel):
     completed_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class WorkoutSetCreate(BaseModel):
+    exercise_id: int
+    set_number: int
+
+
+class WorkoutSetRead(BaseModel):
+    id: int
+    exercise_id: int
+    set_number: int
+    logged_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

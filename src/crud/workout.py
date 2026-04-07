@@ -1,4 +1,4 @@
-"""CRUD operations for WorkoutPlan, Exercise, and CompletedWorkout."""
+"""CRUD operations for WorkoutPlan, Exercise, CompletedWorkout, and WorkoutSet."""
 
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
@@ -6,7 +6,7 @@ from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.model import WorkoutPlan, Exercise, CompletedWorkout
+from src.model import WorkoutPlan, Exercise, CompletedWorkout, WorkoutSet
 
 
 async def get_plan_by_user_id(session: AsyncSession, user_id: int) -> Optional[WorkoutPlan]:
@@ -94,6 +94,68 @@ async def delete_completion(session: AsyncSession, completion: CompletedWorkout)
     """Remove a completed workout day record."""
     await session.delete(completion)
     await session.commit()
+
+
+async def log_set(session: AsyncSession, user_id: int, exercise_id: int, set_number: int) -> WorkoutSet:
+    """Log a completed set. Silently returns existing if already logged this week."""
+    today = datetime.now(timezone.utc)
+    week_start = (today - timedelta(days=today.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    existing = await session.execute(
+        select(WorkoutSet)
+        .where(WorkoutSet.user_id == user_id)
+        .where(WorkoutSet.exercise_id == exercise_id)
+        .where(WorkoutSet.set_number == set_number)
+        .where(WorkoutSet.logged_at >= week_start)
+    )
+    row = existing.scalars().first()
+    if row:
+        return row
+    ws = WorkoutSet(user_id=user_id, exercise_id=exercise_id, set_number=set_number)
+    session.add(ws)
+    await session.commit()
+    await session.refresh(ws)
+    return ws
+
+
+async def unlog_set(session: AsyncSession, user_id: int, exercise_id: int, set_number: int) -> None:
+    """Remove a logged set for the current week."""
+    today = datetime.now(timezone.utc)
+    week_start = (today - timedelta(days=today.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    result = await session.execute(
+        select(WorkoutSet)
+        .where(WorkoutSet.user_id == user_id)
+        .where(WorkoutSet.exercise_id == exercise_id)
+        .where(WorkoutSet.set_number == set_number)
+        .where(WorkoutSet.logged_at >= week_start)
+    )
+    row = result.scalars().first()
+    if row:
+        await session.delete(row)
+        await session.commit()
+
+
+async def get_sets_for_plan(session: AsyncSession, user_id: int, exercise_ids: List[int]) -> List[WorkoutSet]:
+    """Return all logged sets for given exercises in the current week."""
+    today = datetime.now(timezone.utc)
+    week_start = (today - timedelta(days=today.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    result = await session.execute(
+        select(WorkoutSet)
+        .where(WorkoutSet.user_id == user_id)
+        .where(WorkoutSet.exercise_id.in_(exercise_ids))
+        .where(WorkoutSet.logged_at >= week_start)
+    )
+    return result.scalars().all()
+
+
+async def swap_exercise(session: AsyncSession, exercise: Exercise, new_name: str, new_image_url: Optional[str]) -> Exercise:
+    """Replace exercise name and image in-place."""
+    exercise.name = new_name
+    exercise.image_url = new_image_url
+    exercise.instructions = None
+    session.add(exercise)
+    await session.commit()
+    await session.refresh(exercise)
+    return exercise
 
 
 async def get_completion_for_day(
