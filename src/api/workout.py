@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_session
 from src.core.auth import get_current_user
 from src.core.workout_generator import generate_workout_plan
+from src.core.llm import generate_exercise_instructions
 from src.model import User, WorkoutPlan
 from src.schemas import WorkoutPlanRead, CompletedWorkoutCreate, CompletedWorkoutRead
 from src.crud.quiz import get_goal_by_user_id
@@ -33,6 +34,15 @@ async def generate_plan(
         raise HTTPException(status_code=400, detail="Plan already exists. Delete it first to regenerate.")
 
     exercises = generate_workout_plan(goal)
+
+    # enrich exercises with LLM-generated instructions (fails gracefully)
+    unique_names = list({e.name for e in exercises})
+    difficulty = "beginner" if goal.activity_level in ("sedentary", "lightly_active") else \
+                 "intermediate" if goal.activity_level == "moderately_active" else "advanced"
+
+    instructions_map = await generate_exercise_instructions(unique_names, difficulty, goal.goal_type)
+    for exercise in exercises:
+        exercise.instructions = instructions_map.get(exercise.name)
 
     plan = WorkoutPlan(
         user_id=current_user.id,

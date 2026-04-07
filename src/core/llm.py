@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Optional, List
+import json
 import logging
 import ollama
 from src.core.config import settings
@@ -86,3 +87,57 @@ async def generate_fitness_report(user_age: int, gender: str, data_summary: str)
         logger.error(f"[LLM Service] LLM invocation failed: {str(e)}")
         logger.info("[LLM Service] Returning mock report due to LLM failure.")
         return MOCK_REPORT
+
+
+async def generate_exercise_instructions(
+    exercise_names: List[str],
+    difficulty: str,
+    goal_type: str,
+) -> dict:
+    """
+    Given a list of exercise names, returns a dict mapping each name
+    to a 3-step instruction string. Falls back to empty dict on failure.
+    """
+    if not settings.ENABLE_LLM_MODEL:
+        return {}
+
+    try:
+        logger.info(f"[LLM Service] Generating exercise instructions for {len(exercise_names)} exercises...")
+
+        system_prompt = (
+            "You are a certified personal trainer. "
+            "For each exercise provided, write exactly 3 concise steps on how to perform it correctly. "
+            "Tailor the language to a " + difficulty + " level athlete whose goal is to " + goal_type.replace("_", " ") + ". "
+            "Rules you MUST follow: "
+            "1. Respond ONLY with a valid JSON object. No extra text, no markdown, no code blocks. "
+            "2. Keys are exercise names exactly as given. Values are a single string with steps separated by ' | '. "
+            "3. Each step must be under 20 words. "
+            "4. Example format: {\"Push-Up\": \"Step 1 | Step 2 | Step 3\"}"
+        )
+
+        user_prompt = "Generate instructions for these exercises: " + ", ".join(exercise_names)
+
+        client = ollama.AsyncClient(host=settings.OLLAMA_HOST)
+        response = await client.chat(
+            model=settings.LOCAL_MODEL_NAME,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            options={
+                "temperature": 0.3,   # low temp for consistent structured output
+                "num_predict": 2048,
+            },
+        )
+
+        raw = response['message']['content'].strip()
+        instructions = json.loads(raw)
+        logger.info("[LLM Service] Exercise instructions generated successfully.")
+        return instructions
+
+    except json.JSONDecodeError:
+        logger.error("[LLM Service] Failed to parse LLM response as JSON. Falling back to no instructions.")
+        return {}
+    except Exception as e:
+        logger.error(f"[LLM Service] Exercise instruction generation failed: {str(e)}")
+        return {}

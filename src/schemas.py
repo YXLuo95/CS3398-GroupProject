@@ -175,6 +175,7 @@ class ExerciseRead(BaseModel):
     difficulty: str
     day: int
     youtube_url: Optional[str]
+    instructions: Optional[str]
 
     model_config = ConfigDict(from_attributes=True)
 
