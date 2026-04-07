@@ -29,7 +29,6 @@ const DIFFICULTY_COLORS = {
   advanced:     { bg: "rgba(239,68,68,0.15)",  border: "rgba(239,68,68,0.4)",  color: "#fca5a5" },
 };
 
-// JS getDay(): 0=Sun,1=Mon,...,6=Sat  →  plan day: 1=Mon,...,7=Sun
 function todayPlanDay() {
   const d = new Date().getDay();
   return d === 0 ? 7 : d;
@@ -41,22 +40,19 @@ function muscleEmoji(group) {
 }
 
 // ─── Progress ring ────────────────────────────────────────────────────────────
-function ProgressRing({ value, max, color, label, sublabel }) {
-  const pct    = max > 0 ? value / max : 0;
-  const r      = 28;
-  const circ   = 2 * Math.PI * r;
-  const dash   = pct * circ;
+function ProgressRing({ value, max, color }) {
+  const pct  = max > 0 ? value / max : 0;
+  const r    = 28;
+  const circ = 2 * Math.PI * r;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.3rem" }}>
       <svg width={72} height={72}>
         <circle cx={36} cy={36} r={r} fill="none" stroke="var(--ff-surface-3)" strokeWidth={5} />
         <circle
-          cx={36} cy={36} r={r} fill="none"
-          stroke={color} strokeWidth={5}
-          strokeDasharray={`${dash} ${circ}`}
-          strokeLinecap="round"
-          transform="rotate(-90 36 36)"
+          cx={36} cy={36} r={r} fill="none" stroke={color} strokeWidth={5}
+          strokeDasharray={`${pct * circ} ${circ}`}
+          strokeLinecap="round" transform="rotate(-90 36 36)"
           style={{ transition: "stroke-dasharray 0.6s ease" }}
         />
         <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle"
@@ -64,7 +60,7 @@ function ProgressRing({ value, max, color, label, sublabel }) {
           {value}/{max}
         </text>
       </svg>
-      <span style={{ color: "var(--ff-text-muted)", fontSize: "0.72rem", textAlign: "center" }}>{sublabel}</span>
+      <span style={{ color: "var(--ff-text-muted)", fontSize: "0.72rem" }}>Week Progress</span>
     </div>
   );
 }
@@ -100,7 +96,6 @@ function GeneratingAnimation() {
         display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: "2rem", animation: "ff-pulse 1.6s ease-in-out infinite",
       }}>🤖</div>
-
       <div style={{ maxWidth: 420 }}>
         <p style={{ color: "var(--ff-text)", fontWeight: 700, fontSize: "1.1rem", margin: "0 0 0.4rem" }}>
           Building your personalized plan
@@ -109,7 +104,6 @@ function GeneratingAnimation() {
           {GENERATION_STEPS[stepIndex]?.label ?? "Almost done..."}
         </p>
       </div>
-
       <div style={{ width: "100%", maxWidth: 380 }}>
         <div style={{ height: 6, borderRadius: 999, background: "var(--ff-surface-3)", border: "1px solid var(--ff-border-dim)", overflow: "hidden" }}>
           <div style={{
@@ -122,7 +116,6 @@ function GeneratingAnimation() {
           This takes ~2 minutes — the AI is crafting your instructions
         </p>
       </div>
-
       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", width: "100%", maxWidth: 380, textAlign: "left" }}>
         {GENERATION_STEPS.map((step, i) => (
           <div key={i} style={{
@@ -142,13 +135,23 @@ function GeneratingAnimation() {
 }
 
 // ─── Single exercise card ─────────────────────────────────────────────────────
-function ExerciseCard({ exercise, allExpanded }) {
-  const [expanded, setExpanded] = useState(false);
+function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet, onSwap }) {
+  const [expanded, setExpanded]   = useState(false);
+  const [swapping, setSwapping]   = useState(false);
   const steps      = exercise.instructions ? exercise.instructions.split(" | ") : [];
   const hasDetails = steps.length > 0 || !!exercise.image_url;
   const diffStyle  = DIFFICULTY_COLORS[exercise.difficulty] || {};
+  const setCount   = parseInt(exercise.sets) || 0;
+  const doneSets   = loggedSets || new Set();
 
   useEffect(() => { setExpanded(allExpanded); }, [allExpanded]);
+
+  async function handleSwap(e) {
+    e.stopPropagation();
+    setSwapping(true);
+    await onSwap(exercise.id);
+    setSwapping(false);
+  }
 
   return (
     <div className="ff-card ff-card-hover" style={{ padding: "1rem 1.2rem" }} onClick={() => setExpanded((e) => !e)}>
@@ -163,7 +166,6 @@ function ExerciseCard({ exercise, allExpanded }) {
         <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
           <span className="ff-tag ff-tag-blue">{exercise.sets} sets</span>
           <span className="ff-tag ff-tag-amber">{exercise.reps} reps</span>
-          {/* 5. Difficulty badge */}
           {exercise.difficulty && (
             <span style={{
               fontSize: "0.7rem", fontWeight: 600, padding: "2px 7px", borderRadius: 999,
@@ -172,27 +174,68 @@ function ExerciseCard({ exercise, allExpanded }) {
               {exercise.difficulty}
             </span>
           )}
+          {/* 4. Swap button */}
+          <button
+            className="ff-btn ff-btn-ghost ff-btn-sm"
+            style={{ padding: "2px 8px", fontSize: "0.75rem" }}
+            onClick={handleSwap}
+            disabled={swapping}
+            title="Swap for alternative exercise"
+          >
+            {swapping ? "..." : "⟳"}
+          </button>
           {hasDetails && (
-            <span style={{ color: "var(--ff-text-muted)", fontSize: "0.8rem", marginLeft: "0.3rem" }}>
+            <span style={{ color: "var(--ff-text-muted)", fontSize: "0.8rem" }}>
               {expanded ? "▲" : "▼"}
             </span>
           )}
         </div>
       </div>
 
-      {expanded && hasDetails && (
+      {expanded && (
         <div style={{
           marginTop: "0.75rem", paddingTop: "0.75rem",
           borderTop: "1px solid var(--ff-border-dim)",
-          display: "flex", flexDirection: "column", gap: "0.4rem",
+          display: "flex", flexDirection: "column", gap: "0.75rem",
         }}>
+          {/* 3. Sets tracker */}
+          {setCount > 0 && (
+            <div>
+              <p style={{ margin: "0 0 0.4rem", color: "var(--ff-text-muted)", fontSize: "0.78rem", fontWeight: 600 }}>TRACK SETS</p>
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                {Array.from({ length: setCount }, (_, i) => i + 1).map((setNum) => {
+                  const done = doneSets.has(setNum);
+                  return (
+                    <button
+                      key={setNum}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        done ? onUnlogSet(exercise.id, setNum) : onLogSet(exercise.id, setNum);
+                      }}
+                      style={{
+                        width: 40, height: 40, borderRadius: "50%", border: "none", cursor: "pointer",
+                        background: done ? "var(--ff-green)" : "var(--ff-surface-3)",
+                        color: done ? "#fff" : "var(--ff-text-muted)",
+                        fontWeight: 700, fontSize: "0.85rem",
+                        transition: "all 0.2s",
+                        boxShadow: done ? "0 0 8px rgba(34,197,94,0.4)" : "none",
+                      }}
+                    >
+                      {done ? "✓" : setNum}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {exercise.image_url && (
             <img
-              src={exercise.image_url}
-              alt={exercise.name}
-              style={{ width: "100%", maxWidth: 320, borderRadius: 10, marginBottom: "0.5rem", objectFit: "cover" }}
+              src={exercise.image_url} alt={exercise.name}
+              style={{ width: "100%", maxWidth: 320, borderRadius: 10, objectFit: "cover" }}
             />
           )}
+
           {steps.map((step, i) => (
             <div key={i} style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start" }}>
               <span style={{
@@ -204,12 +247,13 @@ function ExerciseCard({ exercise, allExpanded }) {
               <p style={{ margin: 0, color: "var(--ff-text-dim)", fontSize: "0.85rem", lineHeight: 1.5 }}>{step.trim()}</p>
             </div>
           ))}
+
           {exercise.youtube_url && (
             <a
               href={exercise.youtube_url} target="_blank" rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className="ff-btn ff-btn-ghost ff-btn-sm"
-              style={{ alignSelf: "flex-start", marginTop: "0.4rem" }}
+              style={{ alignSelf: "flex-start" }}
             >
               ▶ Watch Tutorial
             </a>
@@ -221,11 +265,9 @@ function ExerciseCard({ exercise, allExpanded }) {
 }
 
 // ─── Day section ──────────────────────────────────────────────────────────────
-function DaySection({ day, exercises, completedDays, onMarkComplete, onUnmark, marking, allExpanded, dayRef }) {
+function DaySection({ day, exercises, completedDays, onMarkComplete, onUnmark, marking, allExpanded, dayRef, loggedSets, onLogSet, onUnlogSet, onSwap }) {
   const isDone  = completedDays.includes(day);
   const isToday = day === todayPlanDay();
-
-  // 3. Muscle group summary
   const muscleGroups = [...new Set(exercises.map((e) => e.muscle_group))];
 
   return (
@@ -234,7 +276,6 @@ function DaySection({ day, exercises, completedDays, onMarkComplete, onUnmark, m
       className="ff-card"
       style={{
         overflow: "visible",
-        // 1. Highlight today
         border: isToday ? "1.5px solid var(--ff-accent)" : undefined,
         boxShadow: isToday ? "0 0 16px var(--ff-accent-glow)" : undefined,
       }}
@@ -248,8 +289,7 @@ function DaySection({ day, exercises, completedDays, onMarkComplete, onUnmark, m
             {isToday && (
               <span style={{
                 fontSize: "0.7rem", fontWeight: 600, padding: "2px 8px", borderRadius: 999,
-                background: "var(--ff-accent-soft)", border: "1px solid var(--ff-accent-glow)",
-                color: "var(--ff-accent)",
+                background: "var(--ff-accent-soft)", border: "1px solid var(--ff-accent-glow)", color: "var(--ff-accent)",
               }}>Today</span>
             )}
           </div>
@@ -272,8 +312,8 @@ function DaySection({ day, exercises, completedDays, onMarkComplete, onUnmark, m
           )}
         </div>
 
-        {/* 3. Muscle group chips */}
-        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+        {/* Muscle group chips */}
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem" }}>
           {muscleGroups.map((g) => (
             <span key={g} style={{ fontSize: "0.72rem", color: "var(--ff-text-muted)", display: "flex", alignItems: "center", gap: "0.2rem" }}>
               {muscleEmoji(g)} {g}
@@ -282,7 +322,17 @@ function DaySection({ day, exercises, completedDays, onMarkComplete, onUnmark, m
         </div>
 
         <div className="ff-stack">
-          {exercises.map((ex) => <ExerciseCard key={ex.id} exercise={ex} allExpanded={allExpanded} />)}
+          {exercises.map((ex) => (
+            <ExerciseCard
+              key={ex.id}
+              exercise={ex}
+              allExpanded={allExpanded}
+              loggedSets={loggedSets[ex.id]}
+              onLogSet={onLogSet}
+              onUnlogSet={onUnlogSet}
+              onSwap={onSwap}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -293,10 +343,7 @@ function DaySection({ day, exercises, completedDays, onMarkComplete, onUnmark, m
 function RestDayCard({ day }) {
   const isToday = day === todayPlanDay();
   return (
-    <div className="ff-card" style={{
-      overflow: "visible", opacity: 0.6,
-      border: isToday ? "1.5px solid var(--ff-accent)" : undefined,
-    }}>
+    <div className="ff-card" style={{ overflow: "visible", opacity: 0.6, border: isToday ? "1.5px solid var(--ff-accent)" : undefined }}>
       <div style={{ padding: "1rem 1.5rem", display: "flex", alignItems: "center", gap: "0.8rem" }}>
         <span className="ff-tag ff-tag-blue" style={{ fontSize: "0.8rem" }}>Day {day}</span>
         <span style={{ color: "var(--ff-text)", fontWeight: 700 }}>{DAY_LABELS[day]}</span>
@@ -309,16 +356,19 @@ function RestDayCard({ day }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Workouts() {
-  const navigate                      = useNavigate();
-  const isLoggedIn                    = Boolean(localStorage.getItem("token"));
-  const [plan, setPlan]               = useState(null);
-  const [loading, setLoading]         = useState(false);
-  const [generating, setGenerating]   = useState(false);
-  const [error, setError]             = useState(null);
-  const [completedDays, setCompleted] = useState([]);
-  const [marking, setMarking]         = useState(null);
-  const [allExpanded, setAllExpanded] = useState(false);
-  const todayRef                      = useRef(null);
+  const navigate                        = useNavigate();
+  const isLoggedIn                      = Boolean(localStorage.getItem("token"));
+  const [plan, setPlan]                 = useState(null);
+  const [loading, setLoading]           = useState(false);
+  const [generating, setGenerating]     = useState(false);
+  const [error, setError]               = useState(null);
+  const [completedDays, setCompleted]   = useState([]);
+  const [marking, setMarking]           = useState(null);
+  const [allExpanded, setAllExpanded]   = useState(false);
+  const [selectedMuscle, setMuscle]     = useState("all");
+  // loggedSets: { [exercise_id]: Set<number> }
+  const [loggedSets, setLoggedSets]     = useState({});
+  const todayRef                        = useRef(null);
 
   const headers = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
 
@@ -328,13 +378,21 @@ export default function Workouts() {
     Promise.all([
       axios.get(`${API}/api/v1/workout/plan`, { headers: headers() }).catch((e) => e.response),
       axios.get(`${API}/api/v1/workout/complete`, { headers: headers() }).catch(() => ({ data: [] })),
-    ]).then(([planRes, compRes]) => {
+      axios.get(`${API}/api/v1/workout/sets`, { headers: headers() }).catch(() => ({ data: [] })),
+    ]).then(([planRes, compRes, setsRes]) => {
       if (planRes?.status === 200) setPlan(planRes.data);
       setCompleted((compRes?.data || []).map((c) => c.day));
+      // build loggedSets map
+      const map = {};
+      for (const s of (setsRes?.data || [])) {
+        if (!map[s.exercise_id]) map[s.exercise_id] = new Set();
+        map[s.exercise_id].add(s.set_number);
+      }
+      setLoggedSets(map);
     }).finally(() => setLoading(false));
   }, [isLoggedIn]);
 
-  // 7. Smooth scroll to today on load
+  // Smooth scroll to today
   useEffect(() => {
     if (todayRef.current) {
       setTimeout(() => todayRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
@@ -359,6 +417,7 @@ export default function Workouts() {
     await axios.delete(`${API}/api/v1/workout/plan`, { headers: headers() });
     setPlan(null);
     setCompleted([]);
+    setLoggedSets({});
     handleGenerate();
   }
 
@@ -368,19 +427,58 @@ export default function Workouts() {
       await axios.post(`${API}/api/v1/workout/complete`, { day }, { headers: headers() });
       setCompleted((prev) => [...prev, day]);
     } catch (e) {
-      // already marked — ignore
+      // ignore
     } finally {
       setMarking(null);
     }
   }
 
-  // 2. Unmark complete
   async function handleUnmark(day) {
     try {
       await axios.delete(`${API}/api/v1/workout/complete/${day}`, { headers: headers() });
       setCompleted((prev) => prev.filter((d) => d !== day));
     } catch (e) {
       // ignore
+    }
+  }
+
+  async function handleLogSet(exerciseId, setNum) {
+    try {
+      await axios.post(`${API}/api/v1/workout/sets`, { exercise_id: exerciseId, set_number: setNum }, { headers: headers() });
+      setLoggedSets((prev) => {
+        const next = { ...prev };
+        next[exerciseId] = new Set(prev[exerciseId] || []);
+        next[exerciseId].add(setNum);
+        return next;
+      });
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  async function handleUnlogSet(exerciseId, setNum) {
+    try {
+      await axios.delete(`${API}/api/v1/workout/sets/${exerciseId}/${setNum}`, { headers: headers() });
+      setLoggedSets((prev) => {
+        const next = { ...prev };
+        next[exerciseId] = new Set(prev[exerciseId] || []);
+        next[exerciseId].delete(setNum);
+        return next;
+      });
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  async function handleSwap(exerciseId) {
+    try {
+      const res = await axios.put(`${API}/api/v1/workout/exercise/${exerciseId}/swap`, {}, { headers: headers() });
+      setPlan((prev) => ({
+        ...prev,
+        exercises: prev.exercises.map((ex) => ex.id === exerciseId ? res.data : ex),
+      }));
+    } catch (e) {
+      // ignore — no alternatives available
     }
   }
 
@@ -393,11 +491,21 @@ export default function Workouts() {
     : {};
   const trainingDays = Object.keys(byDay).map(Number).sort((a, b) => a - b);
 
-  // 6. Build full week with rest days between first and last training day
+  // All days including rest days
   const allDays = trainingDays.length > 0
     ? Array.from({ length: trainingDays[trainingDays.length - 1] - trainingDays[0] + 1 },
         (_, i) => trainingDays[0] + i)
     : [];
+
+  // 5. Muscle group filter — unique groups across all exercises
+  const allMuscleGroups = plan
+    ? [...new Set(plan.exercises.map((e) => e.muscle_group))].sort()
+    : [];
+
+  // Filter training days by selected muscle group
+  const visibleDays = selectedMuscle === "all"
+    ? allDays
+    : allDays.filter((day) => byDay[day]?.some((ex) => ex.muscle_group === selectedMuscle));
 
   const today = todayPlanDay();
 
@@ -464,14 +572,13 @@ export default function Workouts() {
 
       {plan && !generating && (
         <>
+          {/* Summary card */}
           <SectionCard title="Your Plan">
-            {/* 4. Progress ring + KPIs */}
             <div style={{ display: "flex", alignItems: "center", gap: "2rem", flexWrap: "wrap", marginBottom: "1rem" }}>
               <ProgressRing
                 value={completedDays.length}
                 max={trainingDays.length}
                 color="var(--ff-accent)"
-                sublabel="Week Progress"
               />
               <div className="ff-grid ff-grid-3" style={{ flex: 1 }}>
                 <div className="ff-kpi">
@@ -498,9 +605,31 @@ export default function Workouts() {
             </div>
           </SectionCard>
 
-          {/* 6. Full week with rest days */}
+          {/* 5. Muscle group filter */}
+          {allMuscleGroups.length > 0 && (
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
+              {["all", ...allMuscleGroups].map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setMuscle(g)}
+                  style={{
+                    padding: "4px 12px", borderRadius: 999, border: "1px solid",
+                    cursor: "pointer", fontSize: "0.8rem", fontWeight: 600,
+                    background: selectedMuscle === g ? "var(--ff-accent-soft)" : "transparent",
+                    borderColor: selectedMuscle === g ? "var(--ff-accent)" : "var(--ff-border-dim)",
+                    color: selectedMuscle === g ? "var(--ff-accent)" : "var(--ff-text-muted)",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {g === "all" ? "All" : `${muscleEmoji(g)} ${g}`}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Days */}
           <div className="ff-stack" style={{ gap: "1.2rem" }}>
-            {allDays.map((day) =>
+            {visibleDays.map((day) =>
               byDay[day] ? (
                 <DaySection
                   key={day}
@@ -512,6 +641,10 @@ export default function Workouts() {
                   marking={marking}
                   allExpanded={allExpanded}
                   dayRef={day === today ? todayRef : null}
+                  loggedSets={loggedSets}
+                  onLogSet={handleLogSet}
+                  onUnlogSet={handleUnlogSet}
+                  onSwap={handleSwap}
                 />
               ) : (
                 <RestDayCard key={day} day={day} />
