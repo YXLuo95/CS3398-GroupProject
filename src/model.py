@@ -120,11 +120,10 @@ class FitnessGoal(TimestampMixin, table=True):
     quiz_completed: bool = Field(default=False)
 
     user: Optional["User"] = Relationship(back_populates="fitness_goal")
+    workout_plan: Optional["WorkoutPlan"] = Relationship(back_populates="fitness_goal")
 
 
 ## new table for user profile
-## using the same template like other tables,
-## only replace attrubutes with user profile related info
 class UserProfile(TimestampMixin, table=True):
     __tablename__ = "user_profiles"
 
@@ -140,7 +139,7 @@ class UserProfile(TimestampMixin, table=True):
     state: Optional[str] = None
     zip_code: Optional[str] = None
 
-    user: Optional["User"] = Relationship(back_populates="profile")    
+    user: Optional["User"] = Relationship(back_populates="profile")
 
 
 # added for chat feature
@@ -153,3 +152,44 @@ class ChatMessage(TimestampMixin, table=True):
     content: str = Field(sa_column=Column(TEXT))
 
     user: Optional["User"] = Relationship(back_populates="chat_messages")
+
+
+class WorkoutPlan(TimestampMixin, table=True):
+    __tablename__ = "workout_plans"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    fitness_goal_id: int = Field(foreign_key="fitness_goals.id", unique=True, index=True)
+    generated_at: datetime = Field(default_factory=utc_now)
+
+    fitness_goal: Optional["FitnessGoal"] = Relationship(back_populates="workout_plan")
+    exercises: List["Exercise"] = Relationship(back_populates="workout_plan")
+
+
+class Exercise(SQLModel, table=True):
+    __tablename__ = "exercises"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    plan_id: int = Field(foreign_key="workout_plans.id", index=True)
+
+    name: str
+    muscle_group: str
+    sets: str
+    reps: str
+    difficulty: str
+    day: int
+
+    youtube_url: Optional[str] = Field(default=None)
+    instructions: Optional[str] = Field(default=None, sa_column=Column(TEXT))
+
+    workout_plan: Optional["WorkoutPlan"] = Relationship(back_populates="exercises")
+
+
+class CompletedWorkout(SQLModel, table=True):
+    __tablename__ = "completed_workouts"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    plan_id: int = Field(foreign_key="workout_plans.id", index=True)
+    day: int = Field(ge=1, le=7)
+    completed_at: datetime = Field(default_factory=utc_now)

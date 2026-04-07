@@ -160,3 +160,45 @@ class UserProfileCreate(BaseModel):
 class UserProfileRead(UserProfileCreate):
     username: str
     email: str
+
+
+#==========================================
+# 7. Workout Plan Schemas
+#==========================================
+
+class ExerciseRead(BaseModel):
+    id: int
+    name: str
+    muscle_group: str
+    sets: str
+    reps: str
+    difficulty: str
+    day: int
+    youtube_url: Optional[str]
+    instructions: Optional[str]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WorkoutPlanRead(BaseModel):
+    id: int
+    user_id: int
+    fitness_goal_id: int
+    generated_at: datetime
+    exercises: List[ExerciseRead]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompletedWorkoutCreate(BaseModel):
+    day: int = Field(ge=1, le=7)
+
+
+class CompletedWorkoutRead(BaseModel):
+    id: int
+    user_id: int
+    plan_id: int
+    day: int
+    completed_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
