@@ -7,44 +7,82 @@ import SectionCard from "../components/ui/SectionCard";
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const GENERATION_STEPS = [
-  { label: "Analyzing your fitness goal...",        duration: 8 },
-  { label: "Building your weekly split...",          duration: 10 },
-  { label: "Selecting exercises for each day...",    duration: 12 },
-  { label: "Generating step-by-step instructions...",duration: 60 },
-  { label: "Personalizing difficulty & reps...",     duration: 20 },
-  { label: "Finalizing your plan...",                duration: 10 },
+  { label: "Analyzing your fitness goal...",         duration: 8 },
+  { label: "Building your weekly split...",           duration: 10 },
+  { label: "Selecting exercises for each day...",     duration: 12 },
+  { label: "Generating step-by-step instructions...", duration: 60 },
+  { label: "Personalizing difficulty & reps...",      duration: 20 },
+  { label: "Finalizing your plan...",                 duration: 10 },
 ];
 
 const MUSCLE_EMOJI = {
   chest: "💪", back: "🏋️", legs: "🦵", shoulders: "🔝",
-  arms: "💪", biceps: "💪", triceps: "💪", core: "🔥", cardio: "🏃", glutes: "🍑",
-  full_body: "⚡",
+  arms: "💪", biceps: "💪", triceps: "💪", core: "🔥",
+  cardio: "🏃", glutes: "🍑", full_body: "⚡",
 };
 
 const DAY_LABELS = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+const DIFFICULTY_COLORS = {
+  beginner:     { bg: "rgba(34,197,94,0.15)",  border: "rgba(34,197,94,0.4)",  color: "#86efac" },
+  intermediate: { bg: "rgba(251,191,36,0.15)", border: "rgba(251,191,36,0.4)", color: "#fde68a" },
+  advanced:     { bg: "rgba(239,68,68,0.15)",  border: "rgba(239,68,68,0.4)",  color: "#fca5a5" },
+};
+
+// JS getDay(): 0=Sun,1=Mon,...,6=Sat  →  plan day: 1=Mon,...,7=Sun
+function todayPlanDay() {
+  const d = new Date().getDay();
+  return d === 0 ? 7 : d;
+}
 
 function muscleEmoji(group) {
   const key = (group || "").toLowerCase().replace(/\s/g, "_");
   return MUSCLE_EMOJI[key] || "🏋️";
 }
 
-// ─── Loading animation shown during plan generation ───────────────────────────
-function GeneratingAnimation({ onCancel }) {
-  const [stepIndex, setStepIndex]   = useState(0);
-  const [progress, setProgress]     = useState(0);
-  const totalDuration               = GENERATION_STEPS.reduce((s, x) => s + x.duration, 0);
-  const elapsed                     = useRef(0);
-  const stepElapsed                 = useRef(0);
+// ─── Progress ring ────────────────────────────────────────────────────────────
+function ProgressRing({ value, max, color, label, sublabel }) {
+  const pct    = max > 0 ? value / max : 0;
+  const r      = 28;
+  const circ   = 2 * Math.PI * r;
+  const dash   = pct * circ;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.3rem" }}>
+      <svg width={72} height={72}>
+        <circle cx={36} cy={36} r={r} fill="none" stroke="var(--ff-surface-3)" strokeWidth={5} />
+        <circle
+          cx={36} cy={36} r={r} fill="none"
+          stroke={color} strokeWidth={5}
+          strokeDasharray={`${dash} ${circ}`}
+          strokeLinecap="round"
+          transform="rotate(-90 36 36)"
+          style={{ transition: "stroke-dasharray 0.6s ease" }}
+        />
+        <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle"
+          fill={color} fontSize={13} fontWeight={700}>
+          {value}/{max}
+        </text>
+      </svg>
+      <span style={{ color: "var(--ff-text-muted)", fontSize: "0.72rem", textAlign: "center" }}>{sublabel}</span>
+    </div>
+  );
+}
+
+// ─── Loading animation ────────────────────────────────────────────────────────
+function GeneratingAnimation() {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [progress, setProgress]   = useState(0);
+  const totalDuration = GENERATION_STEPS.reduce((s, x) => s + x.duration, 0);
+  const elapsed       = useRef(0);
+  const stepElapsed   = useRef(0);
 
   useEffect(() => {
-    const tick = 200; // ms
+    const tick = 200;
     const timer = setInterval(() => {
       elapsed.current     += tick / 1000;
       stepElapsed.current += tick / 1000;
-
-      const pct = Math.min((elapsed.current / totalDuration) * 100, 95);
-      setProgress(pct);
-
+      setProgress(Math.min((elapsed.current / totalDuration) * 100, 95));
       const stepDur = GENERATION_STEPS[stepIndex]?.duration ?? 10;
       if (stepElapsed.current >= stepDur && stepIndex < GENERATION_STEPS.length - 1) {
         stepElapsed.current = 0;
@@ -54,49 +92,30 @@ function GeneratingAnimation({ onCancel }) {
     return () => clearInterval(timer);
   }, [stepIndex]);
 
-  const currentLabel = GENERATION_STEPS[stepIndex]?.label ?? "Almost done...";
-
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", padding: "3rem 1.5rem", textAlign: "center", gap: "2rem",
-    }}>
-      {/* Pulsing icon */}
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "3rem 1.5rem", textAlign: "center", gap: "2rem" }}>
       <div style={{
         width: 80, height: 80, borderRadius: "50%",
-        background: "var(--ff-accent-soft)",
-        border: "2px solid var(--ff-accent-glow)",
+        background: "var(--ff-accent-soft)", border: "2px solid var(--ff-accent-glow)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "2rem",
-        animation: "ff-pulse 1.6s ease-in-out infinite",
-      }}>
-        🤖
-      </div>
+        fontSize: "2rem", animation: "ff-pulse 1.6s ease-in-out infinite",
+      }}>🤖</div>
 
       <div style={{ maxWidth: 420 }}>
         <p style={{ color: "var(--ff-text)", fontWeight: 700, fontSize: "1.1rem", margin: "0 0 0.4rem" }}>
           Building your personalized plan
         </p>
-        <p style={{ color: "var(--ff-text-dim)", fontSize: "0.9rem", margin: 0, minHeight: "1.4em", transition: "opacity 0.3s" }}>
-          {currentLabel}
+        <p style={{ color: "var(--ff-text-dim)", fontSize: "0.9rem", margin: 0, minHeight: "1.4em" }}>
+          {GENERATION_STEPS[stepIndex]?.label ?? "Almost done..."}
         </p>
       </div>
 
-      {/* Progress bar */}
       <div style={{ width: "100%", maxWidth: 380 }}>
-        <div style={{
-          height: 6, borderRadius: 999,
-          background: "var(--ff-surface-3)",
-          border: "1px solid var(--ff-border-dim)",
-          overflow: "hidden",
-        }}>
+        <div style={{ height: 6, borderRadius: 999, background: "var(--ff-surface-3)", border: "1px solid var(--ff-border-dim)", overflow: "hidden" }}>
           <div style={{
-            height: "100%",
-            width: `${progress}%`,
-            borderRadius: 999,
+            height: "100%", width: `${progress}%`, borderRadius: 999,
             background: "linear-gradient(90deg, var(--ff-accent), var(--ff-cyan))",
-            transition: "width 0.4s ease",
-            boxShadow: "0 0 8px var(--ff-accent-glow)",
+            transition: "width 0.4s ease", boxShadow: "0 0 8px var(--ff-accent-glow)",
           }} />
         </div>
         <p style={{ color: "var(--ff-text-muted)", fontSize: "0.76rem", marginTop: "0.5rem" }}>
@@ -104,14 +123,12 @@ function GeneratingAnimation({ onCancel }) {
         </p>
       </div>
 
-      {/* Steps checklist */}
       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", width: "100%", maxWidth: 380, textAlign: "left" }}>
         {GENERATION_STEPS.map((step, i) => (
           <div key={i} style={{
             display: "flex", alignItems: "center", gap: "0.65rem",
             color: i < stepIndex ? "var(--ff-green)" : i === stepIndex ? "var(--ff-text)" : "var(--ff-text-muted)",
-            fontSize: "0.85rem",
-            transition: "color 0.3s",
+            fontSize: "0.85rem", transition: "color 0.3s",
           }}>
             <span style={{ fontSize: "0.95rem", width: 18, textAlign: "center" }}>
               {i < stepIndex ? "✓" : i === stepIndex ? "›" : "·"}
@@ -127,14 +144,15 @@ function GeneratingAnimation({ onCancel }) {
 // ─── Single exercise card ─────────────────────────────────────────────────────
 function ExerciseCard({ exercise, allExpanded }) {
   const [expanded, setExpanded] = useState(false);
-  const steps = exercise.instructions ? exercise.instructions.split(" | ") : [];
+  const steps      = exercise.instructions ? exercise.instructions.split(" | ") : [];
   const hasDetails = steps.length > 0 || !!exercise.image_url;
+  const diffStyle  = DIFFICULTY_COLORS[exercise.difficulty] || {};
 
   useEffect(() => { setExpanded(allExpanded); }, [allExpanded]);
 
   return (
     <div className="ff-card ff-card-hover" style={{ padding: "1rem 1.2rem" }} onClick={() => setExpanded((e) => !e)}>
-      <div className="ff-flex-between" style={{ marginBottom: steps.length ? "0.5rem" : 0 }}>
+      <div className="ff-flex-between" style={{ marginBottom: hasDetails && expanded ? "0.5rem" : 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
           <span style={{ fontSize: "1.3rem" }}>{muscleEmoji(exercise.muscle_group)}</span>
           <div>
@@ -145,6 +163,15 @@ function ExerciseCard({ exercise, allExpanded }) {
         <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
           <span className="ff-tag ff-tag-blue">{exercise.sets} sets</span>
           <span className="ff-tag ff-tag-amber">{exercise.reps} reps</span>
+          {/* 5. Difficulty badge */}
+          {exercise.difficulty && (
+            <span style={{
+              fontSize: "0.7rem", fontWeight: 600, padding: "2px 7px", borderRadius: 999,
+              background: diffStyle.bg, border: `1px solid ${diffStyle.border}`, color: diffStyle.color,
+            }}>
+              {exercise.difficulty}
+            </span>
+          )}
           {hasDetails && (
             <span style={{ color: "var(--ff-text-muted)", fontSize: "0.8rem", marginLeft: "0.3rem" }}>
               {expanded ? "▲" : "▼"}
@@ -179,9 +206,7 @@ function ExerciseCard({ exercise, allExpanded }) {
           ))}
           {exercise.youtube_url && (
             <a
-              href={exercise.youtube_url}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={exercise.youtube_url} target="_blank" rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className="ff-btn ff-btn-ghost ff-btn-sm"
               style={{ alignSelf: "flex-start", marginTop: "0.4rem" }}
@@ -196,20 +221,46 @@ function ExerciseCard({ exercise, allExpanded }) {
 }
 
 // ─── Day section ──────────────────────────────────────────────────────────────
-function DaySection({ day, exercises, completedDays, onMarkComplete, marking, allExpanded }) {
-  const isDone = completedDays.includes(day);
+function DaySection({ day, exercises, completedDays, onMarkComplete, onUnmark, marking, allExpanded, dayRef }) {
+  const isDone  = completedDays.includes(day);
+  const isToday = day === todayPlanDay();
+
+  // 3. Muscle group summary
+  const muscleGroups = [...new Set(exercises.map((e) => e.muscle_group))];
 
   return (
-    <div className="ff-card" style={{ overflow: "visible" }}>
+    <div
+      ref={dayRef}
+      className="ff-card"
+      style={{
+        overflow: "visible",
+        // 1. Highlight today
+        border: isToday ? "1.5px solid var(--ff-accent)" : undefined,
+        boxShadow: isToday ? "0 0 16px var(--ff-accent-glow)" : undefined,
+      }}
+    >
       <div className="ff-accent-bar" />
       <div style={{ padding: "1.2rem 1.5rem" }}>
-        <div className="ff-flex-between" style={{ marginBottom: "1rem" }}>
+        <div className="ff-flex-between" style={{ marginBottom: "0.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
             <span className="ff-tag ff-tag-blue" style={{ fontSize: "0.8rem" }}>Day {day}</span>
             <span style={{ color: "var(--ff-text)", fontWeight: 700 }}>{DAY_LABELS[day]}</span>
+            {isToday && (
+              <span style={{
+                fontSize: "0.7rem", fontWeight: 600, padding: "2px 8px", borderRadius: 999,
+                background: "var(--ff-accent-soft)", border: "1px solid var(--ff-accent-glow)",
+                color: "var(--ff-accent)",
+              }}>Today</span>
+            )}
           </div>
           {isDone ? (
-            <span className="ff-tag ff-tag-green">✓ Completed</span>
+            <button
+              className="ff-btn ff-btn-ghost ff-btn-sm"
+              onClick={() => onUnmark(day)}
+              style={{ color: "var(--ff-green)", borderColor: "var(--ff-green)" }}
+            >
+              ✓ Completed — Undo
+            </button>
           ) : (
             <button
               className="ff-btn ff-btn-green ff-btn-sm"
@@ -220,9 +271,37 @@ function DaySection({ day, exercises, completedDays, onMarkComplete, marking, al
             </button>
           )}
         </div>
+
+        {/* 3. Muscle group chips */}
+        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+          {muscleGroups.map((g) => (
+            <span key={g} style={{ fontSize: "0.72rem", color: "var(--ff-text-muted)", display: "flex", alignItems: "center", gap: "0.2rem" }}>
+              {muscleEmoji(g)} {g}
+            </span>
+          ))}
+        </div>
+
         <div className="ff-stack">
           {exercises.map((ex) => <ExerciseCard key={ex.id} exercise={ex} allExpanded={allExpanded} />)}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Rest day card ────────────────────────────────────────────────────────────
+function RestDayCard({ day }) {
+  const isToday = day === todayPlanDay();
+  return (
+    <div className="ff-card" style={{
+      overflow: "visible", opacity: 0.6,
+      border: isToday ? "1.5px solid var(--ff-accent)" : undefined,
+    }}>
+      <div style={{ padding: "1rem 1.5rem", display: "flex", alignItems: "center", gap: "0.8rem" }}>
+        <span className="ff-tag ff-tag-blue" style={{ fontSize: "0.8rem" }}>Day {day}</span>
+        <span style={{ color: "var(--ff-text)", fontWeight: 700 }}>{DAY_LABELS[day]}</span>
+        {isToday && <span style={{ fontSize: "0.7rem", fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "var(--ff-accent-soft)", border: "1px solid var(--ff-accent-glow)", color: "var(--ff-accent)" }}>Today</span>}
+        <span style={{ marginLeft: "auto", color: "var(--ff-text-muted)", fontSize: "0.85rem" }}>😴 Rest Day</span>
       </div>
     </div>
   );
@@ -239,12 +318,10 @@ export default function Workouts() {
   const [completedDays, setCompleted] = useState([]);
   const [marking, setMarking]         = useState(null);
   const [allExpanded, setAllExpanded] = useState(false);
+  const todayRef                      = useRef(null);
 
-  const headers = () => ({
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
-  });
+  const headers = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
 
-  // Fetch plan + completions on mount
   useEffect(() => {
     if (!isLoggedIn) return;
     setLoading(true);
@@ -253,10 +330,16 @@ export default function Workouts() {
       axios.get(`${API}/api/v1/workout/complete`, { headers: headers() }).catch(() => ({ data: [] })),
     ]).then(([planRes, compRes]) => {
       if (planRes?.status === 200) setPlan(planRes.data);
-      const days = (compRes?.data || []).map((c) => c.day);
-      setCompleted(days);
+      setCompleted((compRes?.data || []).map((c) => c.day));
     }).finally(() => setLoading(false));
   }, [isLoggedIn]);
+
+  // 7. Smooth scroll to today on load
+  useEffect(() => {
+    if (todayRef.current) {
+      setTimeout(() => todayRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+    }
+  }, [plan]);
 
   async function handleGenerate() {
     setError(null);
@@ -265,8 +348,7 @@ export default function Workouts() {
       const res = await axios.post(`${API}/api/v1/workout/plan`, {}, { headers: headers() });
       setPlan(res.data);
     } catch (e) {
-      const msg = e.response?.data?.detail || "Failed to generate plan.";
-      setError(msg);
+      setError(e.response?.data?.detail || "Failed to generate plan.");
     } finally {
       setGenerating(false);
     }
@@ -292,7 +374,16 @@ export default function Workouts() {
     }
   }
 
-  // Group exercises by day
+  // 2. Unmark complete
+  async function handleUnmark(day) {
+    try {
+      await axios.delete(`${API}/api/v1/workout/complete/${day}`, { headers: headers() });
+      setCompleted((prev) => prev.filter((d) => d !== day));
+    } catch (e) {
+      // ignore
+    }
+  }
+
   const byDay = plan
     ? plan.exercises.reduce((acc, ex) => {
         if (!acc[ex.day]) acc[ex.day] = [];
@@ -300,9 +391,16 @@ export default function Workouts() {
         return acc;
       }, {})
     : {};
-  const days = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+  const trainingDays = Object.keys(byDay).map(Number).sort((a, b) => a - b);
 
-  // ── Not logged in ──────────────────────────────────────────────────────────
+  // 6. Build full week with rest days between first and last training day
+  const allDays = trainingDays.length > 0
+    ? Array.from({ length: trainingDays[trainingDays.length - 1] - trainingDays[0] + 1 },
+        (_, i) => trainingDays[0] + i)
+    : [];
+
+  const today = todayPlanDay();
+
   if (!isLoggedIn) {
     return (
       <AppPage eyebrow="TRAINING" title="Workout" accent="Plans"
@@ -320,7 +418,6 @@ export default function Workouts() {
     );
   }
 
-  // ── Loading initial fetch ─────────────────────────────────────────────────
   if (loading) {
     return (
       <AppPage eyebrow="TRAINING" title="Workout" accent="Plans" subtitle="">
@@ -337,14 +434,12 @@ export default function Workouts() {
     <AppPage eyebrow="TRAINING" title="Workout" accent="Plans"
       subtitle="Your AI-generated plan tailored to your fitness goal and activity level.">
 
-      {/* ── Generating animation ── */}
       {generating && (
         <SectionCard title="Generating Your Plan">
           <GeneratingAnimation />
         </SectionCard>
       )}
 
-      {/* ── Error ── */}
       {error && !generating && (
         <div style={{
           background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
@@ -355,44 +450,42 @@ export default function Workouts() {
         </div>
       )}
 
-      {/* ── No plan yet ── */}
       {!plan && !generating && (
         <SectionCard title="No Plan Yet">
           <p className="ff-muted" style={{ lineHeight: 1.7 }}>
             You don't have a workout plan yet. Complete the quiz first, then generate your personalized plan.
           </p>
           <div className="ff-actions">
-            <button className="ff-btn ff-btn-primary" onClick={handleGenerate}>
-              Generate My Plan
-            </button>
+            <button className="ff-btn ff-btn-primary" onClick={handleGenerate}>Generate My Plan</button>
             <Link to="/quiz" className="ff-btn ff-btn-ghost">Go to Quiz</Link>
           </div>
         </SectionCard>
       )}
 
-      {/* ── Plan exists ── */}
       {plan && !generating && (
         <>
-          {/* Summary bar */}
           <SectionCard title="Your Plan">
-            <div className="ff-grid ff-grid-4" style={{ marginBottom: "1rem" }}>
-              <div className="ff-kpi">
-                <div className="ff-kpi-value" style={{ color: "var(--ff-accent)" }}>{days.length}</div>
-                <div className="ff-kpi-label">Training Days</div>
-              </div>
-              <div className="ff-kpi">
-                <div className="ff-kpi-value" style={{ color: "var(--ff-green)" }}>{plan.exercises.length}</div>
-                <div className="ff-kpi-label">Total Exercises</div>
-              </div>
-              <div className="ff-kpi">
-                <div className="ff-kpi-value" style={{ color: "var(--ff-amber)" }}>{completedDays.length}</div>
-                <div className="ff-kpi-label">Completed This Week</div>
-              </div>
-              <div className="ff-kpi">
-                <div className="ff-kpi-value" style={{ color: "var(--ff-cyan)" }}>
-                  {days.length > 0 ? Math.round((completedDays.length / days.length) * 100) : 0}%
+            {/* 4. Progress ring + KPIs */}
+            <div style={{ display: "flex", alignItems: "center", gap: "2rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+              <ProgressRing
+                value={completedDays.length}
+                max={trainingDays.length}
+                color="var(--ff-accent)"
+                sublabel="Week Progress"
+              />
+              <div className="ff-grid ff-grid-3" style={{ flex: 1 }}>
+                <div className="ff-kpi">
+                  <div className="ff-kpi-value" style={{ color: "var(--ff-accent)" }}>{trainingDays.length}</div>
+                  <div className="ff-kpi-label">Training Days</div>
                 </div>
-                <div className="ff-kpi-label">Week Progress</div>
+                <div className="ff-kpi">
+                  <div className="ff-kpi-value" style={{ color: "var(--ff-green)" }}>{plan.exercises.length}</div>
+                  <div className="ff-kpi-label">Total Exercises</div>
+                </div>
+                <div className="ff-kpi">
+                  <div className="ff-kpi-value" style={{ color: "var(--ff-amber)" }}>{completedDays.length}</div>
+                  <div className="ff-kpi-label">Completed</div>
+                </div>
               </div>
             </div>
             <div className="ff-actions">
@@ -405,24 +498,29 @@ export default function Workouts() {
             </div>
           </SectionCard>
 
-          {/* Days */}
+          {/* 6. Full week with rest days */}
           <div className="ff-stack" style={{ gap: "1.2rem" }}>
-            {days.map((day) => (
-              <DaySection
-                key={day}
-                day={day}
-                exercises={byDay[day]}
-                completedDays={completedDays}
-                onMarkComplete={handleMarkComplete}
-                marking={marking}
-                allExpanded={allExpanded}
-              />
-            ))}
+            {allDays.map((day) =>
+              byDay[day] ? (
+                <DaySection
+                  key={day}
+                  day={day}
+                  exercises={byDay[day]}
+                  completedDays={completedDays}
+                  onMarkComplete={handleMarkComplete}
+                  onUnmark={handleUnmark}
+                  marking={marking}
+                  allExpanded={allExpanded}
+                  dayRef={day === today ? todayRef : null}
+                />
+              ) : (
+                <RestDayCard key={day} day={day} />
+              )
+            )}
           </div>
         </>
       )}
 
-      {/* Pulse keyframe injected inline */}
       <style>{`
         @keyframes ff-pulse {
           0%, 100% { transform: scale(1);   box-shadow: 0 0 0   0   var(--ff-accent-glow); }
