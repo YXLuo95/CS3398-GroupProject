@@ -14,7 +14,7 @@ from src.core.llm import generate_exercise_instructions
 from src.model import User, WorkoutPlan
 from src.schemas import WorkoutPlanRead, CompletedWorkoutCreate, CompletedWorkoutRead
 from src.crud.quiz import get_goal_by_user_id
-from src.crud.workout import get_plan_by_user_id, create_plan, delete_plan, create_completion, get_completions_by_user, get_completion_for_day
+from src.crud.workout import get_plan_by_user_id, create_plan, delete_plan, create_completion, get_completions_by_user, get_completion_for_day, delete_completion
 
 router = APIRouter()
 
@@ -92,6 +92,22 @@ async def mark_complete(
         raise HTTPException(status_code=400, detail=f"Day {data.day} already marked complete.")
 
     return await create_completion(session, current_user.id, plan.id, data.day)
+
+
+@router.delete("/complete/{day}", status_code=status.HTTP_204_NO_CONTENT)
+async def unmark_complete(
+    day: int,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Unmark a workout day as complete."""
+    plan = await get_plan_by_user_id(session, current_user.id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="No workout plan found.")
+    completion = await get_completion_for_day(session, current_user.id, plan.id, day)
+    if not completion:
+        raise HTTPException(status_code=404, detail=f"Day {day} is not marked complete.")
+    await delete_completion(session, completion)
 
 
 @router.get("/complete", response_model=List[CompletedWorkoutRead])

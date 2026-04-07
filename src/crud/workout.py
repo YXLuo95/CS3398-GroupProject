@@ -90,6 +90,12 @@ async def get_completions_by_user(
     return result.scalars().all()
 
 
+async def delete_completion(session: AsyncSession, completion: CompletedWorkout) -> None:
+    """Remove a completed workout day record."""
+    await session.delete(completion)
+    await session.commit()
+
+
 async def get_completion_for_day(
     session: AsyncSession,
     user_id: int,
