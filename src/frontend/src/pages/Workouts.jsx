@@ -125,10 +125,12 @@ function GeneratingAnimation({ onCancel }) {
 }
 
 // ─── Single exercise card ─────────────────────────────────────────────────────
-function ExerciseCard({ exercise }) {
+function ExerciseCard({ exercise, allExpanded }) {
   const [expanded, setExpanded] = useState(false);
   const steps = exercise.instructions ? exercise.instructions.split(" | ") : [];
   const hasDetails = steps.length > 0 || !!exercise.image_url;
+
+  useEffect(() => { setExpanded(allExpanded); }, [allExpanded]);
 
   return (
     <div className="ff-card ff-card-hover" style={{ padding: "1rem 1.2rem" }} onClick={() => setExpanded((e) => !e)}>
@@ -194,7 +196,7 @@ function ExerciseCard({ exercise }) {
 }
 
 // ─── Day section ──────────────────────────────────────────────────────────────
-function DaySection({ day, exercises, completedDays, onMarkComplete, marking }) {
+function DaySection({ day, exercises, completedDays, onMarkComplete, marking, allExpanded }) {
   const isDone = completedDays.includes(day);
 
   return (
@@ -219,7 +221,7 @@ function DaySection({ day, exercises, completedDays, onMarkComplete, marking }) 
           )}
         </div>
         <div className="ff-stack">
-          {exercises.map((ex) => <ExerciseCard key={ex.id} exercise={ex} />)}
+          {exercises.map((ex) => <ExerciseCard key={ex.id} exercise={ex} allExpanded={allExpanded} />)}
         </div>
       </div>
     </div>
@@ -236,6 +238,7 @@ export default function Workouts() {
   const [error, setError]             = useState(null);
   const [completedDays, setCompleted] = useState([]);
   const [marking, setMarking]         = useState(null);
+  const [allExpanded, setAllExpanded] = useState(false);
 
   const headers = () => ({
     Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -393,6 +396,9 @@ export default function Workouts() {
               </div>
             </div>
             <div className="ff-actions">
+              <button className="ff-btn ff-btn-ghost ff-btn-sm" onClick={() => setAllExpanded((v) => !v)}>
+                {allExpanded ? "Collapse All" : "Expand All"}
+              </button>
               <button className="ff-btn ff-btn-ghost ff-btn-sm" onClick={handleDelete}>
                 Regenerate Plan
               </button>
@@ -409,6 +415,7 @@ export default function Workouts() {
                 completedDays={completedDays}
                 onMarkComplete={handleMarkComplete}
                 marking={marking}
+                allExpanded={allExpanded}
               />
             ))}
           </div>
