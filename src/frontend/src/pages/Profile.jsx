@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import AppPage from "../components/ui/AppPage";
+import SectionCard from "../components/ui/SectionCard";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -143,6 +145,18 @@ export default function Profile() {
       </div>
     );
   }
+
+  const bmi  = parseFloat(user.bmi)?.toFixed(1);
+  const bmr  = Math.round(user.bmr);
+  const tdee = Math.round(user.tdee);
+
+  const bmiCategory = (b) => {
+    if (b < 18.5) return { label: "Underweight", color: "var(--ff-cyan)" };
+    if (b < 25)   return { label: "Normal",      color: "var(--ff-green)" };
+    if (b < 30)   return { label: "Overweight",  color: "var(--ff-amber)" };
+    return              { label: "Obese",         color: "#ef4444" };
+  };
+  const bmiInfo = bmiCategory(parseFloat(bmi));
 
   return (
     <div

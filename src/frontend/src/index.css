@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap");
+
 /* =========================================================
    Global Reset
    Removes default browser margins and ensures consistent sizing
@@ -7,8 +9,8 @@ html, body {
   padding: 0;
   width: 100%;
   box-sizing: border-box;
-  background-color: #0b1727;
-  font-family: Arial, sans-serif;
+  background-color: #0b0f19;
+  font-family: "Sora", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
 *, *::before, *::after {

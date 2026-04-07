@@ -1,420 +1,193 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import AppPage from "../components/ui/AppPage";
+import SectionCard from "../components/ui/SectionCard";
 
-// =======================================================
-// Mock Data - Replace with API calls later
-// =======================================================
-const mockUser = {
-  name: 'Alex Johnson',
-  email: 'alex@example.com'
-};
+const mockUser = { name: "Alex Johnson", email: "alex@example.com" };
 
 const mockQuizResults = {
-  goal: 'lose_weight', // Options: lose_weight, gain_muscle, improve_endurance, general_fitness
+  goal: "lose_weight",
   workoutFrequency: 4,
-  dietPreference: 'balanced',
+  dietPreference: "balanced",
   calorieTarget: 2200,
   proteinTarget: 150,
   carbsTarget: 200,
   fatsTarget: 73,
-  focusAreas: ['strength', 'cardio', 'fat_loss']
+  focusAreas: ["strength", "cardio", "fat_loss"],
 };
 
 const mockActivityLog = [
-  { id: 1, action: 'Completed quiz', timestamp: '2 hours ago', icon: '✅' },
-  { id: 2, action: 'Viewed workout plan', timestamp: '1 day ago', icon: '💪' },
-  { id: 3, action: 'Logged today\'s workout', timestamp: '2 days ago', icon: '🏋️' },
-  { id: 4, action: 'Updated nutrition goal', timestamp: '3 days ago', icon: '🥗' }
+  { id: 1, action: "Completed fitness quiz", timestamp: "2 hours ago", icon: "✅" },
+  { id: 2, action: "Viewed Strength Plan", timestamp: "1 day ago", icon: "💪" },
+  { id: 3, action: "Logged today's workout", timestamp: "2 days ago", icon: "🏋️" },
+  { id: 4, action: "Updated nutrition goal", timestamp: "3 days ago", icon: "🥗" },
 ];
 
-const mockStats = {
-  workoutsCompleted: 12,
-  currentStreak: 5,
-  caloriesTarget: mockQuizResults.calorieTarget,
-  proteinTarget: mockQuizResults.proteinTarget,
-  goalType: mockQuizResults.goal.replace('_', ' ')
+const goalDisplay = {
+  lose_weight: "Lose Weight",
+  gain_muscle: "Gain Muscle",
+  improve_endurance: "Improve Endurance",
+  general_fitness: "General Fitness",
 };
 
-// =======================================================
-// Helper Functions
-// =======================================================
-const getGoalDisplay = (goal) => {
-  const goals = {
-    lose_weight: 'Lose Weight',
-    gain_muscle: 'Gain Muscle',
-    improve_endurance: 'Improve Endurance',
-    general_fitness: 'General Fitness'
-  };
-  return goals[goal] || 'General Fitness';
+const goalMotivation = {
+  lose_weight: "Every step counts towards your transformation!",
+  gain_muscle: "Building strength, one rep at a time.",
+  improve_endurance: "Push your limits and discover your potential.",
+  general_fitness: "Your fitness journey starts here.",
 };
 
-const getMotivationalMessage = (goal) => {
-  const messages = {
-    lose_weight: 'Every step counts towards your transformation!',
-    gain_muscle: 'Building strength, one rep at a time!',
-    improve_endurance: 'Push your limits and discover your potential!',
-    general_fitness: 'Your fitness journey starts here!'
-  };
-  return messages[goal] || 'Your fitness journey starts here!';
+const workoutRecs = {
+  lose_weight: { split: "4-Day Split", freq: "4x/week", focus: "HIIT + compound lifts" },
+  gain_muscle: { split: "Push/Pull/Legs", freq: "5-6x/week", focus: "Progressive overload" },
+  improve_endurance: { split: "Circuit Training", freq: "5x/week", focus: "Cardio + functional" },
+  general_fitness: { split: "Full Body", freq: "3-4x/week", focus: "Balanced training" },
 };
 
-const getWorkoutRecommendations = (goal) => {
-  const recommendations = {
-    lose_weight: {
-      split: '4-Day Split',
-      frequency: '4x per week',
-      focus: 'HIIT cardio + strength training',
-      description: 'Combine high-intensity cardio with compound lifts for optimal fat loss'
-    },
-    gain_muscle: {
-      split: 'Push/Pull/Legs',
-      frequency: '5-6x per week',
-      focus: 'Progressive overload + hypertrophy',
-      description: 'Focus on compound movements with progressive weight increases'
-    },
-    improve_endurance: {
-      split: 'Circuit Training',
-      frequency: '5x per week',
-      focus: 'Cardio + functional training',
-      description: 'Build stamina with varied intensity and recovery periods'
-    },
-    general_fitness: {
-      split: 'Full Body',
-      frequency: '3-4x per week',
-      focus: 'Balanced training',
-      description: 'Comprehensive workouts covering all major muscle groups'
-    }
-  };
-  return recommendations[goal] || recommendations.general_fitness;
+const dietTips = {
+  lose_weight: ["Lean proteins first", "Complex carbs over simple", "Healthy fats in moderation"],
+  gain_muscle: ["High protein intake (1.6-2.2g/kg)", "Calorie surplus with whole foods", "Carbs pre/post workout"],
+  improve_endurance: ["Carb-focused pre-workout", "Electrolytes during long sessions", "Moderate protein"],
+  general_fitness: ["Varied protein sources", "Whole grain carbohydrates", "Consistent meal timing"],
 };
 
-const getDietRecommendations = (goal) => {
-  const recommendations = {
-    lose_weight: {
-      focus: 'Calorie deficit with high protein',
-      tips: ['Prioritize lean proteins', 'Include complex carbs', 'Healthy fats in moderation']
-    },
-    gain_muscle: {
-      focus: 'Calorie surplus with ample protein',
-      tips: ['High protein intake', 'Complex carbohydrates', 'Healthy fats for hormones']
-    },
-    improve_endurance: {
-      focus: 'Carb-focused with moderate protein',
-      tips: ['Complex carbs for energy', 'Moderate protein', 'Essential fats']
-    },
-    general_fitness: {
-      focus: 'Balanced macronutrients',
-      tips: ['Varied protein sources', 'Whole grain carbs', 'Healthy fats']
-    }
-  };
-  return recommendations[goal] || recommendations.general_fitness;
+const fitnessTips = {
+  lose_weight: ["Maintain a 300-500 kcal daily deficit", "Use progressive overload to protect muscle", "Track sleep since poor recovery slows fat loss"],
+  gain_muscle: ["Increase weight when you hit the top of your rep range", "Eat within 2 hours post-workout", "Deload every 6-8 weeks"],
+  improve_endurance: ["Mix steady-state and interval cardio", "Stay hydrated and monitor electrolytes", "Include mobility work weekly"],
+  general_fitness: ["Consistency beats intensity long-term", "Balance strength, cardio, and flexibility", "Listen to your body and adjust"],
 };
 
-const getFitnessTips = (goal) => {
-  const tips = {
-    lose_weight: [
-      'Stay in a moderate calorie deficit (300-500 kcal below maintenance)',
-      'Prioritize protein intake to preserve muscle mass',
-      'Include both cardio and strength training for optimal results'
-    ],
-    gain_muscle: [
-      'Focus on progressive overload - gradually increase weights',
-      'Ensure adequate protein intake (1.6-2.2g per kg bodyweight)',
-      'Allow proper recovery between intense training sessions'
-    ],
-    improve_endurance: [
-      'Incorporate both steady-state and interval training',
-      'Stay hydrated and maintain electrolyte balance',
-      'Include mobility work to prevent injuries'
-    ],
-    general_fitness: [
-      'Consistency is key - aim for regular training sessions',
-      'Balance different types of exercise',
-      'Listen to your body and adjust intensity as needed'
-    ]
-  };
-  return tips[goal] || tips.general_fitness;
-};
-
-// =======================================================
-// Main Dashboard Component
-// =======================================================
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user] = useState(mockUser);
-  const [quizResults] = useState(mockQuizResults);
-  const [activityLog] = useState(mockActivityLog);
-  const [stats] = useState(mockStats);
+  const [quiz] = useState(mockQuizResults);
+  const [log] = useState(mockActivityLog);
 
-  // Shared styles
-  const styles = {
-    container: {
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0b1727 0%, #1e293b 100%)',
-      padding: '20px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    },
-    card: {
-      background: 'rgba(255, 255, 255, 0.05)',
-      borderRadius: '16px',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-      backdropFilter: 'blur(10px)',
-      overflow: 'hidden'
-    },
-    accentBar: {
-      height: '4px',
-      background: 'linear-gradient(90deg, #3b82f6, #06b6d4)'
-    },
-    button: {
-      padding: '12px 24px',
-      borderRadius: '8px',
-      border: 'none',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      fontSize: '14px'
-    },
-    primaryButton: {
-      background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
-      color: 'white'
-    },
-    secondaryButton: {
-      background: 'rgba(255, 255, 255, 0.1)',
-      color: 'white',
-      border: '1px solid rgba(255, 255, 255, 0.2)'
-    },
-    statCard: {
-      background: 'rgba(0, 0, 0, 0.2)',
-      borderRadius: '12px',
-      padding: '20px',
-      textAlign: 'center',
-      border: '1px solid rgba(255, 255, 255, 0.05)'
-    }
-  };
-
-  const workoutRecs = getWorkoutRecommendations(quizResults.goal);
-  const dietRecs = getDietRecommendations(quizResults.goal);
-  const fitnessTips = getFitnessTips(quizResults.goal);
+  const goal = quiz.goal;
+  const rec = workoutRecs[goal] || workoutRecs.general_fitness;
+  const tips = fitnessTips[goal] || fitnessTips.general_fitness;
+  const diet = dietTips[goal] || dietTips.general_fitness;
 
   return (
-    <div style={styles.container}>
-      {/* Welcome / Hero Section */}
-      <div style={{ ...styles.card, padding: '40px', marginBottom: '30px', textAlign: 'center' }}>
-        <div style={styles.accentBar} />
-        <h1 style={{ color: 'white', fontSize: '2.5rem', margin: '20px 0', fontWeight: '700' }}>
-          Welcome back, {user.name}! 🦅
-        </h1>
-        <p style={{ color: '#94a3b8', fontSize: '1.2rem', margin: '10px 0 20px' }}>
-          {getMotivationalMessage(quizResults.goal)}
-        </p>
-        <div style={{
-          display: 'inline-block',
-          background: 'rgba(59, 130, 246, 0.1)',
-          color: '#3b82f6',
-          padding: '8px 16px',
-          borderRadius: '20px',
-          fontWeight: '600',
-          border: '1px solid rgba(59, 130, 246, 0.3)'
-        }}>
-          🎯 Goal: {getGoalDisplay(quizResults.goal)}
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px', marginBottom: '30px' }}>
-
-        {/* Personalized Workout Recommendations */}
-        <div style={styles.card}>
-          <div style={styles.accentBar} />
-          <div style={{ padding: '30px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ color: 'white', margin: 0, fontSize: '1.5rem' }}>💪 Workout Plan</h2>
-              <button
-                style={{ ...styles.button, ...styles.primaryButton }}
-                onClick={() => navigate('/workouts')}
-              >
-                View Full Plan
-              </button>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-              <div style={styles.statCard}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3b82f6' }}>{workoutRecs.split}</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Workout Split</div>
-              </div>
-              <div style={styles.statCard}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#06b6d4' }}>{workoutRecs.frequency}</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Frequency</div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <h3 style={{ color: 'white', fontSize: '1.1rem', margin: '0 0 8px 0' }}>Focus Areas</h3>
-              <div style={{ color: '#cbd5e1', fontSize: '0.95rem' }}>{workoutRecs.focus}</div>
-            </div>
-
-            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.5' }}>
-              {workoutRecs.description}
-            </p>
+    <AppPage
+      eyebrow="DASHBOARD"
+      title={`Welcome back, ${user.name}`}
+      subtitle={goalMotivation[goal] || goalMotivation.general_fitness}
+      actions={
+        <span className="ff-tag ff-tag-blue" style={{ fontSize: "0.82rem" }}>
+          Goal: {goalDisplay[goal] || "General Fitness"}
+        </span>
+      }
+    >
+      <SectionCard title="Your Stats This Month">
+        <div className="ff-grid ff-grid-4">
+          <div className="ff-kpi">
+            <div className="ff-kpi-value" style={{ color: "var(--ff-green)" }}>12</div>
+            <div className="ff-kpi-label">Workouts Done</div>
+          </div>
+          <div className="ff-kpi">
+            <div className="ff-kpi-value" style={{ color: "var(--ff-amber)" }}>5</div>
+            <div className="ff-kpi-label">Day Streak</div>
+          </div>
+          <div className="ff-kpi">
+            <div className="ff-kpi-value" style={{ color: "var(--ff-cyan)" }}>{quiz.calorieTarget}</div>
+            <div className="ff-kpi-label">Daily Calories</div>
+          </div>
+          <div className="ff-kpi">
+            <div className="ff-kpi-value" style={{ color: "var(--ff-purple)" }}>{quiz.proteinTarget}g</div>
+            <div className="ff-kpi-label">Daily Protein</div>
           </div>
         </div>
+      </SectionCard>
 
-        {/* Personalized Diet Plan */}
-        <div style={styles.card}>
-          <div style={styles.accentBar} />
-          <div style={{ padding: '30px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ color: 'white', margin: 0, fontSize: '1.5rem' }}>🥗 Nutrition Plan</h2>
-              <button
-                style={{ ...styles.button, ...styles.primaryButton }}
-                onClick={() => navigate('/nutrition')}
-              >
-                View Full Plan
-              </button>
+      <div className="ff-grid ff-grid-2 ff-section">
+        <SectionCard title="Workout Plan">
+          <div className="ff-grid ff-grid-2" style={{ marginBottom: "1rem" }}>
+            <div className="ff-inset" style={{ textAlign: "center" }}>
+              <div style={{ fontWeight: 700, color: "#f8fbff", fontSize: "1rem" }}>{rec.split}</div>
+              <div style={{ color: "#a7b4c9", fontSize: "0.78rem", marginTop: "0.2rem" }}>Split</div>
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
-              <div style={styles.statCard}>
-                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#10b981' }}>{quizResults.calorieTarget}</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Calories</div>
-              </div>
-              <div style={styles.statCard}>
-                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#f59e0b' }}>{quizResults.proteinTarget}g</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Protein</div>
-              </div>
-              <div style={styles.statCard}>
-                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#8b5cf6' }}>{quizResults.fatsTarget}g</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Fats</div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <h3 style={{ color: 'white', fontSize: '1.1rem', margin: '0 0 8px 0' }}>Focus</h3>
-              <div style={{ color: '#cbd5e1', fontSize: '0.95rem' }}>{dietRecs.focus}</div>
-            </div>
-
-            <div>
-              <h3 style={{ color: 'white', fontSize: '1.1rem', margin: '0 0 10px 0' }}>Key Tips</h3>
-              <ul style={{ color: '#94a3b8', fontSize: '0.9rem', paddingLeft: '20px', margin: 0 }}>
-                {dietRecs.tips.map((tip, index) => (
-                  <li key={index} style={{ marginBottom: '5px' }}>{tip}</li>
-                ))}
-              </ul>
+            <div className="ff-inset" style={{ textAlign: "center" }}>
+              <div style={{ fontWeight: 700, color: "var(--ff-cyan)", fontSize: "1rem" }}>{rec.freq}</div>
+              <div style={{ color: "#a7b4c9", fontSize: "0.78rem", marginTop: "0.2rem" }}>Frequency</div>
             </div>
           </div>
-        </div>
+          <p style={{ color: "#a7b4c9", fontSize: "0.88rem", lineHeight: 1.55, margin: "0 0 0.8rem" }}>
+            <strong style={{ color: "#f8fbff" }}>Focus:</strong> {rec.focus}
+          </p>
+          <button className="ff-btn ff-btn-primary ff-btn-sm" onClick={() => navigate("/workouts")}>
+            View Full Plan →
+          </button>
+        </SectionCard>
+
+        <SectionCard title="Nutrition Plan">
+          <div className="ff-grid ff-grid-3" style={{ marginBottom: "1rem" }}>
+            {[
+              { val: quiz.calorieTarget, lbl: "cal", color: "var(--ff-green)" },
+              { val: `${quiz.proteinTarget}g`, lbl: "protein", color: "var(--ff-amber)" },
+              { val: `${quiz.fatsTarget}g`, lbl: "fats", color: "var(--ff-purple)" },
+            ].map(({ val, lbl, color }) => (
+              <div key={lbl} className="ff-inset" style={{ textAlign: "center" }}>
+                <div style={{ fontWeight: 700, color, fontSize: "1rem" }}>{val}</div>
+                <div style={{ color: "#a7b4c9", fontSize: "0.75rem", marginTop: "0.2rem" }}>{lbl}</div>
+              </div>
+            ))}
+          </div>
+          <ul style={{ color: "#a7b4c9", fontSize: "0.86rem", paddingLeft: "1.1rem", margin: "0 0 0.8rem", lineHeight: 1.75 }}>
+            {diet.map((tip) => (
+              <li key={tip}>{tip}</li>
+            ))}
+          </ul>
+          <button className="ff-btn ff-btn-primary ff-btn-sm" onClick={() => navigate("/nutrition")}>
+            View Nutrition →
+          </button>
+        </SectionCard>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', marginBottom: '30px' }}>
-
-        {/* Activity Log Section */}
-        <div style={styles.card}>
-          <div style={styles.accentBar} />
-          <div style={{ padding: '30px' }}>
-            <h2 style={{ color: 'white', margin: '0 0 20px 0', fontSize: '1.5rem' }}>📋 Recent Activity</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              {activityLog.map((activity) => (
-                <div key={activity.id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '15px',
-                  background: 'rgba(0, 0, 0, 0.2)',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.05)'
-                }}>
-                  <span style={{ fontSize: '1.5rem', marginRight: '15px' }}>{activity.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: 'white', fontWeight: '500' }}>{activity.action}</div>
-                    <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{activity.timestamp}</div>
-                  </div>
+      <div className="ff-grid ff-grid-2 ff-section">
+        <SectionCard title="Recent Activity">
+          <div className="ff-stack">
+            {log.map((item) => (
+              <div key={item.id} className="ff-activity-item">
+                <span style={{ fontSize: "1.3rem", flexShrink: 0 }}>{item.icon}</span>
+                <div>
+                  <div style={{ color: "#f8fbff", fontWeight: 500, fontSize: "0.9rem" }}>{item.action}</div>
+                  <div style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "0.15rem" }}>{item.timestamp}</div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        </div>
+        </SectionCard>
 
-        {/* Progress / Stats Section */}
-        <div style={styles.card}>
-          <div style={styles.accentBar} />
-          <div style={{ padding: '30px' }}>
-            <h2 style={{ color: 'white', margin: '0 0 20px 0', fontSize: '1.5rem' }}>📊 Your Progress</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
-              <div style={styles.statCard}>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>{stats.workoutsCompleted}</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Workouts Completed</div>
-              </div>
-              <div style={styles.statCard}>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>{stats.currentStreak}</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Day Streak</div>
-              </div>
-              <div style={styles.statCard}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#06b6d4' }}>{stats.caloriesTarget}</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Daily Calories</div>
-              </div>
-              <div style={styles.statCard}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#8b5cf6' }}>{stats.proteinTarget}g</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Daily Protein</div>
-              </div>
-            </div>
+        <SectionCard title="Fitness Tips">
+          <div className="ff-stack">
+            {tips.map((tip) => (
+              <div key={tip} className="ff-tip-item">{tip}</div>
+            ))}
           </div>
-        </div>
-
-        {/* Quick Actions Section */}
-        <div style={styles.card}>
-          <div style={styles.accentBar} />
-          <div style={{ padding: '30px' }}>
-            <h2 style={{ color: 'white', margin: '0 0 20px 0', fontSize: '1.5rem' }}>⚡ Quick Actions</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <button
-                style={{ ...styles.button, ...styles.primaryButton, height: '60px' }}
-                onClick={() => navigate('/workouts')}
-              >
-                🏋️ Start Workout
-              </button>
-              <button
-                style={{ ...styles.button, ...styles.secondaryButton, height: '60px' }}
-                onClick={() => navigate('/nutrition')}
-              >
-                🥗 View Nutrition
-              </button>
-              <button
-                style={{ ...styles.button, ...styles.secondaryButton, height: '60px' }}
-                onClick={() => navigate('/quiz')}
-              >
-                📝 Retake Quiz
-              </button>
-              <button
-                style={{ ...styles.button, ...styles.secondaryButton, height: '60px' }}
-                onClick={() => navigate('/profile')}
-              >
-                👤 Update Profile
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Tips / Recommendations Section */}
-        <div style={styles.card}>
-          <div style={styles.accentBar} />
-          <div style={{ padding: '30px' }}>
-            <h2 style={{ color: 'white', margin: '0 0 20px 0', fontSize: '1.5rem' }}>💡 Fitness Tips</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              {fitnessTips.map((tip, index) => (
-                <div key={index} style={{
-                  padding: '15px',
-                  background: 'rgba(59, 130, 246, 0.1)',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(59, 130, 246, 0.2)'
-                }}>
-                  <div style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.5' }}>
-                    {tip}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        </SectionCard>
       </div>
-    </div>
+
+      <SectionCard title="Quick Actions">
+        <div className="ff-grid ff-grid-4">
+          {[
+            { label: "Start Workout", action: () => navigate("/workouts"), primary: true },
+            { label: "View Nutrition", action: () => navigate("/nutrition"), primary: false },
+            { label: "Retake Quiz", action: () => navigate("/quiz?retake=true"), primary: false },
+            { label: "Edit Profile", action: () => navigate("/profile"), primary: false },
+          ].map(({ label, action, primary }) => (
+            <button
+              key={label}
+              onClick={action}
+              className={`ff-btn ${primary ? "ff-btn-primary" : "ff-btn-ghost"}`}
+              style={{ padding: "1rem 0.75rem" }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </SectionCard>
+    </AppPage>
   );
 }

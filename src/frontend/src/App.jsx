@@ -4,8 +4,12 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
+// Global design system
+import "./styles/designSystem.css";
+
 // Components
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 // Pages
 import Home from "./pages/Home";
@@ -20,8 +24,15 @@ import Workouts from "./pages/Workouts";
 import WorkoutDetail from "./pages/WorkoutDetail";
 import Nutrition from "./pages/Nutrition";
 import NutritionDetail from "./pages/NutritionDetail";
-// Otherwise, I created a simple inline placeholder to prevent crashes.
-const Features = () => <div style={{ padding: "60px", textAlign: "center" }}><h1>Features</h1></div>;
+import Supplements from "./pages/Supplements";
+
+const Features = () => (
+  <main className="ff-page">
+    <div className="ff-container">
+      <h1 className="ff-title">Features</h1>
+    </div>
+  </main>
+);
 
 // ==========================================
 // MAIN APP COMPONENT (Router Wrapper)
@@ -29,24 +40,30 @@ const Features = () => <div style={{ padding: "60px", textAlign: "center" }}><h1
 function App() {
   return (
     <Router>
-      <div style={{ fontFamily: "Arial, sans-serif" }}>
-        
+      <div>
         {/* Global Navigation Bar */}
-        <Navbar /> 
+        <Navbar />
 
         {/* Page Routes */}
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/features" element={<Features />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/quiz" element={<Quiz />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/chat" element={<Chat />} />
+          <Route path="/"                element={<Home />} />
+          <Route path="/features"        element={<Features />} />
+          <Route path="/about"           element={<About />} />
+          <Route path="/login"           element={<Login />} />
+          <Route path="/signup"          element={<SignUp />} />
+          <Route path="/dashboard"       element={<Dashboard />} />
+          <Route path="/quiz"            element={<Quiz />} />
+          <Route path="/profile"         element={<Profile />} />
+          <Route path="/chat"            element={<Chat />} />
+          <Route path="/workouts"        element={<Workouts />} />
+          <Route path="/workouts/:slug"  element={<WorkoutDetail />} />
+          <Route path="/nutrition"       element={<Nutrition />} />
+          <Route path="/nutrition/:slug" element={<NutritionDetail />} />
+          <Route path="/supplements"     element={<Supplements />} />
         </Routes>
-        
+
+        {/* Global Footer */}
+        <Footer />
       </div>
     </Router>
   );

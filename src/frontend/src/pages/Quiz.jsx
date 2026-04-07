@@ -61,8 +61,8 @@ const optionCard = (selected) => ({
   padding: "18px 24px",
   marginBottom: "12px",
   borderRadius: "14px",
-  border: selected ? "2px solid #3498db" : "2px solid rgba(255,255,255,0.1)",
-  backgroundColor: selected ? "rgba(52,152,219,0.2)" : "rgba(255,255,255,0.04)",
+  border: selected ? "2px solid #3b82f6" : "2px solid rgba(148,163,184,0.14)",
+  backgroundColor: selected ? "rgba(59,130,246,0.18)" : "rgba(15,23,42,0.45)",
   color: "white",
   cursor: "pointer",
   display: "flex",
@@ -70,28 +70,30 @@ const optionCard = (selected) => ({
   gap: "16px",
   fontSize: "1rem",
   fontWeight: selected ? "bold" : "normal",
-  boxShadow: selected ? "0 0 20px rgba(52,152,219,0.35)" : "none",
+  boxShadow: selected ? "0 0 22px rgba(59,130,246,0.3)" : "none",
   transition: "all 0.2s ease",
   textAlign: "left",
+  fontFamily: "'Sora', 'Segoe UI', system-ui, sans-serif",
 });
 
 const inputStyle = {
   width: "100%",
   padding: "14px 18px",
   borderRadius: "12px",
-  border: "2px solid rgba(255,255,255,0.1)",
-  backgroundColor: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(148,163,184,0.22)",
+  backgroundColor: "rgba(15,23,42,0.52)",
   color: "white",
   fontSize: "1rem",
   outline: "none",
   boxSizing: "border-box",
   marginTop: "8px",
+  fontFamily: "'Sora', 'Segoe UI', system-ui, sans-serif",
 };
 
 const labelStyle = {
-  color: "#d6e6f2",
-  fontSize: "0.9rem",
-  fontWeight: "bold",
+  color: "#c2d4f0",
+  fontSize: "0.88rem",
+  fontWeight: "600",
   display: "block",
   marginTop: "16px",
 };
@@ -116,7 +118,7 @@ function Step1({ state, dispatch }) {
     <>
       <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>🦅</div>
       <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>What's your main goal?</h2>
-      <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "28px", fontSize: "0.95rem" }}>Let's build your perfect plan</p>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "28px", fontSize: "0.95rem" }}>Let's build your perfect plan</p>
       {goals.map(g => (
         <button key={g.value} onClick={() => select(g.value)} style={optionCard(state.goal_type === g.value)}>
           <span style={{ fontSize: "1.8rem" }}>{g.emoji}</span>
@@ -124,7 +126,7 @@ function Step1({ state, dispatch }) {
             <div style={{ fontWeight: "bold" }}>{g.label}</div>
             <div style={{ fontSize: "0.8rem", color: "#aac4d8", marginTop: "2px" }}>{g.sub}</div>
           </div>
-          {state.goal_type === g.value && <span style={{ marginLeft: "auto", color: "#3498db", fontSize: "1.2rem" }}>✓</span>}
+          {state.goal_type === g.value && <span style={{ marginLeft: "auto", color: "#3b82f6", fontSize: "1.2rem" }}>✓</span>}
         </button>
       ))}
     </>
@@ -194,7 +196,7 @@ function Step2({ state, dispatch }) {
 
   const unitToggleStyle = (active) => ({
     padding: "3px 10px", borderRadius: "6px", border: "none", cursor: "pointer", fontSize: "0.78rem", fontWeight: "bold",
-    backgroundColor: active ? "#3498db" : "transparent",
+    backgroundColor: active ? "#3b82f6" : "transparent",
     color: active ? "white" : "rgba(255,255,255,0.4)",
   });
 
@@ -202,7 +204,7 @@ function Step2({ state, dispatch }) {
     <>
       <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>📏</div>
       <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>Tell us about your body</h2>
-      <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "24px", fontSize: "0.95rem" }}>We'll calculate your BMI, BMR & TDEE</p>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "24px", fontSize: "0.95rem" }}>We'll calculate your BMI, BMR & TDEE</p>
 
       <label style={labelStyle}>Gender</label>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>
@@ -235,13 +237,13 @@ function Step2({ state, dispatch }) {
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
             <span style={{ color: "white", fontWeight: "bold", fontSize: "1.25rem" }}>
-              {sliderValue} <span style={{ color: "#7ec8e3", fontSize: "0.8rem" }}>{heightUnit}</span>
+              {sliderValue} <span style={{ color: "#93c5fd", fontSize: "0.8rem" }}>{heightUnit}</span>
               <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>{sliderHint}</span>
             </span>
           </div>
           <input type="range" min={sliderMin} max={sliderMax} step="1" value={sliderValue}
             onChange={(e) => handleHeightSlider(e.target.value)}
-            style={{ width: "100%", marginTop: "8px", accentColor: "#3498db", cursor: "pointer" }} />
+            style={{ width: "100%", marginTop: "8px", accentColor: "#3b82f6", cursor: "pointer" }} />
           <div style={{ display: "flex", justifyContent: "space-between", color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", marginTop: "2px" }}>
             <span>{sliderMin} {heightUnit}</span>
             <span>{sliderMax} {heightUnit}</span>
@@ -257,13 +259,13 @@ function Step2({ state, dispatch }) {
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
             <span style={{ color: "white", fontWeight: "bold", fontSize: "1.25rem" }}>
-              {wSliderVal(weightLbs)} <span style={{ color: "#7ec8e3", fontSize: "0.8rem" }}>{weightUnit}</span>
+              {wSliderVal(weightLbs)} <span style={{ color: "#93c5fd", fontSize: "0.8rem" }}>{weightUnit}</span>
               <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>{weightHint}</span>
             </span>
           </div>
           <input type="range" min={wSliderMin} max={wSliderMax} step="1" value={wSliderVal(weightLbs)}
             onChange={(e) => handleWeightSlider(e.target.value)}
-            style={{ width: "100%", marginTop: "8px", accentColor: "#3498db", cursor: "pointer" }} />
+            style={{ width: "100%", marginTop: "8px", accentColor: "#3b82f6", cursor: "pointer" }} />
           <div style={{ display: "flex", justifyContent: "space-between", color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", marginTop: "2px" }}>
             <span>{wSliderMin} {weightUnit}</span><span>{wSliderMax} {weightUnit}</span>
           </div>
@@ -271,19 +273,19 @@ function Step2({ state, dispatch }) {
 
         <div style={{ gridColumn: "1 / -1" }}>
           <label style={{ ...labelStyle, marginTop: "8px" }}>
-            Target Weight <span style={{ color: "#7ec8e3", fontWeight: "normal", fontSize: "0.82rem" }}>(optional)</span>
+            Target Weight <span style={{ color: "#93c5fd", fontWeight: "normal", fontSize: "0.82rem" }}>(optional)</span>
           </label>
           {state.target_weight ? (
             <>
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
                 <span style={{ color: "white", fontWeight: "bold", fontSize: "1.25rem" }}>
-                  {wSliderVal(targetLbs)} <span style={{ color: "#7ec8e3", fontSize: "0.8rem" }}>{weightUnit}</span>
+                  {wSliderVal(targetLbs)} <span style={{ color: "#93c5fd", fontSize: "0.8rem" }}>{weightUnit}</span>
                   <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>{targetHint}</span>
                 </span>
               </div>
               <input type="range" min={wSliderMin} max={wSliderMax} step="1" value={wSliderVal(targetLbs)}
                 onChange={(e) => handleTargetSlider(e.target.value)}
-                style={{ width: "100%", marginTop: "8px", accentColor: "#3498db", cursor: "pointer" }} />
+                style={{ width: "100%", marginTop: "8px", accentColor: "#3b82f6", cursor: "pointer" }} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "2px" }}>
                 <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" }}>{wSliderMin} {weightUnit}</span>
                 <button onClick={() => dispatch({ type: "SET_FIELD", field: "target_weight", value: "" })}
@@ -339,7 +341,7 @@ function Step3({ state, dispatch }) {
     <>
       <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>🏋️</div>
       <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>How active are you?</h2>
-      <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "24px", fontSize: "0.95rem" }}>Pick your current lifestyle — be honest!</p>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "24px", fontSize: "0.95rem" }}>Pick your current lifestyle — be honest!</p>
       {levels.map(l => (
         <div key={l.value} style={{ marginBottom: "10px" }}>
           <div style={{ display: "flex", gap: "8px", alignItems: "stretch" }}>
@@ -349,7 +351,7 @@ function Step3({ state, dispatch }) {
                 <div style={{ fontWeight: "bold" }}>{l.label}</div>
                 <div style={{ fontSize: "0.8rem", color: "#aac4d8", marginTop: "2px" }}>{l.sub}</div>
               </div>
-              {state.activity_level === l.value && <span style={{ color: "#3498db", fontSize: "1.2rem" }}>✓</span>}
+              {state.activity_level === l.value && <span style={{ color: "#3b82f6", fontSize: "1.2rem" }}>✓</span>}
             </button>
             <button
               onClick={() => setOpenTooltip(openTooltip === l.value ? null : l.value)}
@@ -358,7 +360,7 @@ function Step3({ state, dispatch }) {
                 width: "36px", flexShrink: 0, borderRadius: "12px",
                 border: openTooltip === l.value ? "2px solid rgba(52,152,219,0.5)" : "2px solid rgba(255,255,255,0.1)",
                 backgroundColor: openTooltip === l.value ? "rgba(52,152,219,0.15)" : "rgba(255,255,255,0.04)",
-                color: openTooltip === l.value ? "#7ec8e3" : "rgba(255,255,255,0.4)",
+                color: openTooltip === l.value ? "#93c5fd" : "rgba(255,255,255,0.4)",
                 cursor: "pointer", fontSize: "0.8rem", fontWeight: "bold",
               }}
             >
@@ -396,13 +398,13 @@ function Step4({ state, dispatch }) {
     <>
       <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>📅</div>
       <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>How many days can you train?</h2>
-      <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "32px", fontSize: "0.95rem" }}>Per week — be honest with yourself!</p>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "32px", fontSize: "0.95rem" }}>Per week — be honest with yourself!</p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "8px" }}>
         {days.map(d => (
           <button key={d} onClick={() => select(d)} style={{
             padding: "20px 0",
             borderRadius: "14px",
-            border: String(state.workout_days) === String(d) ? "2px solid #3498db" : "2px solid rgba(255,255,255,0.1)",
+            border: String(state.workout_days) === String(d) ? "2px solid #3b82f6" : "2px solid rgba(255,255,255,0.1)",
             backgroundColor: String(state.workout_days) === String(d) ? "rgba(52,152,219,0.25)" : "rgba(255,255,255,0.04)",
             color: "white",
             cursor: "pointer",
@@ -419,7 +421,7 @@ function Step4({ state, dispatch }) {
         ))}
       </div>
       {state.workout_days && (
-        <p style={{ color: "#7ec8e3", textAlign: "center", marginTop: "20px", fontSize: "0.95rem" }}>
+        <p style={{ color: "#93c5fd", textAlign: "center", marginTop: "20px", fontSize: "0.95rem" }}>
           🦅 {state.workout_days} day{state.workout_days > 1 ? "s" : ""} a week — let's go!
         </p>
       )}
@@ -466,8 +468,8 @@ function Step5({ state, dispatch }) {
   const chipStyle = (selected) => ({
     padding: "10px 16px",
     borderRadius: "99px",
-    border: selected ? "2px solid #3498db" : "2px solid rgba(255,255,255,0.15)",
-    backgroundColor: selected ? "rgba(52,152,219,0.2)" : "rgba(255,255,255,0.04)",
+    border: selected ? "2px solid #3b82f6" : "2px solid rgba(148,163,184,0.16)",
+    backgroundColor: selected ? "rgba(59,130,246,0.18)" : "rgba(15,23,42,0.45)",
     color: "white",
     cursor: "pointer",
     fontSize: "0.85rem",
@@ -475,14 +477,15 @@ function Step5({ state, dispatch }) {
     alignItems: "center",
     gap: "6px",
     transition: "all 0.2s ease",
-    boxShadow: selected ? "0 0 12px rgba(52,152,219,0.3)" : "none",
+    boxShadow: selected ? "0 0 12px rgba(59,130,246,0.28)" : "none",
+    fontFamily: "'Sora', 'Segoe UI', system-ui, sans-serif",
   });
 
   return (
     <>
       <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>🥗</div>
       <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>Diet & Allergies</h2>
-      <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "20px", fontSize: "0.95rem" }}>Select all that apply</p>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "20px", fontSize: "0.95rem" }}>Select all that apply</p>
 
       <label style={labelStyle}>Dietary Preferences</label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px" }}>
@@ -547,7 +550,7 @@ function ReviewScreen({ state, onSubmit, loading, error }) {
     <>
       <div style={{ fontSize: "3rem", textAlign: "center", marginBottom: "8px" }}>🦅</div>
       <h2 style={{ color: "white", fontSize: "1.5rem", textAlign: "center", margin: "0 0 4px" }}>Review Your Profile</h2>
-      <p style={{ color: "#7ec8e3", textAlign: "center", marginBottom: "20px", fontSize: "0.9rem" }}>Everything looks good?</p>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "20px", fontSize: "0.9rem" }}>Everything looks good?</p>
 
       <div style={{ backgroundColor: "rgba(255,255,255,0.04)", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" }}>
         {row("Goal", goalLabels[state.goal_type])}
@@ -567,7 +570,7 @@ function ReviewScreen({ state, onSubmit, loading, error }) {
 
       <button onClick={onSubmit} disabled={loading} style={{
         width: "100%", padding: "16px", borderRadius: "12px",
-        background: loading ? "rgba(255,255,255,0.1)" : "linear-gradient(to right, #2980b9, #3498db)",
+        background: loading ? "rgba(255,255,255,0.1)" : "linear-gradient(to right, #1d4ed8, #3b82f6)",
         color: loading ? "rgba(255,255,255,0.4)" : "white",
         border: "none", fontSize: "1rem", fontWeight: "bold",
         cursor: loading ? "not-allowed" : "pointer",
@@ -675,22 +678,15 @@ export default function Quiz() {
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "linear-gradient(160deg, #071a2d 0%, #0d2b45 50%, #12395d 100%)",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      padding: "0 20px 40px",
-    }}>
-      {/* Thin top progress bar */}
-      <div style={{ width: "100%", height: "4px", backgroundColor: "rgba(255,255,255,0.08)", position: "sticky", top: 0, zIndex: 10 }}>
+    <main className="ff-page" style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0 20px 40px" }}>
+      {/* Thin top progress bar — sits just below the site navbar */}
+      <div style={{ width: "100%", height: "3px", backgroundColor: "rgba(148,163,184,0.1)", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{
           height: "100%",
           width: `${progress}%`,
-          background: "linear-gradient(to right, #2980b9, #7ec8e3)",
+          background: "linear-gradient(to right, var(--ff-accent), var(--ff-cyan))",
           transition: "width 0.5s ease",
-          boxShadow: "0 0 8px rgba(126,200,227,0.8)"
+          boxShadow: "0 0 8px rgba(59,130,246,0.7)"
         }} />
       </div>
 
@@ -704,9 +700,9 @@ export default function Quiz() {
                 width: i + 1 === state.step ? "32px" : "10px",
                 height: "10px",
                 borderRadius: "99px",
-                backgroundColor: i + 1 < state.step ? "#3498db" : i + 1 === state.step ? "#7ec8e3" : "rgba(255,255,255,0.15)",
+                backgroundColor: i + 1 < state.step ? "#3b82f6" : i + 1 === state.step ? "#93c5fd" : "rgba(148,163,184,0.18)",
                 transition: "all 0.4s ease",
-                boxShadow: i + 1 === state.step ? "0 0 10px rgba(126,200,227,0.8)" : "none"
+                boxShadow: i + 1 === state.step ? "0 0 10px rgba(59,130,246,0.7)" : "none"
               }} />
             </div>
           ))}
@@ -752,7 +748,7 @@ export default function Quiz() {
             {!showReview && (
               <button onClick={handleNext} disabled={!canProceed} style={{
                 flex: 2, padding: "14px", borderRadius: "12px",
-                background: canProceed ? "linear-gradient(to right, #2980b9, #3498db)" : "rgba(255,255,255,0.08)",
+                background: canProceed ? "linear-gradient(to right, #1d4ed8, #3b82f6)" : "rgba(255,255,255,0.08)",
                 color: canProceed ? "white" : "rgba(255,255,255,0.3)",
                 border: "none", fontSize: "1rem",
                 cursor: canProceed ? "pointer" : "not-allowed",
@@ -785,6 +781,6 @@ export default function Quiz() {
           </p>
         )}
       </div>
-    </div>
+    </main>
   );
 }
