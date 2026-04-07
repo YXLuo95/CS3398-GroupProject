@@ -99,5 +99,8 @@ async def get_completions(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    """Get all completed workout days for the current week."""
-    return await get_completions_by_user(session, current_user.id)
+    """Get all completed workout days for the current plan and week."""
+    plan = await get_plan_by_user_id(session, current_user.id)
+    if not plan:
+        return []
+    return await get_completions_by_user(session, current_user.id, plan.id)

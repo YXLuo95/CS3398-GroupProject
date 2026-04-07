@@ -40,14 +40,17 @@ async def create_plan(
 
 
 async def delete_plan(session: AsyncSession, plan: WorkoutPlan) -> None:
-    """Delete workout plan and all its exercises."""
-    # load exercises if not already loaded
+    """Delete workout plan, its exercises, and all completion records."""
     statement = select(Exercise).where(Exercise.plan_id == plan.id)
     result = await session.execute(statement)
-    exercises = result.scalars().all()
-
-    for exercise in exercises:
+    for exercise in result.scalars().all():
         await session.delete(exercise)
+
+    completions = await session.execute(
+        select(CompletedWorkout).where(CompletedWorkout.plan_id == plan.id)
+    )
+    for completion in completions.scalars().all():
+        await session.delete(completion)
 
     await session.delete(plan)
     await session.commit()
@@ -70,8 +73,9 @@ async def create_completion(
 async def get_completions_by_user(
     session: AsyncSession,
     user_id: int,
+    plan_id: int,
 ) -> List[CompletedWorkout]:
-    """Return all completions for the current calendar week (Mon–Sun)."""
+    """Return all completions for the current plan within the current calendar week."""
     today = datetime.now(timezone.utc)
     week_start = today - timedelta(days=today.weekday())
     week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -79,6 +83,7 @@ async def get_completions_by_user(
     statement = (
         select(CompletedWorkout)
         .where(CompletedWorkout.user_id == user_id)
+        .where(CompletedWorkout.plan_id == plan_id)
         .where(CompletedWorkout.completed_at >= week_start)
     )
     result = await session.execute(statement)
