@@ -128,6 +128,7 @@ function GeneratingAnimation({ onCancel }) {
 function ExerciseCard({ exercise }) {
   const [expanded, setExpanded] = useState(false);
   const steps = exercise.instructions ? exercise.instructions.split(" | ") : [];
+  const hasDetails = steps.length > 0 || !!exercise.image_url;
 
   return (
     <div className="ff-card ff-card-hover" style={{ padding: "1rem 1.2rem" }} onClick={() => setExpanded((e) => !e)}>
@@ -142,7 +143,7 @@ function ExerciseCard({ exercise }) {
         <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
           <span className="ff-tag ff-tag-blue">{exercise.sets} sets</span>
           <span className="ff-tag ff-tag-amber">{exercise.reps} reps</span>
-          {steps.length > 0 && (
+          {hasDetails && (
             <span style={{ color: "var(--ff-text-muted)", fontSize: "0.8rem", marginLeft: "0.3rem" }}>
               {expanded ? "▲" : "▼"}
             </span>
@@ -150,12 +151,19 @@ function ExerciseCard({ exercise }) {
         </div>
       </div>
 
-      {expanded && steps.length > 0 && (
+      {expanded && hasDetails && (
         <div style={{
           marginTop: "0.75rem", paddingTop: "0.75rem",
           borderTop: "1px solid var(--ff-border-dim)",
           display: "flex", flexDirection: "column", gap: "0.4rem",
         }}>
+          {exercise.image_url && (
+            <img
+              src={exercise.image_url}
+              alt={exercise.name}
+              style={{ width: "100%", maxWidth: 320, borderRadius: 10, marginBottom: "0.5rem", objectFit: "cover" }}
+            />
+          )}
           {steps.map((step, i) => (
             <div key={i} style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start" }}>
               <span style={{
