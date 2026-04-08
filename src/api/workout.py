@@ -11,7 +11,6 @@ from sqlmodel import select
 from src.core.database import get_session
 from src.core.auth import get_current_user
 from src.core.workout_generator import generate_workout_plan, get_swap_exercise
-from src.core.llm import generate_exercise_instructions
 from src.model import User, WorkoutPlan, Exercise
 from src.schemas import WorkoutPlanRead, CompletedWorkoutCreate, CompletedWorkoutRead, ExerciseRead, WorkoutSetCreate, WorkoutSetRead
 from src.crud.quiz import get_goal_by_user_id
@@ -39,15 +38,6 @@ async def generate_plan(
         raise HTTPException(status_code=400, detail="Plan already exists. Delete it first to regenerate.")
 
     exercises = generate_workout_plan(goal)
-
-    # enrich exercises with LLM-generated instructions (fails gracefully)
-    unique_names = list({e.name for e in exercises})
-    difficulty = "beginner" if goal.activity_level in ("sedentary", "lightly_active") else \
-                 "intermediate" if goal.activity_level == "moderately_active" else "advanced"
-
-    instructions_map = await generate_exercise_instructions(unique_names, difficulty, goal.goal_type)
-    for exercise in exercises:
-        exercise.instructions = instructions_map.get(exercise.name)
 
     plan = WorkoutPlan(
         user_id=current_user.id,
@@ -185,7 +175,11 @@ async def swap_exercise_endpoint(
     if not plan or exercise.plan_id != plan.id:
         raise HTTPException(status_code=403, detail="Not your exercise.")
 
-    alt = get_swap_exercise(exercise.muscle_group, exercise.difficulty, exercise.name)
+    goal = await get_goal_by_user_id(session, current_user.id)
+    equipment  = getattr(goal, "equipment_available", []) if goal else []
+    limitations = getattr(goal, "limitations", None) if goal else None
+
+    alt = get_swap_exercise(exercise.muscle_group, exercise.difficulty, exercise.name, equipment, limitations)
     if not alt:
         raise HTTPException(status_code=400, detail="No alternatives available for this exercise.")
 
