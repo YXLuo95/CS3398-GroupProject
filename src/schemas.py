@@ -176,6 +176,7 @@ class ExerciseRead(BaseModel):
     day: int
     youtube_url: Optional[str]
     instructions: Optional[str]
+    image_url: Optional[str]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -186,6 +187,7 @@ class WorkoutPlanRead(BaseModel):
     fitness_goal_id: int
     generated_at: datetime
     exercises: List[ExerciseRead]
+    stale: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -204,6 +206,20 @@ class CompletedWorkoutRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class WorkoutSetCreate(BaseModel):
+    exercise_id: int
+    set_number: int
+
+
+class WorkoutSetRead(BaseModel):
+    id: int
+    exercise_id: int
+    set_number: int
+    logged_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class NutritionPlanRead(BaseModel):
     id: int
     user_id: int
@@ -215,6 +231,6 @@ class NutritionPlanRead(BaseModel):
     carbs_g: Optional[int]
     model_used: Optional[str]
     created_at: datetime
- 
+
     model_config = ConfigDict(from_attributes=True)
- 
+

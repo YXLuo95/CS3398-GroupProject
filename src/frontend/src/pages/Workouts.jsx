@@ -1,510 +1,708 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import AppPage from "../components/ui/AppPage";
 import SectionCard from "../components/ui/SectionCard";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-// ==========================================
-// Muscle group badge colors
-// ==========================================
-const muscleColors = {
-  chest:     { bg: "rgba(239, 68, 68, 0.15)",  border: "rgba(239, 68, 68, 0.4)",  text: "#f87171" },
-  back:      { bg: "rgba(59, 130, 246, 0.15)", border: "rgba(59, 130, 246, 0.4)", text: "#60a5fa" },
-  shoulders: { bg: "rgba(168, 85, 247, 0.15)", border: "rgba(168, 85, 247, 0.4)", text: "#a78bfa" },
-  biceps:    { bg: "rgba(236, 72, 153, 0.15)", border: "rgba(236, 72, 153, 0.4)", text: "#f472b6" },
-  triceps:   { bg: "rgba(249, 115, 22, 0.15)", border: "rgba(249, 115, 22, 0.4)", text: "#fb923c" },
-  legs:      { bg: "rgba(34, 197, 94, 0.15)",  border: "rgba(34, 197, 94, 0.4)",  text: "#4ade80" },
-  core:      { bg: "rgba(250, 204, 21, 0.15)", border: "rgba(250, 204, 21, 0.4)", text: "#facc15" },
-  cardio:    { bg: "rgba(6, 182, 212, 0.15)",  border: "rgba(6, 182, 212, 0.4)",  text: "#22d3ee" },
+const GENERATION_STEPS = [
+  { label: "Analyzing your fitness goal...",         duration: 8 },
+  { label: "Building your weekly split...",           duration: 10 },
+  { label: "Selecting exercises for each day...",     duration: 12 },
+  { label: "Generating step-by-step instructions...", duration: 60 },
+  { label: "Personalizing difficulty & reps...",      duration: 20 },
+  { label: "Finalizing your plan...",                 duration: 10 },
+];
+
+const MUSCLE_EMOJI = {
+  chest: "💪", back: "🏋️", legs: "🦵", shoulders: "🔝",
+  arms: "💪", biceps: "💪", triceps: "💪", core: "🔥",
+  cardio: "🏃", glutes: "🍑", full_body: "⚡",
 };
 
-const defaultColor = { bg: "rgba(148,163,184,0.15)", border: "rgba(148,163,184,0.4)", text: "#94a3b8" };
+const DAY_LABELS = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-function getMuscleBadge(group) {
-  return muscleColors[group] || defaultColor;
+const DIFFICULTY_COLORS = {
+  beginner:     { bg: "rgba(34,197,94,0.15)",  border: "rgba(34,197,94,0.4)",  color: "#86efac" },
+  intermediate: { bg: "rgba(251,191,36,0.15)", border: "rgba(251,191,36,0.4)", color: "#fde68a" },
+  advanced:     { bg: "rgba(239,68,68,0.15)",  border: "rgba(239,68,68,0.4)",  color: "#fca5a5" },
+};
+
+function todayPlanDay() {
+  const d = new Date().getDay();
+  return d === 0 ? 7 : d;
 }
 
-// ==========================================
-// Day label helper
-// ==========================================
-const dayLabels = {
-  1: "Day 1", 2: "Day 2", 3: "Day 3", 4: "Day 4",
-  5: "Day 5", 6: "Day 6", 7: "Day 7",
-};
+function muscleEmoji(group) {
+  const key = (group || "").toLowerCase().replace(/\s/g, "_");
+  return MUSCLE_EMOJI[key] || "🏋️";
+}
 
-export default function Workouts() {
-  const navigate = useNavigate();
-  const getToken = () => localStorage.getItem("token");
-  const getHeaders = () => ({ Authorization: `Bearer ${getToken()}` });
+// ─── Progress ring ────────────────────────────────────────────────────────────
+function ProgressRing({ value, max, color }) {
+  const pct  = max > 0 ? value / max : 0;
+  const r    = 28;
+  const circ = 2 * Math.PI * r;
 
-  // ==========================================
-  // States
-  // ==========================================
-  const [loading, setLoading] = useState(true);
-  const [plan, setPlan] = useState(null);           // WorkoutPlanRead | null
-  const [completedDays, setCompletedDays] = useState([]); // CompletedWorkoutRead[]
-  const [hasQuiz, setHasQuiz] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState("");
-  const [expandedDay, setExpandedDay] = useState(null);  // which day is expanded
-  const [completingDay, setCompletingDay] = useState(null); // day currently being marked
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.3rem" }}>
+      <svg width={72} height={72}>
+        <circle cx={36} cy={36} r={r} fill="none" stroke="var(--ff-surface-3)" strokeWidth={5} />
+        <circle
+          cx={36} cy={36} r={r} fill="none" stroke={color} strokeWidth={5}
+          strokeDasharray={`${pct * circ} ${circ}`}
+          strokeLinecap="round" transform="rotate(-90 36 36)"
+          style={{ transition: "stroke-dasharray 0.6s ease" }}
+        />
+        <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle"
+          fill={color} fontSize={13} fontWeight={700}>
+          {value}/{max}
+        </text>
+      </svg>
+      <span style={{ color: "var(--ff-text-muted)", fontSize: "0.72rem" }}>Week Progress</span>
+    </div>
+  );
+}
 
-  // ==========================================
-  // Initial Data Fetch
-  // ==========================================
+// ─── Loading animation ────────────────────────────────────────────────────────
+function GeneratingAnimation() {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [progress, setProgress]   = useState(0);
+  const totalDuration = GENERATION_STEPS.reduce((s, x) => s + x.duration, 0);
+  const elapsed       = useRef(0);
+  const stepElapsed   = useRef(0);
+
   useEffect(() => {
-    const fetchData = async () => {
-      const token = getToken();
-      if (!token) { navigate("/login"); return; }
-
-      const headers = getHeaders();
-
-      try {
-        const [planRes, completedRes, quizRes] = await Promise.allSettled([
-          axios.get(`${API_URL}/api/v1/workout/plan`, { headers }),
-          axios.get(`${API_URL}/api/v1/workout/complete`, { headers }),
-          axios.get(`${API_URL}/api/v1/onboarding/quiz`, { headers }),
-        ]);
-
-        if (quizRes.status === "fulfilled") {
-          setHasQuiz(true);
-        }
-
-        if (planRes.status === "fulfilled") {
-          setPlan(planRes.value.data);
-          // Auto-expand first incomplete day
-          if (completedRes.status === "fulfilled") {
-            const done = completedRes.value.data || [];
-            setCompletedDays(done);
-            const doneDayNums = done.map(c => c.day);
-            const days = [...new Set(planRes.value.data.exercises.map(e => e.day))].sort((a, b) => a - b);
-            const firstIncomplete = days.find(d => !doneDayNums.includes(d));
-            setExpandedDay(firstIncomplete || days[0]);
-          }
-        }
-
-        if (completedRes.status === "fulfilled" && planRes.status !== "fulfilled") {
-          setCompletedDays(completedRes.value.data || []);
-        }
-      } catch (err) {
-        console.error("Workout page fetch error:", err);
-      } finally {
-        setLoading(false);
+    const tick = 200;
+    const timer = setInterval(() => {
+      elapsed.current     += tick / 1000;
+      stepElapsed.current += tick / 1000;
+      setProgress(Math.min((elapsed.current / totalDuration) * 100, 95));
+      const stepDur = GENERATION_STEPS[stepIndex]?.duration ?? 10;
+      if (stepElapsed.current >= stepDur && stepIndex < GENERATION_STEPS.length - 1) {
+        stepElapsed.current = 0;
+        setStepIndex((i) => i + 1);
       }
-    };
-    fetchData();
-  }, [navigate]);
+    }, tick);
+    return () => clearInterval(timer);
+  }, [stepIndex]);
 
-  // ==========================================
-  // Generate Plan
-  // ==========================================
-  const handleGenerate = async () => {
-    setError("");
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "3rem 1.5rem", textAlign: "center", gap: "2rem" }}>
+      <div style={{
+        width: 80, height: 80, borderRadius: "50%",
+        background: "var(--ff-accent-soft)", border: "2px solid var(--ff-accent-glow)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: "2rem", animation: "ff-pulse 1.6s ease-in-out infinite",
+      }}>🤖</div>
+      <div style={{ maxWidth: 420 }}>
+        <p style={{ color: "var(--ff-text)", fontWeight: 700, fontSize: "1.1rem", margin: "0 0 0.4rem" }}>
+          Building your personalized plan
+        </p>
+        <p style={{ color: "var(--ff-text-dim)", fontSize: "0.9rem", margin: 0, minHeight: "1.4em" }}>
+          {GENERATION_STEPS[stepIndex]?.label ?? "Almost done..."}
+        </p>
+      </div>
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        <div style={{ height: 6, borderRadius: 999, background: "var(--ff-surface-3)", border: "1px solid var(--ff-border-dim)", overflow: "hidden" }}>
+          <div style={{
+            height: "100%", width: `${progress}%`, borderRadius: 999,
+            background: "linear-gradient(90deg, var(--ff-accent), var(--ff-cyan))",
+            transition: "width 0.4s ease", boxShadow: "0 0 8px var(--ff-accent-glow)",
+          }} />
+        </div>
+        <p style={{ color: "var(--ff-text-muted)", fontSize: "0.76rem", marginTop: "0.5rem" }}>
+          This takes ~2 minutes — the AI is crafting your instructions
+        </p>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", width: "100%", maxWidth: 380, textAlign: "left" }}>
+        {GENERATION_STEPS.map((step, i) => (
+          <div key={i} style={{
+            display: "flex", alignItems: "center", gap: "0.65rem",
+            color: i < stepIndex ? "var(--ff-green)" : i === stepIndex ? "var(--ff-text)" : "var(--ff-text-muted)",
+            fontSize: "0.85rem", transition: "color 0.3s",
+          }}>
+            <span style={{ fontSize: "0.95rem", width: 18, textAlign: "center" }}>
+              {i < stepIndex ? "✓" : i === stepIndex ? "›" : "·"}
+            </span>
+            {step.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Single exercise card ─────────────────────────────────────────────────────
+function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet, onSwap }) {
+  const [expanded, setExpanded]   = useState(false);
+  const [swapping, setSwapping]   = useState(false);
+  const steps      = exercise.instructions ? exercise.instructions.split(" | ") : [];
+  const hasDetails = steps.length > 0 || !!exercise.image_url;
+  const diffStyle  = DIFFICULTY_COLORS[exercise.difficulty] || {};
+  const setCount   = parseInt(exercise.sets) || 0;
+  const doneSets   = loggedSets || new Set();
+
+  useEffect(() => { setExpanded(allExpanded); }, [allExpanded]);
+
+  async function handleSwap(e) {
+    e.stopPropagation();
+    setSwapping(true);
+    await onSwap(exercise.id);
+    setSwapping(false);
+  }
+
+  return (
+    <div className="ff-card ff-card-hover" style={{ padding: "1rem 1.2rem" }} onClick={() => setExpanded((e) => !e)}>
+      <div className="ff-flex-between" style={{ marginBottom: hasDetails && expanded ? "0.5rem" : 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <span style={{ fontSize: "1.3rem" }}>{muscleEmoji(exercise.muscle_group)}</span>
+          <div>
+            <p style={{ margin: 0, fontWeight: 700, color: "var(--ff-text)", fontSize: "0.95rem" }}>{exercise.name}</p>
+            <p style={{ margin: 0, color: "var(--ff-text-muted)", fontSize: "0.78rem" }}>{exercise.muscle_group}</p>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <span className="ff-tag ff-tag-blue">{exercise.sets} sets</span>
+          <span className="ff-tag ff-tag-amber">{exercise.reps} reps</span>
+          {exercise.difficulty && (
+            <span style={{
+              fontSize: "0.7rem", fontWeight: 600, padding: "2px 7px", borderRadius: 999,
+              background: diffStyle.bg, border: `1px solid ${diffStyle.border}`, color: diffStyle.color,
+            }}>
+              {exercise.difficulty}
+            </span>
+          )}
+          {/* 4. Swap button */}
+          <button
+            className="ff-swap-btn"
+            onClick={handleSwap}
+            disabled={swapping}
+            title="Swap for alternative exercise"
+            style={{
+              width: 28, height: 28, borderRadius: "50%", border: "1px solid var(--ff-border-dim)",
+              background: swapping ? "var(--ff-accent-soft)" : "transparent",
+              color: swapping ? "var(--ff-accent)" : "var(--ff-text-muted)",
+              cursor: swapping ? "default" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "0.95rem", lineHeight: 1, flexShrink: 0,
+              transition: "all 0.2s",
+              animation: swapping ? "ff-spin 0.8s linear infinite" : "none",
+            }}
+          >
+            ↻
+          </button>
+          {hasDetails && (
+            <span style={{ color: "var(--ff-text-muted)", fontSize: "0.8rem" }}>
+              {expanded ? "▲" : "▼"}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {expanded && (
+        <div style={{
+          marginTop: "0.75rem", paddingTop: "0.75rem",
+          borderTop: "1px solid var(--ff-border-dim)",
+          display: "flex", flexDirection: "column", gap: "0.75rem",
+        }}>
+          {/* 3. Sets tracker */}
+          {setCount > 0 && (
+            <div>
+              <p style={{ margin: "0 0 0.4rem", color: "var(--ff-text-muted)", fontSize: "0.78rem", fontWeight: 600 }}>TRACK SETS</p>
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                {Array.from({ length: setCount }, (_, i) => i + 1).map((setNum) => {
+                  const done = doneSets.has(setNum);
+                  return (
+                    <button
+                      key={setNum}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        done ? onUnlogSet(exercise.id, setNum) : onLogSet(exercise.id, setNum);
+                      }}
+                      style={{
+                        width: 40, height: 40, borderRadius: "50%", border: "none", cursor: "pointer",
+                        background: done ? "var(--ff-green)" : "var(--ff-surface-3)",
+                        color: done ? "#fff" : "var(--ff-text-muted)",
+                        fontWeight: 700, fontSize: "0.85rem",
+                        transition: "all 0.2s",
+                        boxShadow: done ? "0 0 8px rgba(34,197,94,0.4)" : "none",
+                      }}
+                    >
+                      {done ? "✓" : setNum}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {exercise.image_url && (
+            <img
+              src={exercise.image_url} alt={exercise.name}
+              style={{ width: "100%", maxWidth: 320, borderRadius: 10, objectFit: "cover" }}
+            />
+          )}
+
+          {steps.map((step, i) => (
+            <div key={i} style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start" }}>
+              <span style={{
+                minWidth: 22, height: 22, borderRadius: "50%",
+                background: "var(--ff-accent-soft)", border: "1px solid rgba(59,130,246,0.3)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "0.72rem", fontWeight: 700, color: "#c7dcff", flexShrink: 0,
+              }}>{i + 1}</span>
+              <p style={{ margin: 0, color: "var(--ff-text-dim)", fontSize: "0.85rem", lineHeight: 1.5 }}>{step.trim()}</p>
+            </div>
+          ))}
+
+          {exercise.youtube_url && (
+            <a
+              href={exercise.youtube_url} target="_blank" rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="ff-btn ff-btn-ghost ff-btn-sm"
+              style={{ alignSelf: "flex-start" }}
+            >
+              ▶ Watch Tutorial
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Day section ──────────────────────────────────────────────────────────────
+function DaySection({ day, exercises, completedDays, onMarkComplete, onUnmark, marking, allExpanded, dayRef, loggedSets, onLogSet, onUnlogSet, onSwap }) {
+  const isDone  = completedDays.includes(day);
+  const isToday = day === todayPlanDay();
+  const muscleGroups = [...new Set(exercises.map((e) => e.muscle_group))];
+
+  return (
+    <div
+      ref={dayRef}
+      className="ff-card"
+      style={{
+        overflow: "visible",
+        border: isToday ? "1.5px solid var(--ff-accent)" : undefined,
+        boxShadow: isToday ? "0 0 16px var(--ff-accent-glow)" : undefined,
+      }}
+    >
+      <div className="ff-accent-bar" />
+      <div style={{ padding: "1.2rem 1.5rem" }}>
+        <div className="ff-flex-between" style={{ marginBottom: "0.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <span className="ff-tag ff-tag-blue" style={{ fontSize: "0.8rem" }}>Day {day}</span>
+            <span style={{ color: "var(--ff-text)", fontWeight: 700 }}>{DAY_LABELS[day]}</span>
+            {isToday && (
+              <span style={{
+                fontSize: "0.7rem", fontWeight: 600, padding: "2px 8px", borderRadius: 999,
+                background: "var(--ff-accent-soft)", border: "1px solid var(--ff-accent-glow)", color: "var(--ff-accent)",
+              }}>Today</span>
+            )}
+          </div>
+          {isDone ? (
+            <button
+              className="ff-btn ff-btn-ghost ff-btn-sm"
+              onClick={() => onUnmark(day)}
+              style={{ color: "var(--ff-green)", borderColor: "var(--ff-green)" }}
+            >
+              ✓ Completed — Undo
+            </button>
+          ) : (
+            <button
+              className="ff-btn ff-btn-green ff-btn-sm"
+              onClick={() => onMarkComplete(day)}
+              disabled={marking === day}
+            >
+              {marking === day ? "Saving..." : "Mark Complete"}
+            </button>
+          )}
+        </div>
+
+        {/* Muscle group chips */}
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+          {muscleGroups.map((g) => (
+            <span key={g} style={{ fontSize: "0.72rem", color: "var(--ff-text-muted)", display: "flex", alignItems: "center", gap: "0.2rem" }}>
+              {muscleEmoji(g)} {g}
+            </span>
+          ))}
+        </div>
+
+        <div className="ff-stack">
+          {exercises.map((ex) => (
+            <ExerciseCard
+              key={ex.id}
+              exercise={ex}
+              allExpanded={allExpanded}
+              loggedSets={loggedSets[ex.id]}
+              onLogSet={onLogSet}
+              onUnlogSet={onUnlogSet}
+              onSwap={onSwap}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Rest day card ────────────────────────────────────────────────────────────
+function RestDayCard({ day }) {
+  const isToday = day === todayPlanDay();
+  return (
+    <div className="ff-card" style={{ overflow: "visible", opacity: 0.6, border: isToday ? "1.5px solid var(--ff-accent)" : undefined }}>
+      <div style={{ padding: "1rem 1.5rem", display: "flex", alignItems: "center", gap: "0.8rem" }}>
+        <span className="ff-tag ff-tag-blue" style={{ fontSize: "0.8rem" }}>Day {day}</span>
+        <span style={{ color: "var(--ff-text)", fontWeight: 700 }}>{DAY_LABELS[day]}</span>
+        {isToday && <span style={{ fontSize: "0.7rem", fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "var(--ff-accent-soft)", border: "1px solid var(--ff-accent-glow)", color: "var(--ff-accent)" }}>Today</span>}
+        <span style={{ marginLeft: "auto", color: "var(--ff-text-muted)", fontSize: "0.85rem" }}>😴 Rest Day</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+export default function Workouts() {
+  const navigate                        = useNavigate();
+  const isLoggedIn                      = Boolean(localStorage.getItem("token"));
+  const [plan, setPlan]                 = useState(null);
+  const [loading, setLoading]           = useState(false);
+  const [generating, setGenerating]     = useState(false);
+  const [error, setError]               = useState(null);
+  const [completedDays, setCompleted]   = useState([]);
+  const [marking, setMarking]           = useState(null);
+  const [allExpanded, setAllExpanded]   = useState(false);
+  const [selectedMuscle, setMuscle]     = useState("all");
+  // loggedSets: { [exercise_id]: Set<number> }
+  const [loggedSets, setLoggedSets]     = useState({});
+  const todayRef                        = useRef(null);
+
+  const headers = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    setLoading(true);
+    Promise.all([
+      axios.get(`${API}/api/v1/workout/plan`, { headers: headers() }).catch((e) => e.response),
+      axios.get(`${API}/api/v1/workout/complete`, { headers: headers() }).catch(() => ({ data: [] })),
+      axios.get(`${API}/api/v1/workout/sets`, { headers: headers() }).catch(() => ({ data: [] })),
+    ]).then(([planRes, compRes, setsRes]) => {
+      if (planRes?.status === 200) setPlan(planRes.data);
+      setCompleted((compRes?.data || []).map((c) => c.day));
+      // build loggedSets map
+      const map = {};
+      for (const s of (setsRes?.data || [])) {
+        if (!map[s.exercise_id]) map[s.exercise_id] = new Set();
+        map[s.exercise_id].add(s.set_number);
+      }
+      setLoggedSets(map);
+    }).finally(() => setLoading(false));
+  }, [isLoggedIn]);
+
+  // Smooth scroll to today
+  useEffect(() => {
+    if (todayRef.current) {
+      setTimeout(() => todayRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+    }
+  }, [plan]);
+
+  async function handleGenerate() {
+    setError(null);
     setGenerating(true);
     try {
-      const res = await axios.post(`${API_URL}/api/v1/workout/plan`, {}, {
-        headers: getHeaders(),
-      });
+      const res = await axios.post(`${API}/api/v1/workout/plan`, {}, { headers: headers() });
       setPlan(res.data);
-      const days = [...new Set(res.data.exercises.map(e => e.day))].sort((a, b) => a - b);
-      setExpandedDay(days[0] || 1);
-    } catch (err) {
-      const detail = err.response?.data?.detail || "Failed to generate plan.";
-      setError(detail);
+    } catch (e) {
+      setError(e.response?.data?.detail || "Failed to generate plan.");
     } finally {
       setGenerating(false);
     }
-  };
+  }
 
-  // ==========================================
-  // Delete Plan (to regenerate)
-  // ==========================================
-  const handleDeletePlan = async () => {
-    if (!window.confirm("Delete your current plan? You can generate a new one after.")) return;
-    try {
-      await axios.delete(`${API_URL}/api/v1/workout/plan`, { headers: getHeaders() });
-      setPlan(null);
-      setCompletedDays([]);
-      setExpandedDay(null);
-    } catch (err) {
-      setError(err.response?.data?.detail || "Failed to delete plan.");
-    }
-  };
+  async function handleDelete() {
+    if (!window.confirm("Regenerate your plan? This will replace your current plan.")) return;
+    await axios.delete(`${API}/api/v1/workout/plan`, { headers: headers() });
+    setPlan(null);
+    setCompleted([]);
+    setLoggedSets({});
+    handleGenerate();
+  }
 
-  // ==========================================
-  // Mark Day Complete
-  // ==========================================
-  const handleComplete = async (day) => {
-    setCompletingDay(day);
+  async function handleMarkComplete(day) {
+    setMarking(day);
     try {
-      const res = await axios.post(`${API_URL}/api/v1/workout/complete`, { day }, {
-        headers: getHeaders(),
-      });
-      setCompletedDays(prev => [...prev, res.data]);
-    } catch (err) {
-      const detail = err.response?.data?.detail || "Failed to mark day complete.";
-      setError(detail);
+      await axios.post(`${API}/api/v1/workout/complete`, { day }, { headers: headers() });
+      setCompleted((prev) => [...prev, day]);
+    } catch (e) {
+      // ignore
     } finally {
-      setCompletingDay(null);
+      setMarking(null);
     }
-  };
+  }
 
-  // ==========================================
-  // Render helpers
-  // ==========================================
-  const isDayCompleted = (day) => completedDays.some(c => c.day === day);
+  async function handleUnmark(day) {
+    try {
+      await axios.delete(`${API}/api/v1/workout/complete/${day}`, { headers: headers() });
+      setCompleted((prev) => prev.filter((d) => d !== day));
+    } catch (e) {
+      // ignore
+    }
+  }
 
-  const groupExercisesByDay = () => {
-    if (!plan) return {};
-    const grouped = {};
-    plan.exercises.forEach(ex => {
-      if (!grouped[ex.day]) grouped[ex.day] = [];
-      grouped[ex.day].push(ex);
-    });
-    return grouped;
-  };
+  async function handleLogSet(exerciseId, setNum) {
+    try {
+      await axios.post(`${API}/api/v1/workout/sets`, { exercise_id: exerciseId, set_number: setNum }, { headers: headers() });
+      setLoggedSets((prev) => {
+        const next = { ...prev };
+        next[exerciseId] = new Set(prev[exerciseId] || []);
+        next[exerciseId].add(setNum);
+        return next;
+      });
+    } catch (e) {
+      // ignore
+    }
+  }
 
-  // ==========================================
-  // Loading
-  // ==========================================
+  async function handleUnlogSet(exerciseId, setNum) {
+    try {
+      await axios.delete(`${API}/api/v1/workout/sets/${exerciseId}/${setNum}`, { headers: headers() });
+      setLoggedSets((prev) => {
+        const next = { ...prev };
+        next[exerciseId] = new Set(prev[exerciseId] || []);
+        next[exerciseId].delete(setNum);
+        return next;
+      });
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  async function handleSwap(exerciseId) {
+    try {
+      const res = await axios.put(`${API}/api/v1/workout/exercise/${exerciseId}/swap`, {}, { headers: headers() });
+      setPlan((prev) => ({
+        ...prev,
+        exercises: prev.exercises.map((ex) => ex.id === exerciseId ? res.data : ex),
+      }));
+    } catch (e) {
+      // ignore — no alternatives available
+    }
+  }
+
+  const byDay = plan
+    ? plan.exercises.reduce((acc, ex) => {
+        if (!acc[ex.day]) acc[ex.day] = [];
+        acc[ex.day].push(ex);
+        return acc;
+      }, {})
+    : {};
+  const trainingDays = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+
+  // All days including rest days
+  const allDays = trainingDays.length > 0
+    ? Array.from({ length: trainingDays[trainingDays.length - 1] - trainingDays[0] + 1 },
+        (_, i) => trainingDays[0] + i)
+    : [];
+
+  // 5. Muscle group filter — unique groups across all exercises
+  const allMuscleGroups = plan
+    ? [...new Set(plan.exercises.map((e) => e.muscle_group))].sort()
+    : [];
+
+  // When filtering, show only training days with matching exercises (no rest days)
+  const visibleDays = selectedMuscle === "all"
+    ? allDays
+    : trainingDays.filter((day) => byDay[day]?.some((ex) => ex.muscle_group === selectedMuscle));
+
+  // Filter exercises within each day based on selected muscle group
+  const filteredByDay = selectedMuscle === "all"
+    ? byDay
+    : Object.fromEntries(
+        Object.entries(byDay).map(([day, exs]) => [
+          day,
+          exs.filter((ex) => ex.muscle_group === selectedMuscle),
+        ])
+      );
+
+  const today = todayPlanDay();
+
+  if (!isLoggedIn) {
+    return (
+      <AppPage eyebrow="TRAINING" title="Workout" accent="Plans"
+        subtitle="Get a personalized AI-generated plan built around your goals.">
+        <SectionCard title="Unlock Your Personal Plan">
+          <p className="ff-muted" style={{ lineHeight: 1.7, marginBottom: "0.6rem" }}>
+            Take the 5-minute fitness quiz to get a program built around your body, goals, and schedule.
+          </p>
+          <div className="ff-actions">
+            <Link to="/signup" className="ff-btn ff-btn-green">Get My Free Plan</Link>
+            <Link to="/login" className="ff-btn ff-btn-ghost">Login</Link>
+          </div>
+        </SectionCard>
+      </AppPage>
+    );
+  }
+
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", backgroundColor: "#0b1727", color: "white", padding: "60px", textAlign: "center" }}>
-        <h2>Loading your workout plan... 🦅</h2>
-      </div>
-    );
-  }
-
-  const grouped = groupExercisesByDay();
-  const days = Object.keys(grouped).map(Number).sort((a, b) => a - b);
-  const totalDays = days.length;
-  const doneCount = days.filter(d => isDayCompleted(d)).length;
-
-  // ==========================================
-  // No Quiz State
-  // ==========================================
-  if (!hasQuiz && !plan) {
-    return (
-      <AppPage
-        eyebrow="TRAINING"
-        title="Workout"
-        accent="Plan"
-        subtitle="Your personalized training program awaits."
-      >
-        <SectionCard title="Getting Started">
-          <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
-            <div style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>📋</div>
-            <h3 style={{ color: "#f8fbff", margin: "0 0 0.8rem", fontSize: "1.2rem" }}>
-              Complete the Fitness Quiz First
-            </h3>
-            <p style={{ color: "#a7b4c9", fontSize: "0.92rem", lineHeight: 1.6, maxWidth: 480, margin: "0 auto 1.5rem" }}>
-              We need to know your goals, body metrics, and activity level to build your personalized workout plan. The quiz takes about 2 minutes.
-            </p>
-            <button
-              className="ff-btn ff-btn-primary"
-              onClick={() => navigate("/quiz")}
-              style={{ padding: "0.85rem 2rem" }}
-            >
-              Take the Quiz →
-            </button>
+      <AppPage eyebrow="TRAINING" title="Workout" accent="Plans" subtitle="">
+        <SectionCard title="Loading your plan...">
+          <div style={{ padding: "2rem", textAlign: "center", color: "var(--ff-text-dim)" }}>
+            Fetching your workout data...
           </div>
         </SectionCard>
       </AppPage>
     );
   }
 
-  // ==========================================
-  // Has Quiz but No Plan
-  // ==========================================
-  if (!plan) {
-    return (
-      <AppPage
-        eyebrow="TRAINING"
-        title="Workout"
-        accent="Plan"
-        subtitle="Your personalized training program awaits."
-      >
-        <SectionCard title="Generate Your Plan">
-          <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
-            <div style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>🏋️</div>
-            <h3 style={{ color: "#f8fbff", margin: "0 0 0.8rem", fontSize: "1.2rem" }}>
-              Ready to Build Your Program
-            </h3>
-            <p style={{ color: "#a7b4c9", fontSize: "0.92rem", lineHeight: 1.6, maxWidth: 480, margin: "0 auto 1.5rem" }}>
-              Based on your quiz results, we'll generate a personalized workout plan with exercises matched to your goal, fitness level, and available training days.
-            </p>
-
-            {error && (
-              <div style={{ color: '#e74c3c', fontSize: '0.88rem', padding: "10px", backgroundColor: "rgba(231, 76, 60, 0.1)", borderRadius: "6px", marginBottom: "1rem" }}>
-                ⚠️ {error}
-              </div>
-            )}
-
-            <button
-              className="ff-btn ff-btn-primary"
-              onClick={handleGenerate}
-              disabled={generating}
-              style={{
-                padding: "0.85rem 2rem",
-                opacity: generating ? 0.6 : 1,
-                cursor: generating ? "not-allowed" : "pointer",
-              }}
-            >
-              {generating ? "Generating..." : "🚀 Generate My Plan"}
-            </button>
-          </div>
-        </SectionCard>
-      </AppPage>
-    );
-  }
-
-  // ==========================================
-  // Plan Loaded — Main View
-  // ==========================================
   return (
-    <AppPage
-      eyebrow="TRAINING"
-      title="Your Workout"
-      accent="Plan"
-      subtitle={`${totalDays}-day program · ${doneCount}/${totalDays} days completed`}
-      actions={
-        <button
-          className="ff-btn ff-btn-ghost"
-          onClick={handleDeletePlan}
-          style={{ fontSize: "0.8rem", padding: "0.5rem 1rem" }}
-        >
-          🔄 Regenerate Plan
-        </button>
-      }
-    >
-      {error && (
-        <div style={{ color: '#e74c3c', fontSize: '0.88rem', padding: "12px 16px", backgroundColor: "rgba(231, 76, 60, 0.1)", borderRadius: "8px", marginBottom: "1rem" }}>
-          ⚠️ {error}
+    <AppPage eyebrow="TRAINING" title="Workout" accent="Plans"
+      subtitle="Your AI-generated plan tailored to your fitness goal and activity level.">
+
+      {generating && (
+        <SectionCard title="Generating Your Plan">
+          <GeneratingAnimation />
+        </SectionCard>
+      )}
+
+      {error && !generating && (
+        <div style={{
+          background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+          borderRadius: 12, padding: "1rem 1.2rem", marginBottom: "1rem",
+          color: "#fca5a5", fontSize: "0.9rem",
+        }}>
+          {error}
         </div>
       )}
 
-      {/* Progress Bar */}
-      <SectionCard title="Weekly Progress">
-        <div style={{ marginBottom: "0.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-            <span style={{ color: "#a7b4c9", fontSize: "0.85rem" }}>Completion</span>
-            <span style={{ color: "#f8fbff", fontWeight: 700, fontSize: "0.85rem" }}>
-              {doneCount}/{totalDays} days
-            </span>
+      {!plan && !generating && (
+        <SectionCard title="No Plan Yet">
+          <p className="ff-muted" style={{ lineHeight: 1.7 }}>
+            You don't have a workout plan yet. Complete the quiz first, then generate your personalized plan.
+          </p>
+          <div className="ff-actions">
+            <button className="ff-btn ff-btn-primary" onClick={handleGenerate}>Generate My Plan</button>
+            <Link to="/quiz" className="ff-btn ff-btn-ghost">Go to Quiz</Link>
           </div>
-          <div style={{ height: 8, borderRadius: 99, backgroundColor: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+        </SectionCard>
+      )}
+
+      {plan && !generating && (
+        <>
+          {/* Stale plan warning */}
+          {plan.stale && (
             <div style={{
-              height: "100%",
-              width: `${totalDays > 0 ? (doneCount / totalDays) * 100 : 0}%`,
-              background: "linear-gradient(90deg, var(--ff-accent, #3b82f6), var(--ff-cyan, #06b6d4))",
-              borderRadius: 99,
-              transition: "width 0.5s ease",
-            }} />
-          </div>
-        </div>
-
-        {/* Day pills */}
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "1rem" }}>
-          {days.map(day => {
-            const done = isDayCompleted(day);
-            const active = expandedDay === day;
-            return (
-              <button
-                key={day}
-                onClick={() => setExpandedDay(active ? null : day)}
-                style={{
-                  padding: "0.55rem 1rem",
-                  borderRadius: 10,
-                  border: active ? "2px solid var(--ff-accent, #3b82f6)" : "2px solid rgba(255,255,255,0.08)",
-                  backgroundColor: done
-                    ? "rgba(34, 197, 94, 0.15)"
-                    : active ? "rgba(59, 130, 246, 0.15)" : "rgba(255,255,255,0.03)",
-                  color: done ? "#4ade80" : active ? "#93c5fd" : "#a7b4c9",
-                  cursor: "pointer",
-                  fontSize: "0.82rem",
-                  fontWeight: 700,
-                  transition: "all 0.2s ease",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.4rem",
-                }}
-              >
-                {done && "✓ "}{dayLabels[day] || `Day ${day}`}
-              </button>
-            );
-          })}
-        </div>
-      </SectionCard>
-
-      {/* Expanded Day Exercises */}
-      {expandedDay && grouped[expandedDay] && (
-        <SectionCard
-          title={
-            <span style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-              {dayLabels[expandedDay] || `Day ${expandedDay}`}
-              {isDayCompleted(expandedDay) && (
-                <span className="ff-tag ff-tag-green" style={{ fontSize: "0.72rem" }}>COMPLETED</span>
-              )}
-            </span>
-          }
-        >
-          {/* Exercise cards */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {grouped[expandedDay].map((ex) => {
-              const badge = getMuscleBadge(ex.muscle_group);
-              return (
-                <div
-                  key={ex.id}
-                  style={{
-                    padding: "1rem 1.2rem",
-                    borderRadius: 12,
-                    backgroundColor: "rgba(255,255,255,0.03)",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                  }}
-                >
-                  {/* Top row: name + muscle badge */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.8rem", marginBottom: "0.6rem" }}>
-                    <div style={{ fontWeight: 700, color: "#f8fbff", fontSize: "0.95rem" }}>
-                      {ex.name}
-                    </div>
-                    <span style={{
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      padding: "0.2rem 0.55rem",
-                      borderRadius: 6,
-                      backgroundColor: badge.bg,
-                      border: `1px solid ${badge.border}`,
-                      color: badge.text,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                    }}>
-                      {ex.muscle_group}
-                    </span>
-                  </div>
-
-                  {/* Stats row */}
-                  <div style={{ display: "flex", gap: "1.2rem", fontSize: "0.82rem", color: "#a7b4c9" }}>
-                    <span><strong style={{ color: "#c8d5e6" }}>Sets:</strong> {ex.sets}</span>
-                    <span><strong style={{ color: "#c8d5e6" }}>Reps:</strong> {ex.reps}</span>
-                    <span><strong style={{ color: "#c8d5e6" }}>Level:</strong> {ex.difficulty}</span>
-                  </div>
-
-                  {/* Instructions (if LLM generated them) */}
-                  {ex.instructions && (
-                    <div style={{
-                      marginTop: "0.7rem",
-                      padding: "0.7rem 0.9rem",
-                      borderRadius: 8,
-                      backgroundColor: "rgba(59, 130, 246, 0.06)",
-                      border: "1px solid rgba(59, 130, 246, 0.15)",
-                      fontSize: "0.82rem",
-                      color: "#93a7c4",
-                      lineHeight: 1.55,
-                      whiteSpace: "pre-wrap",
-                    }}>
-                      💡 {ex.instructions}
-                    </div>
-                  )}
-
-                  {/* YouTube link if available */}
-                  {ex.youtube_url && (
-                    <a
-                      href={ex.youtube_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: "inline-block",
-                        marginTop: "0.6rem",
-                        fontSize: "0.8rem",
-                        color: "#60a5fa",
-                        textDecoration: "none",
-                      }}
-                    >
-                      ▶ Watch tutorial
-                    </a>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Mark Complete button */}
-          {!isDayCompleted(expandedDay) && (
-            <button
-              className="ff-btn ff-btn-primary"
-              onClick={() => handleComplete(expandedDay)}
-              disabled={completingDay === expandedDay}
-              style={{
-                marginTop: "1.2rem",
-                padding: "0.8rem 1.8rem",
-                opacity: completingDay === expandedDay ? 0.6 : 1,
-                cursor: completingDay === expandedDay ? "not-allowed" : "pointer",
-                width: "100%",
-              }}
-            >
-              {completingDay === expandedDay ? "Saving..." : `✓ Mark ${dayLabels[expandedDay] || `Day ${expandedDay}`} Complete`}
-            </button>
-          )}
-
-          {isDayCompleted(expandedDay) && (
-            <div style={{
-              marginTop: "1.2rem",
-              padding: "0.8rem",
-              textAlign: "center",
-              borderRadius: 10,
-              backgroundColor: "rgba(34, 197, 94, 0.1)",
-              border: "1px solid rgba(34, 197, 94, 0.25)",
-              color: "#4ade80",
-              fontSize: "0.88rem",
-              fontWeight: 600,
+              background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.35)",
+              borderRadius: 12, padding: "0.9rem 1.2rem", marginBottom: "0.75rem",
+              display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem",
             }}>
-              ✅ Great work! This day is done.
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <span style={{ fontSize: "1.1rem" }}>⚠️</span>
+                <span style={{ color: "#fde68a", fontSize: "0.88rem", fontWeight: 600 }}>
+                  Your fitness goal was updated. Regenerate your plan to reflect the changes.
+                </span>
+              </div>
+              <button className="ff-btn ff-btn-sm" onClick={handleDelete} style={{
+                background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.4)",
+                color: "#fde68a", flexShrink: 0,
+              }}>
+                Regenerate Now
+              </button>
             </div>
           )}
-        </SectionCard>
-      )}
 
-      {/* All days completed celebration */}
-      {totalDays > 0 && doneCount === totalDays && (
-        <SectionCard title="🎉 Week Complete!">
-          <div style={{ textAlign: "center", padding: "1.5rem 1rem" }}>
-            <div style={{ fontSize: "3rem", marginBottom: "0.8rem" }}>🏆</div>
-            <p style={{ color: "#f8fbff", fontSize: "1.05rem", fontWeight: 600, marginBottom: "0.6rem" }}>
-              You crushed every workout this week!
-            </p>
-            <p style={{ color: "#a7b4c9", fontSize: "0.88rem", lineHeight: 1.6, maxWidth: 420, margin: "0 auto 1.2rem" }}>
-              Ready for a fresh start? Delete this plan and generate a new one, or keep it for next week.
-            </p>
-            <button
-              className="ff-btn ff-btn-primary"
-              onClick={handleDeletePlan}
-              style={{ padding: "0.75rem 1.5rem" }}
-            >
-              🔄 Generate New Plan
-            </button>
+          {/* Summary card */}
+          <SectionCard title="Your Plan">
+            <div style={{ display: "flex", alignItems: "center", gap: "2rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+              <ProgressRing
+                value={completedDays.length}
+                max={trainingDays.length}
+                color="var(--ff-accent)"
+              />
+              <div className="ff-grid ff-grid-3" style={{ flex: 1 }}>
+                <div className="ff-kpi">
+                  <div className="ff-kpi-value" style={{ color: "var(--ff-accent)" }}>{trainingDays.length}</div>
+                  <div className="ff-kpi-label">Training Days</div>
+                </div>
+                <div className="ff-kpi">
+                  <div className="ff-kpi-value" style={{ color: "var(--ff-green)" }}>{plan.exercises.length}</div>
+                  <div className="ff-kpi-label">Total Exercises</div>
+                </div>
+                <div className="ff-kpi">
+                  <div className="ff-kpi-value" style={{ color: "var(--ff-amber)" }}>{completedDays.length}</div>
+                  <div className="ff-kpi-label">Completed</div>
+                </div>
+              </div>
+            </div>
+            <div className="ff-actions">
+              <button className="ff-btn ff-btn-ghost ff-btn-sm" onClick={() => setAllExpanded((v) => !v)}>
+                {allExpanded ? "Collapse All" : "Expand All"}
+              </button>
+              <button className="ff-btn ff-btn-ghost ff-btn-sm" onClick={handleDelete}>
+                Regenerate Plan
+              </button>
+            </div>
+          </SectionCard>
+
+          {/* 5. Muscle group filter */}
+          {allMuscleGroups.length > 0 && (
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
+              {["all", ...allMuscleGroups].map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setMuscle(g)}
+                  style={{
+                    padding: "4px 12px", borderRadius: 999, border: "1px solid",
+                    cursor: "pointer", fontSize: "0.8rem", fontWeight: 600,
+                    background: selectedMuscle === g ? "var(--ff-accent-soft)" : "transparent",
+                    borderColor: selectedMuscle === g ? "var(--ff-accent)" : "var(--ff-border-dim)",
+                    color: selectedMuscle === g ? "var(--ff-accent)" : "var(--ff-text-muted)",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {g === "all" ? "All" : `${muscleEmoji(g)} ${g}`}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Days */}
+          <div className="ff-stack" style={{ gap: "1.2rem" }}>
+            {visibleDays.map((day) =>
+              filteredByDay[day]?.length > 0 ? (
+                <DaySection
+                  key={day}
+                  day={day}
+                  exercises={filteredByDay[day]}
+                  completedDays={completedDays}
+                  onMarkComplete={handleMarkComplete}
+                  onUnmark={handleUnmark}
+                  marking={marking}
+                  allExpanded={allExpanded}
+                  dayRef={day === today ? todayRef : null}
+                  loggedSets={loggedSets}
+                  onLogSet={handleLogSet}
+                  onUnlogSet={handleUnlogSet}
+                  onSwap={handleSwap}
+                />
+              ) : (
+                <RestDayCard key={day} day={day} />
+              )
+            )}
           </div>
-        </SectionCard>
+        </>
       )}
 
-      <button
-        onClick={() => navigate("/dashboard")}
-        style={{
-          marginTop: "20px",
-          padding: "10px 20px",
-          border: "none",
-          borderRadius: "8px",
-          background: "transparent",
-          color: "#64748b",
-          cursor: "pointer",
-          fontSize: "14px",
-        }}
-      >
-        ← Back to Dashboard
-      </button>
+      <style>{`
+        @keyframes ff-pulse {
+          0%, 100% { transform: scale(1);   box-shadow: 0 0 0   0   var(--ff-accent-glow); }
+          50%       { transform: scale(1.08); box-shadow: 0 0 22px 6px var(--ff-accent-glow); }
+        }
+        @keyframes ff-spin { to { transform: rotate(360deg); } }
+        .ff-swap-btn:hover { background: var(--ff-accent-soft) !important; border-color: var(--ff-accent) !important; color: var(--ff-accent) !important; transform: rotate(20deg); }
+      `}</style>
     </AppPage>
   );
 }

@@ -7,6 +7,49 @@ and workout_days -> training split.
 from typing import List
 from src.model import Exercise, FitnessGoal
 
+_GH_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises"
+
+# Maps exercise name -> free-exercise-db folder slug (partial coverage, others get None)
+_IMAGE_MAP: dict = {
+    "Incline Push-Up":           "Incline_Push-Up",
+    "Dumbbell Bench Press":      "Dumbbell_Bench_Press",
+    "Barbell Bench Press":       "Barbell_Bench_Press_-_Medium_Grip",
+    "Decline Dumbbell Press":    "Decline_Dumbbell_Bench_Press",
+    "Bent-Over Dumbbell Row":    "Bent_Over_Two-Dumbbell_Row",
+    "Superman Hold":             "Superman",
+    "Seated Cable Row":          "Seated_Cable_Rows",
+    "Barbell Deadlift":          "Barbell_Deadlift",
+    "Dumbbell Shoulder Press":   "Dumbbell_Shoulder_Press",
+    "Arnold Press":              "Arnold_Dumbbell_Press",
+    "Face Pull":                 "Face_Pull",
+    "Hammer Curl":               "Alternate_Hammer_Curl",
+    "Barbell Curl":              "Barbell_Curl",
+    "Incline Dumbbell Curl":     "Incline_Dumbbell_Curl",
+    "Spider Curl":               "Spider_Curl",
+    "Skull Crusher":             "Decline_Close-Grip_Bench_To_Skull_Crusher",
+    "Bodyweight Squat":          "Bodyweight_Squat",
+    "Goblet Squat":              "Goblet_Squat",
+    "Glute Bridge":              "Single_Leg_Glute_Bridge",
+    "Walking Lunge":             "Bodyweight_Walking_Lunge",
+    "Barbell Back Squat":        "Barbell_Full_Squat",
+    "Barbell Romanian Deadlift": "Romanian_Deadlift",
+    "Bulgarian Split Squat":     "Barbell_Bulgarian_Split_Squat",
+    "Plank":                     "Plank",
+    "Dead Bug":                  "Dead_Bug",
+    "Russian Twist":             "Russian_Twist",
+    "Hanging Leg Raise":         "Hanging_Leg_Raise",
+    "Bicycle Crunch":            "Bicycle_Crunch",
+    "Box Jump":                  "Box_Jump_(Multiple_Response)",
+    "Burpee":                    "Burpees",
+    "Jump Rope":                 "Tire_Jump",
+}
+
+def _image_url(name: str) -> str | None:
+    slug = _IMAGE_MAP.get(name)
+    if not slug:
+        return None
+    return f"{_GH_BASE}/{slug}/0.jpg"
+
 
 # ---------------------------------------------------------------------------
 # Exercise library — (name, muscle_group, sets, reps, difficulty, youtube_url)
@@ -176,9 +219,64 @@ _PPL = {
     7: ["chest", "back", "legs", "core"],
 }
 
-# ---------------------------------------------------------------------------
-# Generator logic (unchanged)
-# ---------------------------------------------------------------------------
+# Cardio exercises to append per day based on goal
+_CARDIO_PER_DAY = {
+    "lose_weight":       2,
+    "improve_endurance": 3,
+    "maintain":          1,
+    "gain_muscle":       0,
+}
+
+# Strength exercises to pick per muscle group based on goal
+_EXERCISES_PER_GROUP = {
+    "lose_weight":       1,
+    "improve_endurance": 1,
+    "maintain":          2,
+    "gain_muscle":       2,
+}
+
+
+def _get_difficulty(activity_level: str) -> str:
+    if activity_level in ("sedentary", "lightly_active"):
+        return "beginner"
+    if activity_level == "moderately_active":
+        return "intermediate"
+    return "advanced"
+
+
+def _get_schedule(workout_days: int) -> dict:
+    if workout_days <= 2:
+        base = _FULL_BODY
+    elif workout_days <= 4:
+        base = _UPPER_LOWER
+    else:
+        base = _PPL
+    return {day: groups for day, groups in base.items() if day <= workout_days}
+
+
+def _pick(muscle_group: str, difficulty: str, count: int, offset: int = 0) -> list:
+    options = _LIBRARY.get(muscle_group, {}).get(difficulty, [])
+    if not options:
+        return []
+    return [options[(offset + i) % len(options)] for i in range(min(count, len(options)))]
+
+
+def get_image_url(name: str) -> str | None:
+    return _image_url(name)
+
+
+def get_swap_exercise(muscle_group: str, difficulty: str, exclude_name: str):
+    """Return a random alternative (name, image_url) tuple or None."""
+    import random
+    options = _LIBRARY.get(muscle_group, {}).get(difficulty, [])
+    alternatives = [raw for raw in options if raw[0] != exclude_name]
+    if not alternatives:
+        return None
+    raw = random.choice(alternatives)
+    return raw[0], _image_url(raw[0])
+
+
+
 def generate_workout_plan(fitness_goal: FitnessGoal) -> List[Exercise]:
     difficulty = "beginner"
     schedule = _FULL_BODY
@@ -195,6 +293,7 @@ def generate_workout_plan(fitness_goal: FitnessGoal) -> List[Exercise]:
                     difficulty=diff,
                     day=day,
                     youtube_url=yt,
+                    image_url=_image_url(name),
                 ))
 
     return result
