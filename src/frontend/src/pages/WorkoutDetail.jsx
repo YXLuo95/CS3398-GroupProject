@@ -17,35 +17,40 @@ const workoutPlans = {
         sets: '3 sets',
         reps: '10-12 reps',
         rest: '60-90 seconds',
-        notes: 'Focus on depth and form'
+        notes: 'Focus on depth and form',
+        youtube_url: 'https://www.youtube.com/watch?v=m0GcZ24pK6k'
       },
       {
         name: 'Push-ups (Modified if needed)',
         sets: '3 sets',
         reps: '8-10 reps',
         rest: '60-90 seconds',
-        notes: 'Drop to knees if needed'
+        notes: 'Drop to knees if needed',
+        youtube_url: 'https://www.youtube.com/watch?v=IODxDxX7oi4'
       },
       {
         name: 'Dumbbell Rows',
         sets: '3 sets',
         reps: '10 reps per arm',
         rest: '60-90 seconds',
-        notes: 'Keep back straight, squeeze shoulder blades'
+        notes: 'Keep back straight, squeeze shoulder blades',
+        youtube_url: 'https://www.youtube.com/watch?v=roCP6wCXPqo'
       },
       {
         name: 'Plank',
         sets: '3 sets',
         reps: '20-30 seconds',
         rest: '60 seconds',
-        notes: 'Keep body in straight line'
+        notes: 'Keep body in straight line',
+        youtube_url: 'https://www.youtube.com/watch?v=ASdvN_XEl_c'
       },
       {
         name: 'Walking Lunges',
         sets: '3 sets',
         reps: '8-10 reps per leg',
         rest: '60-90 seconds',
-        notes: 'Step forward with control'
+        notes: 'Step forward with control',
+        youtube_url: 'https://www.youtube.com/watch?v=L8fvypPrzzs'
       }
     ],
     benefits: [
@@ -75,35 +80,40 @@ const workoutPlans = {
         sets: '4 sets',
         reps: '5-8 reps',
         rest: '2-3 minutes',
-        notes: 'Full depth, keep chest up'
+        notes: 'Full depth, keep chest up',
+        youtube_url: 'https://www.youtube.com/watch?v=ultWZbUMPL8'
       },
       {
         name: 'Bench Press',
         sets: '4 sets',
         reps: '5-8 reps',
         rest: '2-3 minutes',
-        notes: 'Full range of motion, controlled descent'
+        notes: 'Full range of motion, controlled descent',
+        youtube_url: 'https://www.youtube.com/watch?v=rT7DgCr-3pg'
       },
       {
         name: 'Deadlifts',
         sets: '4 sets',
         reps: '5 reps',
         rest: '2-3 minutes',
-        notes: 'Keep back straight, engage lats'
+        notes: 'Keep back straight, engage lats',
+        youtube_url: 'https://www.youtube.com/watch?v=3UwO0fKukRw'
       },
       {
         name: 'Overhead Press',
         sets: '3 sets',
         reps: '6-8 reps',
         rest: '2 minutes',
-        notes: 'Press straight up, avoid leaning back'
+        notes: 'Press straight up, avoid leaning back',
+        youtube_url: 'https://www.youtube.com/watch?v=2yjwXTZQDDI'
       },
       {
         name: 'Bent-over Rows',
         sets: '3 sets',
         reps: '8-10 reps',
         rest: '90 seconds',
-        notes: 'Pull with back, squeeze shoulder blades'
+        notes: 'Pull with back, squeeze shoulder blades',
+        youtube_url: 'https://www.youtube.com/watch?v=ZXpZu_fmheU'
       }
     ],
     benefits: [
@@ -133,35 +143,40 @@ const workoutPlans = {
         sets: '4 sets',
         reps: '10-15 reps',
         rest: '30-45 seconds',
-        notes: 'Full movement, explosive jump'
+        notes: 'Full movement, explosive jump',
+        youtube_url: 'https://www.youtube.com/watch?v=auBLPXO8Fww'
       },
       {
         name: 'Mountain Climbers',
         sets: '4 sets',
         reps: '30 seconds',
         rest: '30 seconds',
-        notes: 'Fast pace, keep core tight'
+        notes: 'Fast pace, keep core tight',
+        youtube_url: 'https://www.youtube.com/watch?v=nmwgirgXLYM'
       },
       {
         name: 'Kettlebell Swings',
         sets: '3 sets',
         reps: '15-20 reps',
         rest: '45 seconds',
-        notes: 'Hinge at hips, drive with glutes'
+        notes: 'Hinge at hips, drive with glutes',
+        youtube_url: 'https://www.youtube.com/watch?v=YSxHifyI6s8'
       },
       {
         name: 'Battle Ropes',
         sets: '3 sets',
         reps: '30 seconds',
         rest: '45 seconds',
-        notes: 'Alternating waves, full power'
+        notes: 'Alternating waves, full power',
+        youtube_url: 'https://www.youtube.com/watch?v=9jZ3pQ8q7Xw'
       },
       {
         name: 'Circuit: Push-ups + Squat Jumps',
         sets: '3 rounds',
         reps: '10 + 10',
         rest: '60 seconds between rounds',
-        notes: 'Minimal rest between exercises'
+        notes: 'Minimal rest between exercises',
+        youtube_url: 'https://www.youtube.com/watch?v=U4s4mEQ5VqU'
       }
     ],
     benefits: [
@@ -191,35 +206,40 @@ const workoutPlans = {
         sets: '3-4 sets',
         reps: '10-15 reps',
         rest: '60 seconds',
-        notes: 'Modify on knees if needed'
+        notes: 'Modify on knees if needed',
+        youtube_url: 'https://www.youtube.com/watch?v=IODxDxX7oi4'
       },
       {
         name: 'Bodyweight Squats',
         sets: '3-4 sets',
         reps: '15-20 reps',
         rest: '60 seconds',
-        notes: 'Full depth, keep chest up'
+        notes: 'Full depth, keep chest up',
+        youtube_url: 'https://www.youtube.com/watch?v=m0GcZ24pK6k'
       },
       {
         name: 'Lunges',
         sets: '3 sets',
         reps: '10 reps per leg',
         rest: '60 seconds',
-        notes: 'Alternating legs, controlled movement'
+        notes: 'Alternating legs, controlled movement',
+        youtube_url: 'https://www.youtube.com/watch?v=QOVaHwm-Q6U'
       },
       {
         name: 'Plank Variations',
         sets: '3 sets',
         reps: '20-45 seconds',
         rest: '60 seconds',
-        notes: 'Try side planks for variety'
+        notes: 'Try side planks for variety',
+        youtube_url: 'https://www.youtube.com/watch?v=ASdvN_XEl_c'
       },
       {
         name: 'Burpees (or modified)',
         sets: '3 sets',
         reps: '8-12 reps',
         rest: '60 seconds',
-        notes: 'Step back instead of jumping if needed'
+        notes: 'Step back instead of jumping if needed',
+        youtube_url: 'https://www.youtube.com/watch?v=auBLPXO8Fww'
       }
     ],
     benefits: [
@@ -293,6 +313,20 @@ const btnSecondary = {
   textDecoration: "none",
   display: "inline-block",
   textAlign: "center"
+};
+
+const btnVideo = {
+  padding: "8px 14px",
+  borderRadius: "8px",
+  border: "none",
+  background: "linear-gradient(90deg, #ef4444, #dc2626)",
+  color: "white",
+  cursor: "pointer",
+  fontWeight: "700",
+  textDecoration: "none",
+  display: "inline-block",
+  textAlign: "center",
+  fontSize: "0.9rem"
 };
 
 const exerciseTable = {
@@ -373,6 +407,7 @@ export default function WorkoutDetail() {
                 <th style={tableHeader}>Reps</th>
                 <th style={tableHeader}>Rest</th>
                 <th style={tableHeader}>Notes</th>
+                <th style={tableHeader}>Demo</th>
               </tr>
             </thead>
             <tbody>
@@ -383,6 +418,20 @@ export default function WorkoutDetail() {
                   <td style={tableCell}>{exercise.reps}</td>
                   <td style={tableCell}>{exercise.rest}</td>
                   <td style={tableCell}>{exercise.notes}</td>
+                  <td style={tableCell}>
+                    {exercise.youtube_url ? (
+                      <a
+                        href={exercise.youtube_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={btnVideo}
+                      >
+                        ▶ Watch Demo
+                      </a>
+                    ) : (
+                      <span style={{ color: "#94a3b8" }}>No demo</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
