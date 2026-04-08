@@ -215,5 +215,5 @@ async def swap_exercise_endpoint(
     if not alt:
         raise HTTPException(status_code=400, detail="No alternatives available for this exercise.")
 
-    new_name, new_image = alt
-    return await swap_exercise(session, exercise, new_name, new_image)
+    new_name, new_image, new_instructions = alt
+    return await swap_exercise(session, exercise, new_name, new_image, new_instructions)

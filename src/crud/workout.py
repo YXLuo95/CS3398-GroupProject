@@ -147,11 +147,11 @@ async def get_sets_for_plan(session: AsyncSession, user_id: int, exercise_ids: L
     return result.scalars().all()
 
 
-async def swap_exercise(session: AsyncSession, exercise: Exercise, new_name: str, new_image_url: Optional[str]) -> Exercise:
-    """Replace exercise name and image in-place."""
+async def swap_exercise(session: AsyncSession, exercise: Exercise, new_name: str, new_image_url: Optional[str], new_instructions: Optional[str] = None) -> Exercise:
+    """Replace exercise name, image, and instructions in-place."""
     exercise.name = new_name
     exercise.image_url = new_image_url
-    exercise.instructions = None
+    exercise.instructions = new_instructions
     session.add(exercise)
     await session.commit()
     await session.refresh(exercise)

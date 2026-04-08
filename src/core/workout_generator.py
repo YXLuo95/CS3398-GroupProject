@@ -110,7 +110,7 @@ def get_swap_exercise(
     )
     if not entry:
         return None
-    return entry["name"], entry.get("image_url")
+    return entry["name"], entry.get("image_url"), entry.get("instructions")
 
 
 # ---------------------------------------------------------------------------
