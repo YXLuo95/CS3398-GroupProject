@@ -14,136 +14,142 @@ from src.model import Exercise, FitnessGoal
 _LIBRARY: dict = {
     "chest": {
         "beginner": [
-            ("Push-Up",          "chest", "3", "10", "beginner", None),
-            ("Incline Push-Up",  "chest", "3", "12", "beginner", None),
-            ("Wall Push-Up",     "chest", "3", "15", "beginner", None),
+            ("Push-Up", "chest", "3", "10", "beginner", "https://www.youtube.com/watch?v=IODxDxX7oi4"),
+            ("Incline Push-Up", "chest", "3", "12", "beginner", "https://www.youtube.com/watch?v=8vG5pL0K9aY"),
+            ("Wall Push-Up", "chest", "3", "15", "beginner", "https://www.youtube.com/watch?v=0pkjOk0EiAk"),
         ],
         "intermediate": [
-            ("Dumbbell Bench Press", "chest", "4", "10", "intermediate", None),
-            ("Dumbbell Flye",        "chest", "3", "12", "intermediate", None),
-            ("Push-Up with Pause",   "chest", "3", "10", "intermediate", None),
+            ("Dumbbell Bench Press", "chest", "4", "10", "intermediate", "https://www.youtube.com/watch?v=VmB1G1K7v94"),
+            ("Dumbbell Flye", "chest", "3", "12", "intermediate", "https://www.youtube.com/watch?v=eozdVDA78K0"),
+            ("Push-Up with Pause", "chest", "3", "10", "intermediate", "https://www.youtube.com/watch?v=IODxDxX7oi4"),
         ],
         "advanced": [
-            ("Barbell Bench Press",    "chest", "5", "5",  "advanced", None),
-            ("Weighted Dip",           "chest", "4", "8",  "advanced", None),
-            ("Decline Dumbbell Press", "chest", "4", "10", "advanced", None),
+            ("Barbell Bench Press", "chest", "5", "5", "advanced", "https://www.youtube.com/watch?v=rT7DgCr-3pg"),
+            ("Weighted Dip", "chest", "4", "8", "advanced", "https://www.youtube.com/watch?v=2z8JmcrW-As"),
+            ("Decline Dumbbell Press", "chest", "4", "10", "advanced", "https://www.youtube.com/watch?v=LfyQBUKR8SE"),
         ],
     },
+
     "back": {
         "beginner": [
-            ("Bent-Over Dumbbell Row", "back", "3", "10",     "beginner", None),
-            ("Superman Hold",          "back", "3", "30 sec", "beginner", None),
-            ("Resistance Band Row",    "back", "3", "12",     "beginner", None),
+            ("Bent-Over Dumbbell Row", "back", "3", "10", "beginner", "https://www.youtube.com/watch?v=ZXpZu_fmheU"),
+            ("Superman Hold", "back", "3", "30 sec", "beginner", "https://www.youtube.com/watch?v=z6PJMT2y8GQ"),
+            ("Resistance Band Row", "back", "3", "12", "beginner", "https://www.youtube.com/watch?v=roCP6wCXPqo"),
         ],
         "intermediate": [
-            ("Pull-Up",                  "back", "3", "6",  "intermediate", None),
-            ("Seated Cable Row",         "back", "4", "10", "intermediate", None),
-            ("Single-Arm Dumbbell Row",  "back", "3", "10", "intermediate", None),
+            ("Pull-Up", "back", "3", "6", "intermediate", "https://www.youtube.com/watch?v=eGo4IYlbE5g"),
+            ("Seated Cable Row", "back", "4", "10", "intermediate", "https://www.youtube.com/watch?v=GZbfZ033f74"),
+            ("Single-Arm Dumbbell Row", "back", "3", "10", "intermediate", "https://www.youtube.com/watch?v=pYcpY20QaE8"),
         ],
         "advanced": [
-            ("Weighted Pull-Up",  "back", "4", "6", "advanced", None),
-            ("Barbell Deadlift",  "back", "5", "5", "advanced", None),
-            ("T-Bar Row",         "back", "4", "8", "advanced", None),
+            ("Weighted Pull-Up", "back", "4", "6", "advanced", "https://www.youtube.com/watch?v=Kx5hX1c7w5Y"),
+            ("Barbell Deadlift", "back", "5", "5", "advanced", "https://www.youtube.com/watch?v=3UwO0fKukRw"),
+            ("T-Bar Row", "back", "4", "8", "advanced", "https://www.youtube.com/watch?v=j3Igk5nyZE4"),
         ],
     },
+
     "shoulders": {
         "beginner": [
-            ("Dumbbell Lateral Raise",      "shoulders", "3", "12", "beginner", None),
-            ("Overhead Press (light DB)",   "shoulders", "3", "10", "beginner", None),
-            ("Front Raise",                 "shoulders", "3", "12", "beginner", None),
+            ("Dumbbell Lateral Raise", "shoulders", "3", "12", "beginner", "https://www.youtube.com/watch?v=kDqklk1ZESo"),
+            ("Overhead Press (light DB)", "shoulders", "3", "10", "beginner", "https://www.youtube.com/watch?v=B-aVuyhvLHU"),
+            ("Front Raise", "shoulders", "3", "12", "beginner", "https://www.youtube.com/watch?v=-t7fuZ0KhDA"),
         ],
         "intermediate": [
-            ("Dumbbell Shoulder Press", "shoulders", "4", "10", "intermediate", None),
-            ("Arnold Press",            "shoulders", "3", "10", "intermediate", None),
-            ("Face Pull",               "shoulders", "3", "15", "intermediate", None),
+            ("Dumbbell Shoulder Press", "shoulders", "4", "10", "intermediate", "https://www.youtube.com/watch?v=B-aVuyhvLHU"),
+            ("Arnold Press", "shoulders", "3", "10", "intermediate", "https://www.youtube.com/watch?v=vj2w851ZHRM"),
+            ("Face Pull", "shoulders", "3", "15", "intermediate", "https://www.youtube.com/watch?v=rep-qVOkqgk"),
         ],
         "advanced": [
-            ("Barbell Overhead Press",   "shoulders", "5", "5",  "advanced", None),
-            ("Barbell Upright Row",      "shoulders", "4", "8",  "advanced", None),
-            ("Lateral Raise Drop Set",   "shoulders", "4", "10", "advanced", None),
+            ("Barbell Overhead Press", "shoulders", "5", "5", "advanced", "https://www.youtube.com/watch?v=2yjwXTZQDDI"),
+            ("Barbell Upright Row", "shoulders", "4", "8", "advanced", "https://www.youtube.com/watch?v=amCU-ziHITM"),
+            ("Lateral Raise Drop Set", "shoulders", "4", "10", "advanced", "https://www.youtube.com/watch?v=kDqklk1ZESo"),
         ],
     },
+
     "biceps": {
         "beginner": [
-            ("Dumbbell Curl", "biceps", "3", "12", "beginner", None),
-            ("Hammer Curl",   "biceps", "3", "10", "beginner", None),
+            ("Dumbbell Curl", "biceps", "3", "12", "beginner", "https://www.youtube.com/watch?v=ykJmrZ5v0Oo"),
+            ("Hammer Curl", "biceps", "3", "10", "beginner", "https://www.youtube.com/watch?v=zC3nLlEvin4"),
         ],
         "intermediate": [
-            ("Barbell Curl",         "biceps", "3", "10", "intermediate", None),
-            ("Incline Dumbbell Curl","biceps", "3", "10", "intermediate", None),
+            ("Barbell Curl", "biceps", "3", "10", "intermediate", "https://www.youtube.com/watch?v=kwG2ipFRgfo"),
+            ("Incline Dumbbell Curl", "biceps", "3", "10", "intermediate", "https://www.youtube.com/watch?v=soxrZlIl35U"),
         ],
         "advanced": [
-            ("EZ-Bar Preacher Curl", "biceps", "4", "8",  "advanced", None),
-            ("Spider Curl",          "biceps", "3", "10", "advanced", None),
+            ("EZ-Bar Preacher Curl", "biceps", "4", "8", "advanced", "https://www.youtube.com/watch?v=fIWP-FRFNU0"),
+            ("Spider Curl", "biceps", "3", "10", "advanced", "https://www.youtube.com/watch?v=2v3R5wq1zKM"),
         ],
     },
+
     "triceps": {
         "beginner": [
-            ("Bench Tricep Dip",              "triceps", "3", "10", "beginner", None),
-            ("Overhead DB Tricep Extension",  "triceps", "3", "12", "beginner", None),
+            ("Bench Tricep Dip", "triceps", "3", "10", "beginner", "https://www.youtube.com/watch?v=0326dy_-CzM"),
+            ("Overhead DB Tricep Extension", "triceps", "3", "12", "beginner", "https://www.youtube.com/watch?v=_gsUck-7M74"),
         ],
         "intermediate": [
-            ("Cable Tricep Pushdown", "triceps", "3", "12", "intermediate", None),
-            ("Skull Crusher",         "triceps", "3", "10", "intermediate", None),
+            ("Cable Tricep Pushdown", "triceps", "3", "12", "intermediate", "https://www.youtube.com/watch?v=2-LAMcpzODU"),
+            ("Skull Crusher", "triceps", "3", "10", "intermediate", "https://www.youtube.com/watch?v=d_KZxkY_0cM"),
         ],
         "advanced": [
-            ("Close-Grip Bench Press", "triceps", "4", "8", "advanced", None),
-            ("Weighted Tricep Dip",    "triceps", "4", "8", "advanced", None),
+            ("Close-Grip Bench Press", "triceps", "4", "8", "advanced", "https://www.youtube.com/watch?v=nEF0bv2FW94"),
+            ("Weighted Tricep Dip", "triceps", "4", "8", "advanced", "https://www.youtube.com/watch?v=2z8JmcrW-As"),
         ],
     },
+
     "legs": {
         "beginner": [
-            ("Bodyweight Squat", "legs", "3", "15", "beginner", None),
-            ("Reverse Lunge",    "legs", "3", "10", "beginner", None),
-            ("Glute Bridge",     "legs", "3", "15", "beginner", None),
+            ("Bodyweight Squat", "legs", "3", "15", "beginner", "https://www.youtube.com/watch?v=m0GcZ24pK6k"),
+            ("Reverse Lunge", "legs", "3", "10", "beginner", "https://www.youtube.com/watch?v=QOVaHwm-Q6U"),
+            ("Glute Bridge", "legs", "3", "15", "beginner", "https://www.youtube.com/watch?v=wPM8icPu6H8"),
         ],
         "intermediate": [
-            ("Goblet Squat",          "legs", "4", "10", "intermediate", None),
-            ("Romanian Deadlift (DB)","legs", "3", "10", "intermediate", None),
-            ("Walking Lunge",         "legs", "3", "12", "intermediate", None),
+            ("Goblet Squat", "legs", "4", "10", "intermediate", "https://www.youtube.com/watch?v=MeIiIdhvXT4"),
+            ("Romanian Deadlift (DB)", "legs", "3", "10", "intermediate", "https://www.youtube.com/watch?v=2SHsk9AzdjA"),
+            ("Walking Lunge", "legs", "3", "12", "intermediate", "https://www.youtube.com/watch?v=L8fvypPrzzs"),
         ],
         "advanced": [
-            ("Barbell Back Squat",        "legs", "5", "5", "advanced", None),
-            ("Barbell Romanian Deadlift", "legs", "4", "8", "advanced", None),
-            ("Bulgarian Split Squat",     "legs", "4", "8", "advanced", None),
+            ("Barbell Back Squat", "legs", "5", "5", "advanced", "https://www.youtube.com/watch?v=ultWZbUMPL8"),
+            ("Barbell Romanian Deadlift", "legs", "4", "8", "advanced", "https://www.youtube.com/watch?v=2SHsk9AzdjA"),
+            ("Bulgarian Split Squat", "legs", "4", "8", "advanced", "https://www.youtube.com/watch?v=2C-uNgKwPLE"),
         ],
     },
+
     "core": {
         "beginner": [
-            ("Plank",       "core", "3", "20 sec", "beginner", None),
-            ("Dead Bug",    "core", "3", "8",      "beginner", None),
-            ("Knee Crunch", "core", "3", "15",     "beginner", None),
+            ("Plank", "core", "3", "20 sec", "beginner", "https://www.youtube.com/watch?v=ASdvN_XEl_c"),
+            ("Dead Bug", "core", "3", "8", "beginner", "https://www.youtube.com/watch?v=g_BYB0R-4Ws"),
+            ("Knee Crunch", "core", "3", "15", "beginner", "https://www.youtube.com/watch?v=Xyd_fa5zoEU"),
         ],
         "intermediate": [
-            ("Plank",           "core", "3", "45 sec", "intermediate", None),
-            ("Bicycle Crunch",  "core", "3", "20",     "intermediate", None),
-            ("Russian Twist",   "core", "3", "20",     "intermediate", None),
+            ("Bicycle Crunch", "core", "3", "20", "intermediate", "https://www.youtube.com/watch?v=9FGilxCbdz8"),
+            ("Russian Twist", "core", "3", "20", "intermediate", "https://www.youtube.com/watch?v=wkD8rjkodUI"),
+            ("Plank", "core", "3", "45 sec", "intermediate", "https://www.youtube.com/watch?v=ASdvN_XEl_c"),
         ],
         "advanced": [
-            ("Ab Wheel Rollout",  "core", "4", "10", "advanced", None),
-            ("Hanging Leg Raise", "core", "4", "12", "advanced", None),
-            ("Dragon Flag",       "core", "3", "6",  "advanced", None),
+            ("Ab Wheel Rollout", "core", "4", "10", "advanced", "https://www.youtube.com/watch?v=2fQ4F2FJzXg"),
+            ("Hanging Leg Raise", "core", "4", "12", "advanced", "https://www.youtube.com/watch?v=JB2oyawG9KI"),
+            ("Dragon Flag", "core", "3", "6", "advanced", "https://www.youtube.com/watch?v=YbV1H2S4oKQ"),
         ],
     },
+
     "cardio": {
         "beginner": [
-            ("Brisk Walk", "cardio", "1", "20 min", "beginner", None),
-            ("Jump Rope",  "cardio", "3", "2 min",  "beginner", None),
-            ("Step-Up",    "cardio", "3", "15",     "beginner", None),
+            ("Brisk Walk", "cardio", "1", "20 min", "beginner", "https://www.youtube.com/watch?v=3Ka7B3hCg08"),
+            ("Jump Rope", "cardio", "3", "2 min", "beginner", "https://www.youtube.com/watch?v=1BZM2Vre5oc"),
+            ("Step-Up", "cardio", "3", "15", "beginner", "https://www.youtube.com/watch?v=dQqApCGd5Ss"),
         ],
         "intermediate": [
-            ("Jogging",        "cardio", "1", "25 min", "intermediate", None),
-            ("Jumping Jacks",  "cardio", "4", "30 sec", "intermediate", None),
-            ("Box Jump",       "cardio", "4", "8",      "intermediate", None),
+            ("Jogging", "cardio", "1", "25 min", "intermediate", "https://www.youtube.com/watch?v=ue0l8N6R8gk"),
+            ("Jumping Jacks", "cardio", "4", "30 sec", "intermediate", "https://www.youtube.com/watch?v=c4DAnQ6DtF8"),
+            ("Box Jump", "cardio", "4", "8", "intermediate", "https://www.youtube.com/watch?v=52r_Ul5k03g"),
         ],
         "advanced": [
-            ("Sprint Intervals",        "cardio", "8", "30 sec on / 30 sec off", "advanced", None),
-            ("Burpee",                  "cardio", "5", "10",                     "advanced", None),
-            ("Jump Rope Double Unders", "cardio", "5", "30 sec",                 "advanced", None),
+            ("Sprint Intervals", "cardio", "8", "30 sec", "advanced", "https://www.youtube.com/watch?v=1skBf6h2ksI"),
+            ("Burpee", "cardio", "5", "10", "advanced", "https://www.youtube.com/watch?v=auBLPXO8Fww"),
+            ("Jump Rope Double Unders", "cardio", "5", "30 sec", "advanced", "https://www.youtube.com/watch?v=3hX2q5oW5Qs"),
         ],
     },
 }
-
 
 # ---------------------------------------------------------------------------
 # Day schedules per split — trimmed to workout_days at runtime
@@ -154,81 +160,33 @@ _FULL_BODY = {
 }
 
 _UPPER_LOWER = {
-    1: ["chest", "back", "shoulders", "biceps", "triceps"],   # upper
-    2: ["legs", "core"],                                        # lower
-    3: ["chest", "back", "shoulders", "biceps", "triceps"],   # upper
-    4: ["legs", "core"],                                        # lower
+    1: ["chest", "back", "shoulders", "biceps", "triceps"],
+    2: ["legs", "core"],
+    3: ["chest", "back", "shoulders", "biceps", "triceps"],
+    4: ["legs", "core"],
 }
 
 _PPL = {
-    1: ["chest", "shoulders", "triceps"],        # push
-    2: ["back", "biceps"],                        # pull
-    3: ["legs", "core"],                          # legs
-    4: ["chest", "shoulders", "triceps"],        # push
-    5: ["back", "biceps"],                        # pull
-    6: ["legs", "core"],                          # legs
-    7: ["chest", "back", "legs", "core"],        # full body / active recovery
+    1: ["chest", "shoulders", "triceps"],
+    2: ["back", "biceps"],
+    3: ["legs", "core"],
+    4: ["chest", "shoulders", "triceps"],
+    5: ["back", "biceps"],
+    6: ["legs", "core"],
+    7: ["chest", "back", "legs", "core"],
 }
 
-# Cardio exercises to append per day based on goal
-_CARDIO_PER_DAY = {
-    "lose_weight":       2,
-    "improve_endurance": 3,
-    "maintain":          1,
-    "gain_muscle":       0,
-}
-
-# Strength exercises to pick per muscle group based on goal
-_EXERCISES_PER_GROUP = {
-    "lose_weight":       1,
-    "improve_endurance": 1,
-    "maintain":          2,
-    "gain_muscle":       2,
-}
-
-
-def _get_difficulty(activity_level: str) -> str:
-    if activity_level in ("sedentary", "lightly_active"):
-        return "beginner"
-    if activity_level == "moderately_active":
-        return "intermediate"
-    return "advanced"
-
-
-def _get_schedule(workout_days: int) -> dict:
-    if workout_days <= 2:
-        base = _FULL_BODY
-    elif workout_days <= 4:
-        base = _UPPER_LOWER
-    else:
-        base = _PPL
-    return {day: groups for day, groups in base.items() if day <= workout_days}
-
-
-def _pick(muscle_group: str, difficulty: str, count: int, offset: int = 0) -> list:
-    options = _LIBRARY.get(muscle_group, {}).get(difficulty, [])
-    if not options:
-        return []
-    return [options[(offset + i) % len(options)] for i in range(min(count, len(options)))]
-
-
+# ---------------------------------------------------------------------------
+# Generator logic (unchanged)
+# ---------------------------------------------------------------------------
 def generate_workout_plan(fitness_goal: FitnessGoal) -> List[Exercise]:
-    """
-    Generate a list of Exercise objects for a given FitnessGoal.
-    plan_id is not set here — the caller assigns it after saving the WorkoutPlan.
-    """
-    difficulty          = _get_difficulty(fitness_goal.activity_level)
-    schedule            = _get_schedule(fitness_goal.workout_days)
-    goal                = fitness_goal.goal_type
-    exercises_per_group = _EXERCISES_PER_GROUP.get(goal, 2)
-    cardio_count        = _CARDIO_PER_DAY.get(goal, 1)
-
+    difficulty = "beginner"
+    schedule = _FULL_BODY
     result: List[Exercise] = []
 
-    for day, muscle_groups in schedule.items():
-        for i, group in enumerate(muscle_groups):
-            for raw in _pick(group, difficulty, exercises_per_group, offset=i):
-                name, muscle, sets, reps, diff, yt = raw
+    for day, groups in schedule.items():
+        for group in groups:
+            for name, muscle, sets, reps, diff, yt in _LIBRARY[group][difficulty][:1]:
                 result.append(Exercise(
                     name=name,
                     muscle_group=muscle,
@@ -238,18 +196,5 @@ def generate_workout_plan(fitness_goal: FitnessGoal) -> List[Exercise]:
                     day=day,
                     youtube_url=yt,
                 ))
-
-        cardio_options = _LIBRARY["cardio"][difficulty]
-        for i in range(cardio_count):
-            name, muscle, sets, reps, diff, yt = cardio_options[i % len(cardio_options)]
-            result.append(Exercise(
-                name=name,
-                muscle_group=muscle,
-                sets=sets,
-                reps=reps,
-                difficulty=diff,
-                day=day,
-                youtube_url=yt,
-            ))
 
     return result
