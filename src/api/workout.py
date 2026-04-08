@@ -10,7 +10,12 @@ from sqlmodel import select
 
 from src.core.database import get_session
 from src.core.auth import get_current_user
-from src.core.workout_generator import generate_workout_plan, get_swap_exercise
+from src.core.workout_generator import (
+    generate_workout_plan, get_swap_exercise,
+    get_catalog_for_llm, build_exercise_from_db,
+    get_difficulty, get_schedule,
+)
+from src.core.llm import generate_workout_plan_with_llm
 from src.model import User, WorkoutPlan, Exercise
 from src.schemas import WorkoutPlanRead, CompletedWorkoutCreate, CompletedWorkoutRead, ExerciseRead, WorkoutSetCreate, WorkoutSetRead
 from src.crud.quiz import get_goal_by_user_id
@@ -37,7 +42,34 @@ async def generate_plan(
     if existing:
         raise HTTPException(status_code=400, detail="Plan already exists. Delete it first to regenerate.")
 
-    exercises = generate_workout_plan(goal)
+    equipment   = getattr(goal, "equipment_available", []) or []
+    limitations = getattr(goal, "limitations", None)
+    difficulty  = get_difficulty(goal.activity_level)
+    schedule    = get_schedule(goal.workout_days)
+    catalog     = get_catalog_for_llm(difficulty, equipment, limitations)
+    catalog_by_name = {e["name"]: e for e in catalog}
+
+    exercises = []
+    try:
+        llm_plan = await generate_workout_plan_with_llm(
+            goal_type=goal.goal_type,
+            activity_level=goal.activity_level,
+            difficulty=difficulty,
+            workout_days=goal.workout_days,
+            equipment=equipment,
+            limitations=limitations,
+            schedule=schedule,
+            catalog=catalog,
+            catalog_by_name=catalog_by_name,
+        )
+        for day, ex_list in llm_plan.items():
+            for ex in ex_list:
+                exercise = build_exercise_from_db(ex["name"], day, ex.get("instructions"))
+                if exercise:
+                    exercises.append(exercise)
+    except Exception:
+        # LLM unavailable or failed — fall back to rule-based generation
+        exercises = generate_workout_plan(goal)
 
     plan = WorkoutPlan(
         user_id=current_user.id,

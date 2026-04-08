@@ -164,6 +164,14 @@ def generate_workout_plan(fitness_goal: FitnessGoal) -> List[Exercise]:
 # Catalog helpers — used by LLM-based generation in llm.py
 # ---------------------------------------------------------------------------
 
+def get_difficulty(activity_level: str) -> str:
+    return _get_difficulty(activity_level)
+
+
+def get_schedule(workout_days: int) -> dict:
+    return _get_schedule(workout_days)
+
+
 def get_catalog_for_llm(
     difficulty: str,
     equipment_available: Optional[List[str]] = None,
