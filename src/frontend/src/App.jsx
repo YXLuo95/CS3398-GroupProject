@@ -25,6 +25,9 @@ import WorkoutDetail from "./pages/WorkoutDetail";
 import Nutrition from "./pages/Nutrition";
 import NutritionDetail from "./pages/NutritionDetail";
 import Supplements from "./pages/Supplements";
+import Reports from "./pages/Reports";
+import DietPlan from "./pages/DietPlan";
+import NotFound from "./pages/NotFound";
 
 const Features = () => (
   <main className="ff-page">
@@ -33,6 +36,22 @@ const Features = () => (
     </div>
   </main>
 );
+
+import axios from "axios";
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
+
+
+
 
 // ==========================================
 // MAIN APP COMPONENT (Router Wrapper)
@@ -60,6 +79,9 @@ function App() {
           <Route path="/nutrition"       element={<Nutrition />} />
           <Route path="/nutrition/:slug" element={<NutritionDetail />} />
           <Route path="/supplements"     element={<Supplements />} />
+          <Route path="/reports"         element={<Reports />} />
+          <Route path="/diet-plan"       element={<DietPlan />} />
+          <Route path="*"                element={<NotFound />} />
         </Routes>
 
         {/* Global Footer */}

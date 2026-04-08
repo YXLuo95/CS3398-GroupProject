@@ -59,6 +59,8 @@ class User(TimestampMixin, table=True):
     chat_messages: List["ChatMessage"] = Relationship(back_populates="user")
     #added relation for workout plans TS3-41
     workout_plans: List["WorkoutPlan"] = Relationship(back_populates="user")
+    #added relation for nutrition plans demo2
+    nutrition_plans: List["NutritionPlan"] = Relationship(back_populates="user")
 
 class FitnessRecord(TimestampMixin, table=True):
     __tablename__ = "fitness_records"
@@ -199,6 +201,7 @@ class CompletedWorkout(SQLModel, table=True):
     completed_at: datetime = Field(default_factory=utc_now)
 
 
+
 class WorkoutSet(SQLModel, table=True):
     __tablename__ = "workout_sets"
 
@@ -207,3 +210,29 @@ class WorkoutSet(SQLModel, table=True):
     exercise_id: int = Field(foreign_key="exercises.id", index=True)
     set_number: int
     logged_at: datetime = Field(default_factory=utc_now)
+
+
+#new table for nutrition plans
+class NutritionPlan(TimestampMixin, table=True):
+    __tablename__ = "nutrition_plans"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+
+    # LLM-generated daily nutrition plan content (markdown)
+    plan_content: str = Field(sa_column=Column(TEXT))
+
+    # Snapshot of user data fed to the LLM
+    data_summary: Optional[str] = Field(default=None, sa_column=Column(TEXT))
+
+    # Macro targets computed from quiz data (stored for quick display)
+    calories: Optional[int] = Field(default=None)
+    protein_g: Optional[int] = Field(default=None)
+    fat_g: Optional[int] = Field(default=None)
+    carbs_g: Optional[int] = Field(default=None)
+
+    # Which model generated this plan
+    model_used: Optional[str] = Field(default=None)
+
+    user: Optional["User"] = Relationship(back_populates="nutrition_plans")
+

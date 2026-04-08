@@ -20,6 +20,7 @@ const initialState = {
   workout_days: "",
   dietary_preferences: [],
   allergies: [],
+  equipment_available: [],
   limitations: "",
 };
 
@@ -30,7 +31,12 @@ function quizReducer(state, action) {
     case "TOGGLE_ARRAY":
       const arr = state[action.field];
       const exists = arr.includes(action.value);
-      return { ...state, [action.field]: exists ? arr.filter(v => v !== action.value) : [...arr, action.value] };
+      return {
+        ...state,
+        [action.field]: exists
+          ? arr.filter((v) => v !== action.value)
+          : [...arr, action.value],
+      };
     case "NEXT_STEP":
       return { ...state, step: state.step + 1, direction: 1 };
     case "PREV_STEP":
@@ -44,12 +50,18 @@ const TOTAL_STEPS = 5;
 
 function isStepComplete(state) {
   switch (state.step) {
-    case 1: return !!state.goal_type;
-    case 2: return !!state.age && !!state.gender && !!state.height_in && !!state.weight_lbs;
-    case 3: return !!state.activity_level;
-    case 4: return !!state.workout_days;
-    case 5: return true;
-    default: return false;
+    case 1:
+      return !!state.goal_type;
+    case 2:
+      return !!state.age && !!state.gender && !!state.height_in && !!state.weight_lbs;
+    case 3:
+      return !!state.activity_level;
+    case 4:
+      return !!state.workout_days;
+    case 5:
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -103,10 +115,10 @@ const labelStyle = {
 // ==========================================
 function Step1({ state, dispatch }) {
   const goals = [
-    { value: "lose_weight",       emoji: "🔥", label: "Lose Weight",       sub: "Burn fat, feel lighter" },
-    { value: "gain_muscle",       emoji: "💪", label: "Gain Muscle",        sub: "Build strength & size" },
-    { value: "maintain",          emoji: "⚖️", label: "Maintain",           sub: "Stay where I am" },
-    { value: "improve_endurance", emoji: "🏃", label: "Improve Endurance",  sub: "Run farther, go longer" },
+    { value: "lose_weight", emoji: "🔥", label: "Lose Weight", sub: "Burn fat, feel lighter" },
+    { value: "gain_muscle", emoji: "💪", label: "Gain Muscle", sub: "Build strength & size" },
+    { value: "maintain", emoji: "⚖️", label: "Maintain", sub: "Stay where I am" },
+    { value: "improve_endurance", emoji: "🏃", label: "Improve Endurance", sub: "Run farther, go longer" },
   ];
 
   const select = (value) => {
@@ -116,17 +128,23 @@ function Step1({ state, dispatch }) {
 
   return (
     <>
-      <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>🦅</div>
-      <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>What's your main goal?</h2>
-      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "28px", fontSize: "0.95rem" }}>Let's build your perfect plan</p>
-      {goals.map(g => (
+      <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>🦄</div>
+      <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>
+        What's your main goal?
+      </h2>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "28px", fontSize: "0.95rem" }}>
+        Let's build your perfect plan
+      </p>
+      {goals.map((g) => (
         <button key={g.value} onClick={() => select(g.value)} style={optionCard(state.goal_type === g.value)}>
           <span style={{ fontSize: "1.8rem" }}>{g.emoji}</span>
           <div>
             <div style={{ fontWeight: "bold" }}>{g.label}</div>
             <div style={{ fontSize: "0.8rem", color: "#aac4d8", marginTop: "2px" }}>{g.sub}</div>
           </div>
-          {state.goal_type === g.value && <span style={{ marginLeft: "auto", color: "#3b82f6", fontSize: "1.2rem" }}>✓</span>}
+          {state.goal_type === g.value && (
+            <span style={{ marginLeft: "auto", color: "#3b82f6", fontSize: "1.2rem" }}>✓</span>
+          )}
         </button>
       ))}
     </>
@@ -141,39 +159,35 @@ function Step2({ state, dispatch }) {
   const [weightUnit, setWeightUnit] = useState("lbs");
   const set = (field) => (e) => dispatch({ type: "SET_FIELD", field, value: e.target.value });
 
-  // Seed slider defaults into state on mount so validation passes without needing to drag
   useEffect(() => {
-    if (!state.height_in)  dispatch({ type: "SET_FIELD", field: "height_in",  value: "66" });
+    if (!state.height_in) dispatch({ type: "SET_FIELD", field: "height_in", value: "66" });
     if (!state.weight_lbs) dispatch({ type: "SET_FIELD", field: "weight_lbs", value: "150" });
   }, []);
 
   const genders = [
-    { value: "male",              emoji: "👨", label: "Male" },
-    { value: "female",            emoji: "👩", label: "Female" },
-    { value: "other",             emoji: "🧑", label: "Other" },
+    { value: "male", emoji: "👨", label: "Male" },
+    { value: "female", emoji: "👩", label: "Female" },
+    { value: "other", emoji: "🧑", label: "Other" },
     { value: "prefer_not_to_say", emoji: "🤐", label: "Prefer not to say" },
   ];
 
-  // Height conversion helpers — state always stores inches
-  const heightIn  = Number(state.height_in) || 66;
-  const heightCm  = Math.round(heightIn * 2.54);
-  const toFeet    = (inches) => `${Math.floor(inches / 12)}'${inches % 12}"`;
+  const heightIn = Number(state.height_in) || 66;
+  const heightCm = Math.round(heightIn * 2.54);
+  const toFeet = (inches) => `${Math.floor(inches / 12)}'${inches % 12}"`;
 
   const handleHeightSlider = (val) => {
     const inches = heightUnit === "cm" ? Math.round(val / 2.54) : Number(val);
     dispatch({ type: "SET_FIELD", field: "height_in", value: String(inches) });
   };
 
-  const sliderValue = heightUnit === "cm" ? heightCm  : heightIn;
-  const sliderMin   = heightUnit === "cm" ? 122       : 48;
-  const sliderMax   = heightUnit === "cm" ? 244       : 96;
-  const sliderHint  = heightUnit === "cm"
-    ? `${heightIn} in · ${toFeet(heightIn)}`
-    : `${toFeet(heightIn)} · ${heightCm} cm`;
+  const sliderValue = heightUnit === "cm" ? heightCm : heightIn;
+  const sliderMin = heightUnit === "cm" ? 122 : 48;
+  const sliderMax = heightUnit === "cm" ? 244 : 96;
+  const sliderHint =
+    heightUnit === "cm" ? `${heightIn} in · ${toFeet(heightIn)}` : `${toFeet(heightIn)} · ${heightCm} cm`;
 
-  // Weight conversion helpers — state always stores lbs
   const weightLbs = Number(state.weight_lbs) || 150;
-  const weightKg  = Math.round(weightLbs * 0.453592);
+  const weightKg = Math.round(weightLbs * 0.453592);
 
   const handleWeightSlider = (val) => {
     const lbs = weightUnit === "kg" ? Math.round(val / 0.453592) : Number(val);
@@ -181,21 +195,26 @@ function Step2({ state, dispatch }) {
   };
 
   const targetLbs = Number(state.target_weight) || weightLbs;
-  const targetKg  = Math.round(targetLbs * 0.453592);
+  const targetKg = Math.round(targetLbs * 0.453592);
 
   const handleTargetSlider = (val) => {
     const lbs = weightUnit === "kg" ? Math.round(val / 0.453592) : Number(val);
     dispatch({ type: "SET_FIELD", field: "target_weight", value: String(lbs) });
   };
 
-  const wSliderVal    = (lbs) => weightUnit === "kg" ? Math.round(lbs * 0.453592) : lbs;
-  const wSliderMin    = weightUnit === "kg" ? 36  : 80;
-  const wSliderMax    = weightUnit === "kg" ? 181 : 400;
-  const weightHint    = weightUnit === "kg" ? `${weightLbs} lbs` : `${weightKg} kg`;
-  const targetHint    = weightUnit === "kg" ? `${targetLbs} lbs` : `${targetKg} kg`;
+  const wSliderVal = (lbs) => (weightUnit === "kg" ? Math.round(lbs * 0.453592) : lbs);
+  const wSliderMin = weightUnit === "kg" ? 36 : 80;
+  const wSliderMax = weightUnit === "kg" ? 181 : 400;
+  const weightHint = weightUnit === "kg" ? `${weightLbs} lbs` : `${weightKg} kg`;
+  const targetHint = weightUnit === "kg" ? `${targetLbs} lbs` : `${targetKg} kg`;
 
   const unitToggleStyle = (active) => ({
-    padding: "3px 10px", borderRadius: "6px", border: "none", cursor: "pointer", fontSize: "0.78rem", fontWeight: "bold",
+    padding: "3px 10px",
+    borderRadius: "6px",
+    border: "none",
+    cursor: "pointer",
+    fontSize: "0.78rem",
+    fontWeight: "bold",
     backgroundColor: active ? "#3b82f6" : "transparent",
     color: active ? "white" : "rgba(255,255,255,0.4)",
   });
@@ -203,14 +222,30 @@ function Step2({ state, dispatch }) {
   return (
     <>
       <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>📏</div>
-      <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>Tell us about your body</h2>
-      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "24px", fontSize: "0.95rem" }}>We'll calculate your BMI, BMR & TDEE</p>
+      <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>
+        Tell us about your body
+      </h2>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "24px", fontSize: "0.95rem" }}>
+        We'll calculate your BMI, BMR & TDEE
+      </p>
 
       <label style={labelStyle}>Gender</label>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>
-        {genders.map(g => (
-          <button key={g.value} onClick={() => dispatch({ type: "SET_FIELD", field: "gender", value: g.value })}
-            style={{ ...optionCard(state.gender === g.value), justifyContent: "center", flexDirection: "column", alignItems: "center", padding: "12px 8px", marginBottom: 0, gap: "4px", fontSize: "0.82rem" }}>
+        {genders.map((g) => (
+          <button
+            key={g.value}
+            onClick={() => dispatch({ type: "SET_FIELD", field: "gender", value: g.value })}
+            style={{
+              ...optionCard(state.gender === g.value),
+              justifyContent: "center",
+              flexDirection: "column",
+              alignItems: "center",
+              padding: "12px 8px",
+              marginBottom: 0,
+              gap: "4px",
+              fontSize: "0.82rem",
+            }}
+          >
             <span style={{ fontSize: "1.4rem" }}>{g.emoji}</span>
             <span>{g.label}</span>
           </button>
@@ -225,49 +260,118 @@ function Step2({ state, dispatch }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "4px" }}>
         <div>
           <label style={labelStyle}>Age</label>
-          <input type="number" placeholder="e.g. 25" value={state.age} onChange={set("age")} min="1" max="120" style={inputStyle} />
+          <input
+            type="number"
+            placeholder="e.g. 25"
+            value={state.age}
+            onChange={set("age")}
+            min="1"
+            max="120"
+            style={inputStyle}
+          />
         </div>
+
         <div style={{ gridColumn: "1 / -1" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
             <label style={{ ...labelStyle, marginTop: 0 }}>Height</label>
-            <div style={{ display: "flex", alignItems: "center", gap: "4px", backgroundColor: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "3px" }}>
-              <button style={unitToggleStyle(heightUnit === "in")} onClick={() => setHeightUnit("in")}>in</button>
-              <button style={unitToggleStyle(heightUnit === "cm")} onClick={() => setHeightUnit("cm")}>cm</button>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                backgroundColor: "rgba(255,255,255,0.06)",
+                borderRadius: "8px",
+                padding: "3px",
+              }}
+            >
+              <button style={unitToggleStyle(heightUnit === "in")} onClick={() => setHeightUnit("in")}>
+                in
+              </button>
+              <button style={unitToggleStyle(heightUnit === "cm")} onClick={() => setHeightUnit("cm")}>
+                cm
+              </button>
             </div>
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
             <span style={{ color: "white", fontWeight: "bold", fontSize: "1.25rem" }}>
               {sliderValue} <span style={{ color: "#93c5fd", fontSize: "0.8rem" }}>{heightUnit}</span>
-              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>{sliderHint}</span>
+              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>
+                {sliderHint}
+              </span>
             </span>
           </div>
-          <input type="range" min={sliderMin} max={sliderMax} step="1" value={sliderValue}
+          <input
+            type="range"
+            min={sliderMin}
+            max={sliderMax}
+            step="1"
+            value={sliderValue}
             onChange={(e) => handleHeightSlider(e.target.value)}
-            style={{ width: "100%", marginTop: "8px", accentColor: "#3b82f6", cursor: "pointer" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", marginTop: "2px" }}>
+            style={{ width: "100%", marginTop: "8px", accentColor: "#3b82f6", cursor: "pointer" }}
+          />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              color: "rgba(255,255,255,0.3)",
+              fontSize: "0.72rem",
+              marginTop: "2px",
+            }}
+          >
             <span>{sliderMin} {heightUnit}</span>
             <span>{sliderMax} {heightUnit}</span>
           </div>
         </div>
+
         <div style={{ gridColumn: "1 / -1" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px" }}>
             <label style={{ ...labelStyle, marginTop: 0 }}>Weight</label>
-            <div style={{ display: "flex", alignItems: "center", gap: "4px", backgroundColor: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "3px" }}>
-              <button style={unitToggleStyle(weightUnit === "lbs")} onClick={() => setWeightUnit("lbs")}>lbs</button>
-              <button style={unitToggleStyle(weightUnit === "kg")}  onClick={() => setWeightUnit("kg")}>kg</button>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                backgroundColor: "rgba(255,255,255,0.06)",
+                borderRadius: "8px",
+                padding: "3px",
+              }}
+            >
+              <button style={unitToggleStyle(weightUnit === "lbs")} onClick={() => setWeightUnit("lbs")}>
+                lbs
+              </button>
+              <button style={unitToggleStyle(weightUnit === "kg")} onClick={() => setWeightUnit("kg")}>
+                kg
+              </button>
             </div>
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
             <span style={{ color: "white", fontWeight: "bold", fontSize: "1.25rem" }}>
               {wSliderVal(weightLbs)} <span style={{ color: "#93c5fd", fontSize: "0.8rem" }}>{weightUnit}</span>
-              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>{weightHint}</span>
+              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>
+                {weightHint}
+              </span>
             </span>
           </div>
-          <input type="range" min={wSliderMin} max={wSliderMax} step="1" value={wSliderVal(weightLbs)}
+          <input
+            type="range"
+            min={wSliderMin}
+            max={wSliderMax}
+            step="1"
+            value={wSliderVal(weightLbs)}
             onChange={(e) => handleWeightSlider(e.target.value)}
-            style={{ width: "100%", marginTop: "8px", accentColor: "#3b82f6", cursor: "pointer" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", color: "rgba(255,255,255,0.3)", fontSize: "0.72rem", marginTop: "2px" }}>
-            <span>{wSliderMin} {weightUnit}</span><span>{wSliderMax} {weightUnit}</span>
+            style={{ width: "100%", marginTop: "8px", accentColor: "#3b82f6", cursor: "pointer" }}
+          />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              color: "rgba(255,255,255,0.3)",
+              fontSize: "0.72rem",
+              marginTop: "2px",
+            }}
+          >
+            <span>{wSliderMin} {weightUnit}</span>
+            <span>{wSliderMax} {weightUnit}</span>
           </div>
         </div>
 
@@ -280,16 +384,33 @@ function Step2({ state, dispatch }) {
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
                 <span style={{ color: "white", fontWeight: "bold", fontSize: "1.25rem" }}>
                   {wSliderVal(targetLbs)} <span style={{ color: "#93c5fd", fontSize: "0.8rem" }}>{weightUnit}</span>
-                  <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>{targetHint}</span>
+                  <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", marginLeft: "8px" }}>
+                    {targetHint}
+                  </span>
                 </span>
               </div>
-              <input type="range" min={wSliderMin} max={wSliderMax} step="1" value={wSliderVal(targetLbs)}
+              <input
+                type="range"
+                min={wSliderMin}
+                max={wSliderMax}
+                step="1"
+                value={wSliderVal(targetLbs)}
                 onChange={(e) => handleTargetSlider(e.target.value)}
-                style={{ width: "100%", marginTop: "8px", accentColor: "#3b82f6", cursor: "pointer" }} />
+                style={{ width: "100%", marginTop: "8px", accentColor: "#3b82f6", cursor: "pointer" }}
+              />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "2px" }}>
                 <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" }}>{wSliderMin} {weightUnit}</span>
-                <button onClick={() => dispatch({ type: "SET_FIELD", field: "target_weight", value: "" })}
-                  style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", fontSize: "0.75rem", textDecoration: "underline" }}>
+                <button
+                  onClick={() => dispatch({ type: "SET_FIELD", field: "target_weight", value: "" })}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "rgba(255,255,255,0.35)",
+                    cursor: "pointer",
+                    fontSize: "0.75rem",
+                    textDecoration: "underline",
+                  }}
+                >
                   clear
                 </button>
                 <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.72rem" }}>{wSliderMax} {weightUnit}</span>
@@ -308,7 +429,18 @@ function Step2({ state, dispatch }) {
           ) : (
             <button
               onClick={() => dispatch({ type: "SET_FIELD", field: "target_weight", value: String(weightLbs) })}
-              style={{ marginTop: "8px", padding: "12px", borderRadius: "10px", border: "2px dashed rgba(255,255,255,0.15)", backgroundColor: "transparent", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: "0.85rem", width: "100%" }}>
+              style={{
+                marginTop: "8px",
+                padding: "12px",
+                borderRadius: "10px",
+                border: "2px dashed rgba(255,255,255,0.15)",
+                backgroundColor: "transparent",
+                color: "rgba(255,255,255,0.4)",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+                width: "100%",
+              }}
+            >
               + Set a target weight
             </button>
           )}
@@ -325,11 +457,41 @@ function Step3({ state, dispatch }) {
   const [openTooltip, setOpenTooltip] = useState(null);
 
   const levels = [
-    { value: "sedentary",         emoji: "🛋️", label: "Sedentary",         sub: "Little or no exercise",            tooltip: "Desk job, mostly sitting all day. Fewer than 5,000 steps/day. e.g. office worker, gamer, driver." },
-    { value: "lightly_active",    emoji: "🚶", label: "Lightly Active",     sub: "Light exercise 1–3 days/week",     tooltip: "On your feet part of the day. e.g. teacher, retail worker, or someone who walks ~30 mins/day." },
-    { value: "moderately_active", emoji: "🏋️", label: "Moderately Active",  sub: "Moderate exercise 3–5 days/week",  tooltip: "Regular gym sessions or an active job. e.g. nursing, construction, or working out 3–5x/week." },
-    { value: "very_active",       emoji: "🏃", label: "Very Active",         sub: "Hard exercise 6–7 days/week",      tooltip: "Intense training nearly every day, or a very physical job. e.g. personal trainer, athlete in season." },
-    { value: "extra_active",      emoji: "⚡", label: "Extra Active",         sub: "Athlete-level training",           tooltip: "Twice-a-day training or elite competition prep. e.g. military, Olympic athlete, or heavy manual labor." },
+    {
+      value: "sedentary",
+      emoji: "🛋️",
+      label: "Sedentary",
+      sub: "Little or no exercise",
+      tooltip: "Desk job, mostly sitting all day. Fewer than 5,000 steps/day. e.g. office worker, gamer, driver.",
+    },
+    {
+      value: "lightly_active",
+      emoji: "🚶",
+      label: "Lightly Active",
+      sub: "Light exercise 1–3 days/week",
+      tooltip: "On your feet part of the day. e.g. teacher, retail worker, or someone who walks ~30 mins/day.",
+    },
+    {
+      value: "moderately_active",
+      emoji: "🏋️",
+      label: "Moderately Active",
+      sub: "Moderate exercise 3–5 days/week",
+      tooltip: "Regular gym sessions or an active job. e.g. nursing, construction, or working out 3–5x/week.",
+    },
+    {
+      value: "very_active",
+      emoji: "🏃",
+      label: "Very Active",
+      sub: "Hard exercise 6–7 days/week",
+      tooltip: "Intense training nearly every day, or a very physical job. e.g. personal trainer, athlete in season.",
+    },
+    {
+      value: "extra_active",
+      emoji: "⚡",
+      label: "Extra Active",
+      sub: "Athlete-level training",
+      tooltip: "Twice-a-day training or elite competition prep. e.g. military, Olympic athlete, or heavy manual labor.",
+    },
   ];
 
   const select = (value) => {
@@ -340,9 +502,13 @@ function Step3({ state, dispatch }) {
   return (
     <>
       <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>🏋️</div>
-      <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>How active are you?</h2>
-      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "24px", fontSize: "0.95rem" }}>Pick your current lifestyle — be honest!</p>
-      {levels.map(l => (
+      <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>
+        How active are you?
+      </h2>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "24px", fontSize: "0.95rem" }}>
+        Pick your current lifestyle — be honest!
+      </p>
+      {levels.map((l) => (
         <div key={l.value} style={{ marginBottom: "10px" }}>
           <div style={{ display: "flex", gap: "8px", alignItems: "stretch" }}>
             <button onClick={() => select(l.value)} style={{ ...optionCard(state.activity_level === l.value), flex: 1, marginBottom: 0 }}>
@@ -357,22 +523,33 @@ function Step3({ state, dispatch }) {
               onClick={() => setOpenTooltip(openTooltip === l.value ? null : l.value)}
               title="See examples"
               style={{
-                width: "36px", flexShrink: 0, borderRadius: "12px",
+                width: "36px",
+                flexShrink: 0,
+                borderRadius: "12px",
                 border: openTooltip === l.value ? "2px solid rgba(52,152,219,0.5)" : "2px solid rgba(255,255,255,0.1)",
                 backgroundColor: openTooltip === l.value ? "rgba(52,152,219,0.15)" : "rgba(255,255,255,0.04)",
                 color: openTooltip === l.value ? "#93c5fd" : "rgba(255,255,255,0.4)",
-                cursor: "pointer", fontSize: "0.8rem", fontWeight: "bold",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+                fontWeight: "bold",
               }}
             >
               ?
             </button>
           </div>
           {openTooltip === l.value && (
-            <div style={{
-              backgroundColor: "rgba(52,152,219,0.08)", border: "1px solid rgba(52,152,219,0.2)",
-              borderRadius: "8px", padding: "10px 14px", marginTop: "4px",
-              color: "#aac4d8", fontSize: "0.82rem", lineHeight: "1.5",
-            }}>
+            <div
+              style={{
+                backgroundColor: "rgba(52,152,219,0.08)",
+                border: "1px solid rgba(52,152,219,0.2)",
+                borderRadius: "8px",
+                padding: "10px 14px",
+                marginTop: "4px",
+                color: "#aac4d8",
+                fontSize: "0.82rem",
+                lineHeight: "1.5",
+              }}
+            >
               💡 {l.tooltip}
             </div>
           )}
@@ -396,25 +573,33 @@ function Step4({ state, dispatch }) {
 
   return (
     <>
-      <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>📅</div>
-      <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>How many days can you train?</h2>
-      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "32px", fontSize: "0.95rem" }}>Per week — be honest with yourself!</p>
+      <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>📆</div>
+      <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>
+        How many days can you train?
+      </h2>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "32px", fontSize: "0.95rem" }}>
+        Per week — be honest with yourself!
+      </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "8px" }}>
-        {days.map(d => (
-          <button key={d} onClick={() => select(d)} style={{
-            padding: "20px 0",
-            borderRadius: "14px",
-            border: String(state.workout_days) === String(d) ? "2px solid #3b82f6" : "2px solid rgba(255,255,255,0.1)",
-            backgroundColor: String(state.workout_days) === String(d) ? "rgba(52,152,219,0.25)" : "rgba(255,255,255,0.04)",
-            color: "white",
-            cursor: "pointer",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "4px",
-            boxShadow: String(state.workout_days) === String(d) ? "0 0 16px rgba(52,152,219,0.4)" : "none",
-            transition: "all 0.2s ease",
-          }}>
+        {days.map((d) => (
+          <button
+            key={d}
+            onClick={() => select(d)}
+            style={{
+              padding: "20px 0",
+              borderRadius: "14px",
+              border: String(state.workout_days) === String(d) ? "2px solid #3b82f6" : "2px solid rgba(255,255,255,0.1)",
+              backgroundColor: String(state.workout_days) === String(d) ? "rgba(52,152,219,0.25)" : "rgba(255,255,255,0.04)",
+              color: "white",
+              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "4px",
+              boxShadow: String(state.workout_days) === String(d) ? "0 0 16px rgba(52,152,219,0.4)" : "none",
+              transition: "all 0.2s ease",
+            }}
+          >
             <span style={{ fontSize: "1.3rem", fontWeight: "bold" }}>{d}</span>
             <span style={{ fontSize: "0.6rem", color: "#aac4d8" }}>{labels[d]}</span>
           </button>
@@ -422,7 +607,7 @@ function Step4({ state, dispatch }) {
       </div>
       {state.workout_days && (
         <p style={{ color: "#93c5fd", textAlign: "center", marginTop: "20px", fontSize: "0.95rem" }}>
-          🦅 {state.workout_days} day{state.workout_days > 1 ? "s" : ""} a week — let's go!
+          🦄 {state.workout_days} day{state.workout_days > 1 ? "s" : ""} a week — let's go!
         </p>
       )}
     </>
@@ -430,27 +615,36 @@ function Step4({ state, dispatch }) {
 }
 
 // ==========================================
-// STEP 5 — DIET & ALLERGIES
+// STEP 5 — DIET, EQUIPMENT & ALLERGIES
 // ==========================================
 function Step5({ state, dispatch }) {
   const diets = [
-    { value: "vegan",                emoji: "🌱", label: "Vegan" },
-    { value: "vegetarian",           emoji: "🥦", label: "Vegetarian" },
-    { value: "keto",                 emoji: "🥑", label: "Keto" },
-    { value: "paleo",                emoji: "🍖", label: "Paleo" },
-    { value: "gluten_free",          emoji: "🌾", label: "Gluten Free" },
-    { value: "dairy_free",           emoji: "🥛", label: "Dairy Free" },
-    { value: "mediterranean",        emoji: "🫒", label: "Mediterranean" },
+    { value: "vegan", emoji: "🌱", label: "Vegan" },
+    { value: "vegetarian", emoji: "🥦", label: "Vegetarian" },
+    { value: "keto", emoji: "🥑", label: "Keto" },
+    { value: "paleo", emoji: "🍖", label: "Paleo" },
+    { value: "gluten_free", emoji: "🌾", label: "Gluten Free" },
+    { value: "dairy_free", emoji: "🥛", label: "Dairy Free" },
+    { value: "mediterranean", emoji: "🫒", label: "Mediterranean" },
     { value: "intermittent_fasting", emoji: "⏱️", label: "Intermittent Fasting" },
   ];
 
+  const equipmentOptions = [
+    { value: "Bodyweight only", emoji: "🤸", label: "Bodyweight only" },
+    { value: "Dumbbells", emoji: "🏋️", label: "Dumbbells" },
+    { value: "Resistance Bands", emoji: "🪢", label: "Resistance Bands" },
+    { value: "Barbell", emoji: "🏋️‍♂️", label: "Barbell" },
+    { value: "Cables", emoji: "🔗", label: "Cables" },
+    { value: "Full Gym", emoji: "🏠", label: "Full Gym" },
+  ];
+
   const allergyList = [
-    { value: "peanuts",   emoji: "🥜", label: "Peanuts" },
-    { value: "dairy",     emoji: "🧀", label: "Dairy" },
-    { value: "gluten",    emoji: "🍞", label: "Gluten" },
+    { value: "peanuts", emoji: "🥜", label: "Peanuts" },
+    { value: "dairy", emoji: "🧀", label: "Dairy" },
+    { value: "gluten", emoji: "🍞", label: "Gluten" },
     { value: "shellfish", emoji: "🦐", label: "Shellfish" },
-    { value: "eggs",      emoji: "🥚", label: "Eggs" },
-    { value: "soy",       emoji: "🫘", label: "Soy" },
+    { value: "eggs", emoji: "🥚", label: "Eggs" },
+    { value: "soy", emoji: "🫘", label: "Soy" },
   ];
 
   const [customAllergy, setCustomAllergy] = useState("");
@@ -484,50 +678,84 @@ function Step5({ state, dispatch }) {
   return (
     <>
       <div style={{ fontSize: "4rem", textAlign: "center", marginBottom: "8px" }}>🥗</div>
-      <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>Diet & Allergies</h2>
-      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "20px", fontSize: "0.95rem" }}>Select all that apply</p>
+      <h2 style={{ color: "white", fontSize: "1.6rem", textAlign: "center", margin: "0 0 6px" }}>
+        Diet, Equipment & Allergies
+      </h2>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "20px", fontSize: "0.95rem" }}>
+        Select all that apply
+      </p>
 
       <label style={labelStyle}>Dietary Preferences</label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px" }}>
-        {diets.map(d => (
+        {diets.map((d) => (
           <button key={d.value} onClick={() => toggle("dietary_preferences", d.value)} style={chipStyle(state.dietary_preferences.includes(d.value))}>
             <span>{d.emoji}</span> {d.label}
           </button>
         ))}
       </div>
 
+      <label style={{ ...labelStyle, marginTop: "20px" }}>What equipment do you have access to?</label>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px" }}>
+        {equipmentOptions.map((item) => (
+          <button
+            key={item.value}
+            onClick={() => toggle("equipment_available", item.value)}
+            style={chipStyle(state.equipment_available.includes(item.value))}
+          >
+            <span>{item.emoji}</span> {item.label}
+          </button>
+        ))}
+      </div>
+
       <label style={{ ...labelStyle, marginTop: "20px" }}>Allergies</label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px" }}>
-        {allergyList.map(a => (
+        {allergyList.map((a) => (
           <button key={a.value} onClick={() => toggle("allergies", a.value)} style={chipStyle(state.allergies.includes(a.value))}>
             <span>{a.emoji}</span> {a.label}
           </button>
         ))}
-        {state.allergies.filter(v => !allergyList.find(a => a.value === v)).map(v => (
-          <button key={v} onClick={() => toggle("allergies", v)} style={chipStyle(true)}>
-            ⚠️ {v} ×
-          </button>
-        ))}
+        {state.allergies
+          .filter((v) => !allergyList.find((a) => a.value === v))
+          .map((v) => (
+            <button key={v} onClick={() => toggle("allergies", v)} style={chipStyle(true)}>
+              ⚠️ {v} ×
+            </button>
+          ))}
       </div>
+
       <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
         <input
           type="text"
           placeholder="Other allergy (press Enter to add)"
           value={customAllergy}
-          onChange={e => setCustomAllergy(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addCustomAllergy())}
+          onChange={(e) => setCustomAllergy(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addCustomAllergy())}
           style={{ ...inputStyle, flex: 1, padding: "10px 14px", fontSize: "0.9rem" }}
         />
         <button
           onClick={addCustomAllergy}
-          style={{ padding: "10px 16px", borderRadius: "12px", border: "2px solid rgba(255,255,255,0.15)", backgroundColor: "rgba(255,255,255,0.08)", color: "white", cursor: "pointer", fontSize: "1.1rem" }}
+          style={{
+            padding: "10px 16px",
+            borderRadius: "12px",
+            border: "2px solid rgba(255,255,255,0.15)",
+            backgroundColor: "rgba(255,255,255,0.08)",
+            color: "white",
+            cursor: "pointer",
+            fontSize: "1.1rem",
+          }}
         >
           +
         </button>
       </div>
 
       <label style={labelStyle}>Physical Limitations (optional)</label>
-      <input type="text" placeholder="e.g. Bad knees, lower back pain..." value={state.limitations} onChange={set("limitations")} style={inputStyle} />
+      <input
+        type="text"
+        placeholder="e.g. Bad knees, lower back pain..."
+        value={state.limitations}
+        onChange={set("limitations")}
+        style={inputStyle}
+      />
     </>
   );
 }
@@ -536,8 +764,20 @@ function Step5({ state, dispatch }) {
 // REVIEW SCREEN
 // ==========================================
 function ReviewScreen({ state, onSubmit, loading, error }) {
-  const goalLabels     = { lose_weight: "Lose Weight 🔥", gain_muscle: "Gain Muscle 💪", maintain: "Maintain ⚖️", improve_endurance: "Improve Endurance 🏃" };
-  const activityLabels = { sedentary: "Sedentary 🛋️", lightly_active: "Lightly Active 🚶", moderately_active: "Moderately Active 🏋️", very_active: "Very Active 🏃", extra_active: "Extra Active ⚡" };
+  const goalLabels = {
+    lose_weight: "Lose Weight 🔥",
+    gain_muscle: "Gain Muscle 💪",
+    maintain: "Maintain ⚖️",
+    improve_endurance: "Improve Endurance 🏃",
+  };
+
+  const activityLabels = {
+    sedentary: "Sedentary 🛋️",
+    lightly_active: "Lightly Active 🚶",
+    moderately_active: "Moderately Active 🏋️",
+    very_active: "Very Active 🏃",
+    extra_active: "Extra Active ⚡",
+  };
 
   const row = (label, value) => (
     <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
@@ -548,9 +788,13 @@ function ReviewScreen({ state, onSubmit, loading, error }) {
 
   return (
     <>
-      <div style={{ fontSize: "3rem", textAlign: "center", marginBottom: "8px" }}>🦅</div>
-      <h2 style={{ color: "white", fontSize: "1.5rem", textAlign: "center", margin: "0 0 4px" }}>Review Your Profile</h2>
-      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "20px", fontSize: "0.9rem" }}>Everything looks good?</p>
+      <div style={{ fontSize: "3rem", textAlign: "center", marginBottom: "8px" }}>🦄</div>
+      <h2 style={{ color: "white", fontSize: "1.5rem", textAlign: "center", margin: "0 0 4px" }}>
+        Review Your Profile
+      </h2>
+      <p style={{ color: "#93c5fd", textAlign: "center", marginBottom: "20px", fontSize: "0.9rem" }}>
+        Everything looks good?
+      </p>
 
       <div style={{ backgroundColor: "rgba(255,255,255,0.04)", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" }}>
         {row("Goal", goalLabels[state.goal_type])}
@@ -562,20 +806,29 @@ function ReviewScreen({ state, onSubmit, loading, error }) {
         {row("Activity Level", activityLabels[state.activity_level])}
         {row("Workout Days", `${state.workout_days} days/week`)}
         {state.dietary_preferences.length > 0 && row("Diet", state.dietary_preferences.join(", "))}
+        {state.equipment_available.length > 0 && row("Equipment", state.equipment_available.join(", "))}
         {state.allergies.length > 0 && row("Allergies", state.allergies.join(", "))}
         {state.limitations && row("Limitations", state.limitations)}
       </div>
 
       {error && <p style={{ color: "#e74c3c", textAlign: "center", marginBottom: "12px" }}>{error}</p>}
 
-      <button onClick={onSubmit} disabled={loading} style={{
-        width: "100%", padding: "16px", borderRadius: "12px",
-        background: loading ? "rgba(255,255,255,0.1)" : "linear-gradient(to right, #1d4ed8, #3b82f6)",
-        color: loading ? "rgba(255,255,255,0.4)" : "white",
-        border: "none", fontSize: "1rem", fontWeight: "bold",
-        cursor: loading ? "not-allowed" : "pointer",
-        boxShadow: loading ? "none" : "0 4px 20px rgba(52,152,219,0.4)",
-      }}>
+      <button
+        onClick={onSubmit}
+        disabled={loading}
+        style={{
+          width: "100%",
+          padding: "16px",
+          borderRadius: "12px",
+          background: loading ? "rgba(255,255,255,0.1)" : "linear-gradient(to right, #1d4ed8, #3b82f6)",
+          color: loading ? "rgba(255,255,255,0.4)" : "white",
+          border: "none",
+          fontSize: "1rem",
+          fontWeight: "bold",
+          cursor: loading ? "not-allowed" : "pointer",
+          boxShadow: loading ? "none" : "0 4px 20px rgba(52,152,219,0.4)",
+        }}
+      >
         {loading ? "Calculating your metrics..." : "🚀 Submit & Calculate My Metrics"}
       </button>
     </>
@@ -598,26 +851,49 @@ export default function Quiz() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) { navigate("/login"); return; }
+    if (!token) {
+      navigate("/login");
+      return;
+    }
     const headers = { Authorization: `Bearer ${token}` };
 
     if (isRetake) {
-      // Pre-fill form with existing quiz data
-      axios.get(`${API}/api/v1/onboarding/quiz`, { headers })
-        .then(res => {
+      axios
+        .get(`${API}/api/v1/onboarding/quiz`, { headers })
+        .then((res) => {
           const d = res.data;
-          const fields = ["goal_type", "age", "gender", "height_in", "weight_lbs", "target_weight", "activity_level", "workout_days", "dietary_preferences", "allergies", "limitations"];
-          fields.forEach(field => {
+          const fields = [
+            "goal_type",
+            "age",
+            "gender",
+            "height_in",
+            "weight_lbs",
+            "target_weight",
+            "activity_level",
+            "workout_days",
+            "dietary_preferences",
+            "allergies",
+            "equipment_available",
+            "limitations",
+          ];
+          fields.forEach((field) => {
             if (d[field] !== null && d[field] !== undefined) {
-              dispatch({ type: "SET_FIELD", field, value: Array.isArray(d[field]) ? d[field] : String(d[field]) });
+              dispatch({
+                type: "SET_FIELD",
+                field,
+                value: Array.isArray(d[field]) ? d[field] : String(d[field]),
+              });
             }
           });
-        }).catch(() => {});
+        })
+        .catch(() => {});
     } else {
-      axios.get(`${API}/api/v1/onboarding/status`, { headers })
-        .then(res => {
+      axios
+        .get(`${API}/api/v1/onboarding/status`, { headers })
+        .then((res) => {
           if (res.data.completed) navigate("/dashboard");
-        }).catch(() => {});
+        })
+        .catch(() => {});
     }
   }, [navigate, isRetake]);
 
@@ -636,15 +912,27 @@ export default function Quiz() {
       return;
     }
     setValidationMsg("");
-    if (state.step === TOTAL_STEPS) { setShowReview(true); return; }
+    if (state.step === TOTAL_STEPS) {
+      setShowReview(true);
+      return;
+    }
     setAnimating(true);
-    setTimeout(() => { dispatch({ type: "NEXT_STEP" }); setAnimating(false); }, 200);
+    setTimeout(() => {
+      dispatch({ type: "NEXT_STEP" });
+      setAnimating(false);
+    }, 200);
   };
 
   const handleBack = () => {
-    if (showReview) { setShowReview(false); return; }
+    if (showReview) {
+      setShowReview(false);
+      return;
+    }
     setAnimating(true);
-    setTimeout(() => { dispatch({ type: "PREV_STEP" }); setAnimating(false); }, 200);
+    setTimeout(() => {
+      dispatch({ type: "PREV_STEP" });
+      setAnimating(false);
+    }, 200);
   };
 
   const handleSubmit = async () => {
@@ -662,8 +950,10 @@ export default function Quiz() {
       workout_days: parseInt(state.workout_days),
       dietary_preferences: state.dietary_preferences,
       allergies: state.allergies,
+      equipment_available: state.equipment_available,
       limitations: state.limitations || null,
     };
+
     try {
       const method = isRetake ? axios.put : axios.post;
       await method(`${API}/api/v1/onboarding/quiz`, payload, {
@@ -679,41 +969,45 @@ export default function Quiz() {
 
   return (
     <main className="ff-page" style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0 20px 40px" }}>
-      {/* Thin top progress bar — sits just below the site navbar */}
       <div style={{ width: "100%", height: "3px", backgroundColor: "rgba(148,163,184,0.1)", position: "sticky", top: 0, zIndex: 10 }}>
-        <div style={{
-          height: "100%",
-          width: `${progress}%`,
-          background: "linear-gradient(to right, var(--ff-accent), var(--ff-cyan))",
-          transition: "width 0.5s ease",
-          boxShadow: "0 0 8px rgba(59,130,246,0.7)"
-        }} />
+        <div
+          style={{
+            height: "100%",
+            width: `${progress}%`,
+            background: "linear-gradient(to right, var(--ff-accent), var(--ff-cyan))",
+            transition: "width 0.5s ease",
+            boxShadow: "0 0 8px rgba(59,130,246,0.7)",
+          }}
+        />
       </div>
 
       <div style={{ width: "100%", maxWidth: "560px", marginTop: "40px" }}>
+        {!showReview && (
+          <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "32px" }}>
+            {stepLabels.map((label, i) => (
+              <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
+                <div
+                  style={{
+                    width: i + 1 === state.step ? "32px" : "10px",
+                    height: "10px",
+                    borderRadius: "99px",
+                    backgroundColor: i + 1 < state.step ? "#3b82f6" : i + 1 === state.step ? "#93c5fd" : "rgba(148,163,184,0.18)",
+                    transition: "all 0.4s ease",
+                    boxShadow: i + 1 === state.step ? "0 0 10px rgba(59,130,246,0.7)" : "none",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
-        {/* Step dot indicators */}
-        {!showReview && <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "32px" }}>
-          {stepLabels.map((label, i) => (
-            <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
-              <div style={{
-                width: i + 1 === state.step ? "32px" : "10px",
-                height: "10px",
-                borderRadius: "99px",
-                backgroundColor: i + 1 < state.step ? "#3b82f6" : i + 1 === state.step ? "#93c5fd" : "rgba(148,163,184,0.18)",
-                transition: "all 0.4s ease",
-                boxShadow: i + 1 === state.step ? "0 0 10px rgba(59,130,246,0.7)" : "none"
-              }} />
-            </div>
-          ))}
-        </div>}
-
-        {/* Step content with fade + slide animation */}
-        <div style={{
-          opacity: animating ? 0 : 1,
-          transform: animating ? `translateX(${state.direction > 0 ? "20px" : "-20px"})` : "translateX(0)",
-          transition: "opacity 0.2s ease, transform 0.2s ease",
-        }}>
+        <div
+          style={{
+            opacity: animating ? 0 : 1,
+            transform: animating ? `translateX(${state.direction > 0 ? "20px" : "-20px"})` : "translateX(0)",
+            transition: "opacity 0.2s ease, transform 0.2s ease",
+          }}
+        >
           {showReview ? (
             <ReviewScreen state={state} onSubmit={handleSubmit} loading={loading} error={error} />
           ) : (
@@ -727,49 +1021,67 @@ export default function Quiz() {
           )}
         </div>
 
-        {/* Inline validation message */}
         {validationMsg && (
           <p style={{ color: "#e07b54", fontSize: "0.88rem", textAlign: "center", marginTop: "12px", marginBottom: "0" }}>
             ⚠️ {validationMsg}
           </p>
         )}
 
-        {/* Manual Next button for steps that need it (2, 5, and review) */}
         {(state.step === 2 || state.step === 5 || showReview) && !loading && (
           <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
-            <button onClick={handleBack} style={{
-              flex: 1, padding: "14px", borderRadius: "12px",
-              backgroundColor: "rgba(255,255,255,0.06)",
-              color: "white", border: "1px solid rgba(255,255,255,0.15)",
-              fontSize: "1rem", cursor: "pointer", fontWeight: "bold"
-            }}>
+            <button
+              onClick={handleBack}
+              style={{
+                flex: 1,
+                padding: "14px",
+                borderRadius: "12px",
+                backgroundColor: "rgba(255,255,255,0.06)",
+                color: "white",
+                border: "1px solid rgba(255,255,255,0.15)",
+                fontSize: "1rem",
+                cursor: "pointer",
+                fontWeight: "bold",
+              }}
+            >
               ← Back
             </button>
             {!showReview && (
-              <button onClick={handleNext} disabled={!canProceed} style={{
-                flex: 2, padding: "14px", borderRadius: "12px",
-                background: canProceed ? "linear-gradient(to right, #1d4ed8, #3b82f6)" : "rgba(255,255,255,0.08)",
-                color: canProceed ? "white" : "rgba(255,255,255,0.3)",
-                border: "none", fontSize: "1rem",
-                cursor: canProceed ? "pointer" : "not-allowed",
-                fontWeight: "bold",
-                boxShadow: canProceed ? "0 4px 15px rgba(52,152,219,0.35)" : "none",
-                transition: "all 0.3s ease"
-              }}>
+              <button
+                onClick={handleNext}
+                disabled={!canProceed}
+                style={{
+                  flex: 2,
+                  padding: "14px",
+                  borderRadius: "12px",
+                  background: canProceed ? "linear-gradient(to right, #1d4ed8, #3b82f6)" : "rgba(255,255,255,0.08)",
+                  color: canProceed ? "white" : "rgba(255,255,255,0.3)",
+                  border: "none",
+                  fontSize: "1rem",
+                  cursor: canProceed ? "pointer" : "not-allowed",
+                  fontWeight: "bold",
+                  boxShadow: canProceed ? "0 4px 15px rgba(52,152,219,0.35)" : "none",
+                  transition: "all 0.3s ease",
+                }}
+              >
                 {state.step === TOTAL_STEPS ? "Review →" : "Next →"}
               </button>
             )}
           </div>
         )}
 
-        {/* Subtle back link for auto-advance steps */}
         {!showReview && (state.step === 3 || state.step === 4) && (
           <div style={{ marginTop: "20px", textAlign: "center" }}>
-            <button onClick={handleBack} style={{
-              background: "none", border: "none",
-              color: "rgba(255,255,255,0.4)", cursor: "pointer",
-              fontSize: "0.9rem", textDecoration: "underline"
-            }}>
+            <button
+              onClick={handleBack}
+              style={{
+                background: "none",
+                border: "none",
+                color: "rgba(255,255,255,0.4)",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+                textDecoration: "underline",
+              }}
+            >
               ← Go back
             </button>
           </div>
