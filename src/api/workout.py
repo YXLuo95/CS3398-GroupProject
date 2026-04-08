@@ -66,7 +66,11 @@ async def get_plan(
     plan = await get_plan_by_user_id(session, current_user.id)
     if not plan:
         raise HTTPException(status_code=404, detail="No workout plan found. Generate one first.")
-    return plan
+    goal = await get_goal_by_user_id(session, current_user.id)
+    plan_read = WorkoutPlanRead.model_validate(plan)
+    if goal and goal.updated_at > plan.generated_at:
+        plan_read.stale = True
+    return plan_read
 
 
 @router.delete("/plan", status_code=status.HTTP_204_NO_CONTENT)

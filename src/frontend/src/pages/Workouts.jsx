@@ -591,6 +591,28 @@ export default function Workouts() {
 
       {plan && !generating && (
         <>
+          {/* Stale plan warning */}
+          {plan.stale && (
+            <div style={{
+              background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.35)",
+              borderRadius: 12, padding: "0.9rem 1.2rem", marginBottom: "0.75rem",
+              display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <span style={{ fontSize: "1.1rem" }}>⚠️</span>
+                <span style={{ color: "#fde68a", fontSize: "0.88rem", fontWeight: 600 }}>
+                  Your fitness goal was updated. Regenerate your plan to reflect the changes.
+                </span>
+              </div>
+              <button className="ff-btn ff-btn-sm" onClick={handleDelete} style={{
+                background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.4)",
+                color: "#fde68a", flexShrink: 0,
+              }}>
+                Regenerate Now
+              </button>
+            </div>
+          )}
+
           {/* Summary card */}
           <SectionCard title="Your Plan">
             <div style={{ display: "flex", alignItems: "center", gap: "2rem", flexWrap: "wrap", marginBottom: "1rem" }}>

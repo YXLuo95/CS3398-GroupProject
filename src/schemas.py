@@ -187,6 +187,7 @@ class WorkoutPlanRead(BaseModel):
     fitness_goal_id: int
     generated_at: datetime
     exercises: List[ExerciseRead]
+    stale: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
