@@ -116,6 +116,7 @@ class FitnessGoal(TimestampMixin, table=True):
     dietary_preferences: List[str] = Field(default=[], sa_column=Column(JSON))
     allergies: List[str] = Field(default=[], sa_column=Column(JSON))
     limitations: Optional[str] = Field(default=None, sa_column=Column(TEXT))
+    equipment_available: List[str] = Field(default=[], sa_column=Column(JSON))
 
     bmi: Optional[float] = None
     bmr: Optional[float] = None
