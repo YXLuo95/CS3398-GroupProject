@@ -2,200 +2,17 @@
 Workout plan generator for Falcon Fitness.
 Maps goal type -> exercise focus, activity level -> difficulty,
 and workout_days -> training split.
+
+Exercise data comes from the free-exercise-db dataset via exercise_db.py.
 """
 
-from typing import List
+from typing import List, Optional
 from src.model import Exercise, FitnessGoal
-
-_GH_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises"
-
-# Maps exercise name -> free-exercise-db folder slug (partial coverage, others get None)
-_IMAGE_MAP: dict = {
-    "Incline Push-Up":           "Incline_Push-Up",
-    "Dumbbell Bench Press":      "Dumbbell_Bench_Press",
-    "Barbell Bench Press":       "Barbell_Bench_Press_-_Medium_Grip",
-    "Decline Dumbbell Press":    "Decline_Dumbbell_Bench_Press",
-    "Bent-Over Dumbbell Row":    "Bent_Over_Two-Dumbbell_Row",
-    "Superman Hold":             "Superman",
-    "Seated Cable Row":          "Seated_Cable_Rows",
-    "Barbell Deadlift":          "Barbell_Deadlift",
-    "Dumbbell Shoulder Press":   "Dumbbell_Shoulder_Press",
-    "Arnold Press":              "Arnold_Dumbbell_Press",
-    "Face Pull":                 "Face_Pull",
-    "Hammer Curl":               "Alternate_Hammer_Curl",
-    "Barbell Curl":              "Barbell_Curl",
-    "Incline Dumbbell Curl":     "Incline_Dumbbell_Curl",
-    "Spider Curl":               "Spider_Curl",
-    "Skull Crusher":             "Decline_Close-Grip_Bench_To_Skull_Crusher",
-    "Bodyweight Squat":          "Bodyweight_Squat",
-    "Goblet Squat":              "Goblet_Squat",
-    "Glute Bridge":              "Single_Leg_Glute_Bridge",
-    "Walking Lunge":             "Bodyweight_Walking_Lunge",
-    "Barbell Back Squat":        "Barbell_Full_Squat",
-    "Barbell Romanian Deadlift": "Romanian_Deadlift",
-    "Bulgarian Split Squat":     "Barbell_Bulgarian_Split_Squat",
-    "Plank":                     "Plank",
-    "Dead Bug":                  "Dead_Bug",
-    "Russian Twist":             "Russian_Twist",
-    "Hanging Leg Raise":         "Hanging_Leg_Raise",
-    "Bicycle Crunch":            "Bicycle_Crunch",
-    "Box Jump":                  "Box_Jump_(Multiple_Response)",
-    "Burpee":                    "Burpees",
-    "Jump Rope":                 "Tire_Jump",
-}
-
-def _image_url(name: str) -> str | None:
-    slug = _IMAGE_MAP.get(name)
-    if not slug:
-        return None
-    return f"{_GH_BASE}/{slug}/0.jpg"
+from src.core import exercise_db
 
 
 # ---------------------------------------------------------------------------
-# Exercise library — (name, muscle_group, sets, reps, difficulty, youtube_url)
-# ---------------------------------------------------------------------------
-_LIBRARY: dict = {
-    "chest": {
-        "beginner": [
-            ("Push-Up", "chest", "3", "10", "beginner", "https://www.youtube.com/watch?v=IODxDxX7oi4"),
-            ("Incline Push-Up", "chest", "3", "12", "beginner", "https://www.youtube.com/watch?v=8vG5pL0K9aY"),
-            ("Wall Push-Up", "chest", "3", "15", "beginner", "https://www.youtube.com/watch?v=0pkjOk0EiAk"),
-        ],
-        "intermediate": [
-            ("Dumbbell Bench Press", "chest", "4", "10", "intermediate", "https://www.youtube.com/watch?v=VmB1G1K7v94"),
-            ("Dumbbell Flye", "chest", "3", "12", "intermediate", "https://www.youtube.com/watch?v=eozdVDA78K0"),
-            ("Push-Up with Pause", "chest", "3", "10", "intermediate", "https://www.youtube.com/watch?v=IODxDxX7oi4"),
-        ],
-        "advanced": [
-            ("Barbell Bench Press", "chest", "5", "5", "advanced", "https://www.youtube.com/watch?v=rT7DgCr-3pg"),
-            ("Weighted Dip", "chest", "4", "8", "advanced", "https://www.youtube.com/watch?v=2z8JmcrW-As"),
-            ("Decline Dumbbell Press", "chest", "4", "10", "advanced", "https://www.youtube.com/watch?v=LfyQBUKR8SE"),
-        ],
-    },
-
-    "back": {
-        "beginner": [
-            ("Bent-Over Dumbbell Row", "back", "3", "10", "beginner", "https://www.youtube.com/watch?v=ZXpZu_fmheU"),
-            ("Superman Hold", "back", "3", "30 sec", "beginner", "https://www.youtube.com/watch?v=z6PJMT2y8GQ"),
-            ("Resistance Band Row", "back", "3", "12", "beginner", "https://www.youtube.com/watch?v=roCP6wCXPqo"),
-        ],
-        "intermediate": [
-            ("Pull-Up", "back", "3", "6", "intermediate", "https://www.youtube.com/watch?v=eGo4IYlbE5g"),
-            ("Seated Cable Row", "back", "4", "10", "intermediate", "https://www.youtube.com/watch?v=GZbfZ033f74"),
-            ("Single-Arm Dumbbell Row", "back", "3", "10", "intermediate", "https://www.youtube.com/watch?v=pYcpY20QaE8"),
-        ],
-        "advanced": [
-            ("Weighted Pull-Up", "back", "4", "6", "advanced", "https://www.youtube.com/watch?v=Kx5hX1c7w5Y"),
-            ("Barbell Deadlift", "back", "5", "5", "advanced", "https://www.youtube.com/watch?v=3UwO0fKukRw"),
-            ("T-Bar Row", "back", "4", "8", "advanced", "https://www.youtube.com/watch?v=j3Igk5nyZE4"),
-        ],
-    },
-
-    "shoulders": {
-        "beginner": [
-            ("Dumbbell Lateral Raise", "shoulders", "3", "12", "beginner", "https://www.youtube.com/watch?v=kDqklk1ZESo"),
-            ("Overhead Press (light DB)", "shoulders", "3", "10", "beginner", "https://www.youtube.com/watch?v=B-aVuyhvLHU"),
-            ("Front Raise", "shoulders", "3", "12", "beginner", "https://www.youtube.com/watch?v=-t7fuZ0KhDA"),
-        ],
-        "intermediate": [
-            ("Dumbbell Shoulder Press", "shoulders", "4", "10", "intermediate", "https://www.youtube.com/watch?v=B-aVuyhvLHU"),
-            ("Arnold Press", "shoulders", "3", "10", "intermediate", "https://www.youtube.com/watch?v=vj2w851ZHRM"),
-            ("Face Pull", "shoulders", "3", "15", "intermediate", "https://www.youtube.com/watch?v=rep-qVOkqgk"),
-        ],
-        "advanced": [
-            ("Barbell Overhead Press", "shoulders", "5", "5", "advanced", "https://www.youtube.com/watch?v=2yjwXTZQDDI"),
-            ("Barbell Upright Row", "shoulders", "4", "8", "advanced", "https://www.youtube.com/watch?v=amCU-ziHITM"),
-            ("Lateral Raise Drop Set", "shoulders", "4", "10", "advanced", "https://www.youtube.com/watch?v=kDqklk1ZESo"),
-        ],
-    },
-
-    "biceps": {
-        "beginner": [
-            ("Dumbbell Curl", "biceps", "3", "12", "beginner", "https://www.youtube.com/watch?v=ykJmrZ5v0Oo"),
-            ("Hammer Curl", "biceps", "3", "10", "beginner", "https://www.youtube.com/watch?v=zC3nLlEvin4"),
-        ],
-        "intermediate": [
-            ("Barbell Curl", "biceps", "3", "10", "intermediate", "https://www.youtube.com/watch?v=kwG2ipFRgfo"),
-            ("Incline Dumbbell Curl", "biceps", "3", "10", "intermediate", "https://www.youtube.com/watch?v=soxrZlIl35U"),
-        ],
-        "advanced": [
-            ("EZ-Bar Preacher Curl", "biceps", "4", "8", "advanced", "https://www.youtube.com/watch?v=fIWP-FRFNU0"),
-            ("Spider Curl", "biceps", "3", "10", "advanced", "https://www.youtube.com/watch?v=2v3R5wq1zKM"),
-        ],
-    },
-
-    "triceps": {
-        "beginner": [
-            ("Bench Tricep Dip", "triceps", "3", "10", "beginner", "https://www.youtube.com/watch?v=0326dy_-CzM"),
-            ("Overhead DB Tricep Extension", "triceps", "3", "12", "beginner", "https://www.youtube.com/watch?v=_gsUck-7M74"),
-        ],
-        "intermediate": [
-            ("Cable Tricep Pushdown", "triceps", "3", "12", "intermediate", "https://www.youtube.com/watch?v=2-LAMcpzODU"),
-            ("Skull Crusher", "triceps", "3", "10", "intermediate", "https://www.youtube.com/watch?v=d_KZxkY_0cM"),
-        ],
-        "advanced": [
-            ("Close-Grip Bench Press", "triceps", "4", "8", "advanced", "https://www.youtube.com/watch?v=nEF0bv2FW94"),
-            ("Weighted Tricep Dip", "triceps", "4", "8", "advanced", "https://www.youtube.com/watch?v=2z8JmcrW-As"),
-        ],
-    },
-
-    "legs": {
-        "beginner": [
-            ("Bodyweight Squat", "legs", "3", "15", "beginner", "https://www.youtube.com/watch?v=m0GcZ24pK6k"),
-            ("Reverse Lunge", "legs", "3", "10", "beginner", "https://www.youtube.com/watch?v=QOVaHwm-Q6U"),
-            ("Glute Bridge", "legs", "3", "15", "beginner", "https://www.youtube.com/watch?v=wPM8icPu6H8"),
-        ],
-        "intermediate": [
-            ("Goblet Squat", "legs", "4", "10", "intermediate", "https://www.youtube.com/watch?v=MeIiIdhvXT4"),
-            ("Romanian Deadlift (DB)", "legs", "3", "10", "intermediate", "https://www.youtube.com/watch?v=2SHsk9AzdjA"),
-            ("Walking Lunge", "legs", "3", "12", "intermediate", "https://www.youtube.com/watch?v=L8fvypPrzzs"),
-        ],
-        "advanced": [
-            ("Barbell Back Squat", "legs", "5", "5", "advanced", "https://www.youtube.com/watch?v=ultWZbUMPL8"),
-            ("Barbell Romanian Deadlift", "legs", "4", "8", "advanced", "https://www.youtube.com/watch?v=2SHsk9AzdjA"),
-            ("Bulgarian Split Squat", "legs", "4", "8", "advanced", "https://www.youtube.com/watch?v=2C-uNgKwPLE"),
-        ],
-    },
-
-    "core": {
-        "beginner": [
-            ("Plank", "core", "3", "20 sec", "beginner", "https://www.youtube.com/watch?v=ASdvN_XEl_c"),
-            ("Dead Bug", "core", "3", "8", "beginner", "https://www.youtube.com/watch?v=g_BYB0R-4Ws"),
-            ("Knee Crunch", "core", "3", "15", "beginner", "https://www.youtube.com/watch?v=Xyd_fa5zoEU"),
-        ],
-        "intermediate": [
-            ("Bicycle Crunch", "core", "3", "20", "intermediate", "https://www.youtube.com/watch?v=9FGilxCbdz8"),
-            ("Russian Twist", "core", "3", "20", "intermediate", "https://www.youtube.com/watch?v=wkD8rjkodUI"),
-            ("Plank", "core", "3", "45 sec", "intermediate", "https://www.youtube.com/watch?v=ASdvN_XEl_c"),
-        ],
-        "advanced": [
-            ("Ab Wheel Rollout", "core", "4", "10", "advanced", "https://www.youtube.com/watch?v=2fQ4F2FJzXg"),
-            ("Hanging Leg Raise", "core", "4", "12", "advanced", "https://www.youtube.com/watch?v=JB2oyawG9KI"),
-            ("Dragon Flag", "core", "3", "6", "advanced", "https://www.youtube.com/watch?v=YbV1H2S4oKQ"),
-        ],
-    },
-
-    "cardio": {
-        "beginner": [
-            ("Brisk Walk", "cardio", "1", "20 min", "beginner", "https://www.youtube.com/watch?v=3Ka7B3hCg08"),
-            ("Jump Rope", "cardio", "3", "2 min", "beginner", "https://www.youtube.com/watch?v=1BZM2Vre5oc"),
-            ("Step-Up", "cardio", "3", "15", "beginner", "https://www.youtube.com/watch?v=dQqApCGd5Ss"),
-        ],
-        "intermediate": [
-            ("Jogging", "cardio", "1", "25 min", "intermediate", "https://www.youtube.com/watch?v=ue0l8N6R8gk"),
-            ("Jumping Jacks", "cardio", "4", "30 sec", "intermediate", "https://www.youtube.com/watch?v=c4DAnQ6DtF8"),
-            ("Box Jump", "cardio", "4", "8", "intermediate", "https://www.youtube.com/watch?v=52r_Ul5k03g"),
-        ],
-        "advanced": [
-            ("Sprint Intervals", "cardio", "8", "30 sec", "advanced", "https://www.youtube.com/watch?v=1skBf6h2ksI"),
-            ("Burpee", "cardio", "5", "10", "advanced", "https://www.youtube.com/watch?v=auBLPXO8Fww"),
-            ("Jump Rope Double Unders", "cardio", "5", "30 sec", "advanced", "https://www.youtube.com/watch?v=3hX2q5oW5Qs"),
-        ],
-    },
-}
-
-# ---------------------------------------------------------------------------
-# Day schedules per split — trimmed to workout_days at runtime
+# Day schedules per split
 # ---------------------------------------------------------------------------
 _FULL_BODY = {
     1: ["chest", "back", "legs", "core"],
@@ -236,6 +53,10 @@ _EXERCISES_PER_GROUP = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
 def _get_difficulty(activity_level: str) -> str:
     if activity_level in ("sedentary", "lightly_active"):
         return "beginner"
@@ -254,46 +75,121 @@ def _get_schedule(workout_days: int) -> dict:
     return {day: groups for day, groups in base.items() if day <= workout_days}
 
 
-def _pick(muscle_group: str, difficulty: str, count: int, offset: int = 0) -> list:
-    options = _LIBRARY.get(muscle_group, {}).get(difficulty, [])
-    if not options:
-        return []
-    return [options[(offset + i) % len(options)] for i in range(min(count, len(options)))]
+def _to_exercise(entry: dict, day: int) -> Exercise:
+    return Exercise(
+        name=entry["name"],
+        muscle_group=entry["muscle_group"],
+        sets=entry["sets"],
+        reps=entry["reps"],
+        difficulty=entry["difficulty"],
+        day=day,
+        youtube_url=entry.get("youtube_url"),
+        image_url=entry.get("image_url"),
+        instructions=entry.get("instructions"),
+    )
 
 
-def get_image_url(name: str) -> str | None:
-    return _image_url(name)
+# ---------------------------------------------------------------------------
+# Swap helper — used by the swap endpoint
+# ---------------------------------------------------------------------------
 
-
-def get_swap_exercise(muscle_group: str, difficulty: str, exclude_name: str):
-    """Return a random alternative (name, image_url) tuple or None."""
-    import random
-    options = _LIBRARY.get(muscle_group, {}).get(difficulty, [])
-    alternatives = [raw for raw in options if raw[0] != exclude_name]
-    if not alternatives:
+def get_swap_exercise(
+    muscle_group: str,
+    difficulty: str,
+    exclude_name: str,
+    equipment_available: Optional[List[str]] = None,
+    limitations: Optional[str] = None,
+) -> Optional[tuple]:
+    """Return (name, image_url) for a random alternative exercise, or None."""
+    entry = exercise_db.get_random_swap(
+        muscle_group=muscle_group,
+        difficulty=difficulty,
+        exclude_name=exclude_name,
+        equipment_available=equipment_available or [],
+        limitations=limitations,
+    )
+    if not entry:
         return None
-    raw = random.choice(alternatives)
-    return raw[0], _image_url(raw[0])
+    return entry["name"], entry.get("image_url")
 
 
+# ---------------------------------------------------------------------------
+# Main plan generation — fallback (used when LLM is disabled or fails)
+# ---------------------------------------------------------------------------
 
 def generate_workout_plan(fitness_goal: FitnessGoal) -> List[Exercise]:
-    difficulty = "beginner"
-    schedule = _FULL_BODY
+    """
+    Generate a workout plan using the free-exercise-db dataset.
+    Respects user's activity level, goal type, equipment, and limitations.
+    Used as fallback when LLM-based generation fails or is disabled.
+    """
+    difficulty          = _get_difficulty(fitness_goal.activity_level)
+    schedule            = _get_schedule(fitness_goal.workout_days)
+    goal                = fitness_goal.goal_type
+    exercises_per_group = _EXERCISES_PER_GROUP.get(goal, 2)
+    cardio_count        = _CARDIO_PER_DAY.get(goal, 1)
+    equipment           = getattr(fitness_goal, "equipment_available", []) or []
+    limitations         = getattr(fitness_goal, "limitations", None)
+
     result: List[Exercise] = []
 
-    for day, groups in schedule.items():
-        for group in groups:
-            for name, muscle, sets, reps, diff, yt in _LIBRARY[group][difficulty][:1]:
-                result.append(Exercise(
-                    name=name,
-                    muscle_group=muscle,
-                    sets=sets,
-                    reps=reps,
-                    difficulty=diff,
-                    day=day,
-                    youtube_url=yt,
-                    image_url=_image_url(name),
-                ))
+    for day, muscle_groups in schedule.items():
+        for group in muscle_groups:
+            entries = exercise_db.filter_exercises(
+                muscle_group=group,
+                difficulty=difficulty,
+                equipment_available=equipment,
+                limitations=limitations,
+                count=exercises_per_group,
+            )
+            for entry in entries:
+                result.append(_to_exercise(entry, day))
+
+        # append cardio exercises for the day
+        if cardio_count > 0:
+            cardio_entries = exercise_db.filter_exercises(
+                muscle_group="cardio",
+                difficulty=difficulty,
+                equipment_available=equipment,
+                limitations=limitations,
+                count=cardio_count,
+            )
+            for entry in cardio_entries:
+                result.append(_to_exercise(entry, day))
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# Catalog helpers — used by LLM-based generation in llm.py
+# ---------------------------------------------------------------------------
+
+def get_catalog_for_llm(
+    difficulty: str,
+    equipment_available: Optional[List[str]] = None,
+    limitations: Optional[str] = None,
+) -> List[dict]:
+    """Return filtered exercise pool for the LLM to select from."""
+    return exercise_db.get_all_for_llm(
+        equipment_available=equipment_available or [],
+        limitations=limitations,
+        difficulty=difficulty,
+    )
+
+
+def build_exercise_from_db(name: str, day: int, instructions: Optional[str] = None) -> Optional[Exercise]:
+    """Build an Exercise object from db data by name. Used by LLM path."""
+    entry = exercise_db.get_exercise_by_name(name)
+    if not entry:
+        return None
+    return Exercise(
+        name=entry["name"],
+        muscle_group=entry["muscle_group"],
+        sets=entry["sets"],
+        reps=entry["reps"],
+        difficulty=entry["difficulty"],
+        day=day,
+        youtube_url=entry.get("youtube_url"),
+        image_url=entry.get("image_url"),
+        instructions=instructions or entry.get("instructions"),
+    )
