@@ -1,7 +1,9 @@
 import json
+from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
+from sqlalchemy import func, cast, Date
 
 # importing dependencies for database session management and user authentication    
 from src.core.database import get_session
@@ -11,8 +13,6 @@ from typing import List
 
 #added to improve data summary
 from src.model import User, FitnessRecord, FitnessReport, FitnessGoal
-
-from src.model import User, FitnessRecord ,FitnessReport
 
 router = APIRouter()
 
@@ -25,8 +25,27 @@ async def enqueue_fitness_report(
     """
     Queue a fitness report generation task for the current user.
     This endpoint extracts recent data and delegates the heavy LLM inference to a Redis background worker.
+    Limited to ONE report per user per day.
     """
     
+    # ==========================================
+    # 0. Daily Limit Check — one report per day
+    # ==========================================
+    today_start = datetime.combine(date.today(), datetime.min.time())
+    today_end = datetime.combine(date.today(), datetime.max.time())
+    
+    existing_today = await session.execute(
+        select(FitnessReport)
+        .where(FitnessReport.user_id == current_user.id)
+        .where(FitnessReport.created_at >= today_start)
+        .where(FitnessReport.created_at <= today_end)
+    )
+    if existing_today.scalars().first():
+        raise HTTPException(
+            status_code=429, 
+            detail="You have already generated a report today. Come back tomorrow!"
+        )
+
     # ==========================================
     # 1. Pre processing & Data Extraction
     # ==========================================
@@ -42,7 +61,7 @@ async def enqueue_fitness_report(
     records = result.scalars().all()
 
     if not records:
-        raise HTTPException(status_code=400, detail="No fitness records found. Please submit your data first.")
+        raise HTTPException(status_code=400, detail="No fitness records found. Please log your data on the dashboard first.")
     
     latest_record = records[0]
 
@@ -79,7 +98,6 @@ async def enqueue_fitness_report(
     goal_result = await session.execute(goal_statement)
     goal = goal_result.scalars().first()
 
-    # Adjust the data summary to include more details from the fitness goal if available, which can help the LLM generate a more personalized and relevant report. This includes target weight, workout frequency, dietary preferences, and any physical limitations that the user has specified in their fitness goal. Additionally, it provides context on how much weight the user needs to lose or gain to reach their target weight, which can be a crucial piece of information for the LLM to create actionable recommendations in the fitness report.
     if goal:
         if goal.target_weight:
             data_summary += f" Target weight: {goal.target_weight} lbs."
@@ -93,7 +111,7 @@ async def enqueue_fitness_report(
             data_summary += f" Allergies: {', '.join(goal.allergies)}."
         if goal.limitations:
             data_summary += f" Physical limitations: {goal.limitations}."
-        if goal.target_weight and latest_record:                           #make sure calculation happend before given to LLM because local LLM can not do math.
+        if goal.target_weight and latest_record:
             weight_to_go = latest_record.weight_lbs - goal.target_weight
             direction = "lose" if weight_to_go > 0 else "gain"
             data_summary += (
@@ -104,7 +122,6 @@ async def enqueue_fitness_report(
     # ==========================================
     # 2. Push Task to Redis Queue (Producer)
     # ==========================================
-    # Package all necessary parameters for the background worker
     task_payload = {
         "user_id": current_user.id,
         "age": latest_record.age,
@@ -113,7 +130,6 @@ async def enqueue_fitness_report(
     }
     
     try:
-        # Push the task to the left side of the list (FIFO queue)
         await request.app.state.redis_queue.lpush(
             "fitness_report_queue", 
             json.dumps(task_payload)
@@ -124,7 +140,6 @@ async def enqueue_fitness_report(
     # ==========================================
     # 3. Return Immediate Response
     # ==========================================
-    # instant feedback, 
     return {
         "message": "Fitness report generation queued successfully!",
         "status": "pending",

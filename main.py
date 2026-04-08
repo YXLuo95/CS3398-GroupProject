@@ -23,6 +23,9 @@ logger = logging.getLogger("uvicorn.info")
 async def mock_generate_report(*args, **kwargs):
     await asyncio.sleep(2) #give it some delay to simulate processing time
     return "LLM Disabled: This is a mock fitness report. Enable LLM in settings to get real reports."
+async def mock_generate_nutrition_plan(*args, **kwargs):
+    await asyncio.sleep(1)
+    return "LLM Disabled: This is a mock nutrition plan."
 
 class MockLLMService:
     def is_ready(self): return True
@@ -72,18 +75,20 @@ async def lifespan(app: FastAPI):
     # 3. LLM Engine Initialization (Dynamic Binding)
     app.state.llm_service = MockLLMService()
     app.state.generate_report = mock_generate_report # bind to the mock function by default
+    app.state.generate_nutrition_plan = mock_generate_nutrition_plan # bind to the mock function by default
     
     if settings.ENABLE_LLM_MODEL:
         try:
             logger.info(f"[Booting] Checking Local LLM Model ({settings.LOCAL_MODEL_NAME})...")
             import ollama
-            from src.core.llm import generate_fitness_report
+            from src.core.llm import generate_fitness_report , generate_nutrition_plan
             
             client = ollama.AsyncClient(host=settings.OLLAMA_HOST)
             await client.list() 
             
             # replace the mock function with the real LLM function for the worker to call
             app.state.generate_report = generate_fitness_report
+            app.state.generate_nutrition_plan = generate_nutrition_plan
             logger.info(f"[Booting] LLM Engine ({settings.LOCAL_MODEL_NAME}) is online and ready!")
             
         except ImportError:
@@ -169,6 +174,9 @@ app.include_router(chat_router, prefix=settings.API_V1_STR, tags=["Chat"])
 
 from src.api.workout import router as workout_router
 app.include_router(workout_router, prefix="/api/v1/workout", tags=["Workout"])
+
+from src.api.nutrition_plan import router as nutrition_plan_router
+app.include_router(nutrition_plan_router, prefix=f"{settings.API_V1_STR}/nutrition-plans", tags=["Nutrition Plans"])
 
 
 if __name__ == "__main__":
