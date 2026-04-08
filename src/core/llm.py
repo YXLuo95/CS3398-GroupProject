@@ -1,5 +1,6 @@
 from typing import Optional, List
 import json
+import re
 import logging
 import ollama
 from src.core.config import settings
@@ -10,31 +11,24 @@ logger = logging.getLogger("uvicorn.info")
 # LLM Integration Logic
 # ==========================================
 
-# decouple for team members who can not run LLM, 
 MOCK_REPORT = """
 [System Notice] Local LLM generation is disabled or temporarily unavailable.
 This is a mock fitness report to ensure the system remains functional.
 Please enable the LLM in settings to receive real, personalized fitness reports.
 """
 
+
 async def generate_fitness_report(user_age: int, gender: str, data_summary: str) -> Optional[str]:
     """
-    call the local LLM to generate a fitness report based on the
+    Call the local LLM to generate a fitness report.
     """
-    
-    # extra check to ensure LLM is enabled, in case the config is changed at runtime or there are issues with the LLM service initialization. This provides an additional layer of robustness to prevent crashes and ensure a graceful fallback to the mock report if the LLM is not available.
     if not settings.ENABLE_LLM_MODEL:
         logger.info("[LLM Service] LLM disabled by config, returning mock report.")
         return MOCK_REPORT
 
-    # 2. refer ollama's documentation for how to construct the system and user prompts,
-    #  and how to call the chat endpoint asynchronously. The system prompt should define the AI's persona, tone, and output format constraints,
-    #  while the user prompt should provide the actual data summary and request for recommendations. 
-    # The response from the LLM will be extracted and returned as the fitness report content.
     try:
-        logger.info(f"[LLM Service] Generating real report using {settings.LOCAL_MODEL_NAME}...") # log for later use
-        
-        # force LLM to generate reports in a specific manner
+        logger.info(f"[LLM Service] Generating real report using {settings.LOCAL_MODEL_NAME}...")
+
         system_prompt = (
             "You are a highly professional, rigorous, yet encouraging personal fitness coach and nutritionist based in the US. "
             "Your task is to provide scientific, safe, and highly actionable assessments and recommendations based on the user's recent body metric changes. "
@@ -45,48 +39,66 @@ async def generate_fitness_report(user_age: int, gender: str, data_summary: str)
             "4. Only provide the report, do not add introductory conversational phrases like 'Sure, here is your report'. "
             "5. ALWAYS use Imperial units (lbs, inches) in your response. "
             "6. Structure your report with these sections: "
-            "7. Use ONLY the numbers provided in the data summary. Do NOT calculate or estimate any values yourself."           ## important to prevent hallucination,  LLM can not do math
+            "7. Use ONLY the numbers provided in the data summary. Do NOT calculate or estimate any values yourself."
             "   - **Progress Summary**: Analyze the weight trend and overall progress. "
             "   - **Body Composition Analysis**: BMI context, estimated body fat if possible. "
             "   - **Nutrition Plan**: Daily calorie target, macro split, meal timing suggestions. "
             "   - **Training Plan**: Weekly workout split based on their goal and activity level. "
             "   - **Next Milestone**: Set a realistic short-term goal for the next 2-4 weeks."
         )
-        
-        # pull data from DB , feed into the prompt
+
         user_prompt = (
             f"Client Profile: {user_age} years old, {gender}.\n"
             f"Recent Data Summary: {data_summary}\n\n"
             "Please generate a professional periodic assessment and provide the next phase of training and dietary recommendations."
         )
 
-        # initialize ollama client
-        # Notes: change locolhost to actual host before making docker file.
         client = ollama.AsyncClient(host=settings.OLLAMA_HOST)
-        
-        # sent a chat request to the local LLM, 
-        # passing in the system and user prompts, and specifying the model to use based on the settings. 
-        # The response is expected to be in a structured format defined by the system prompt, 
-        # and we extract the content of the message from the response to return as the fitness report.
+
         response = await client.chat(
-            model=settings.LOCAL_MODEL_NAME, 
+            model=settings.LOCAL_MODEL_NAME,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-             options={
-            "temperature": 0.7,    # harness creativity while maintaining coherence
-            "num_predict": 1024,   # limit response length to ensure concise reports
+            options={
+                "temperature": 0.7,
+                "num_predict": 1024,
             },
         )
-        
+
         logger.info("[LLM Service] Report generated successfully!")
         return response['message']['content']
-        
+
     except Exception as e:
         logger.error(f"[LLM Service] LLM invocation failed: {str(e)}")
         logger.info("[LLM Service] Returning mock report due to LLM failure.")
         return MOCK_REPORT
+
+
+def _extract_json(raw: str) -> dict:
+    """
+    Try to extract a JSON object from LLM output.
+    Handles cases where LLM wraps JSON in markdown code blocks.
+    """
+    # Strip markdown code fences if present
+    cleaned = re.sub(r"^```(?:json)?\s*", "", raw.strip())
+    cleaned = re.sub(r"\s*```$", "", cleaned)
+
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Last resort: find first { ... } block
+    match = re.search(r"\{[\s\S]*\}", cleaned)
+    if match:
+        try:
+            return json.loads(match.group())
+        except json.JSONDecodeError:
+            pass
+
+    return {}
 
 
 async def generate_exercise_instructions(
@@ -125,19 +137,95 @@ async def generate_exercise_instructions(
                 {"role": "user", "content": user_prompt},
             ],
             options={
-                "temperature": 0.3,   # low temp for consistent structured output
+                "temperature": 0.3,
                 "num_predict": 2048,
             },
         )
 
         raw = response['message']['content'].strip()
-        instructions = json.loads(raw)
-        logger.info("[LLM Service] Exercise instructions generated successfully.")
+        instructions = _extract_json(raw)
+
+        if instructions:
+            logger.info(f"[LLM Service] Exercise instructions generated for {len(instructions)}/{len(exercise_names)} exercises.")
+        else:
+            logger.warning("[LLM Service] Could not parse any instructions from LLM response.")
+
         return instructions
 
-    except json.JSONDecodeError:
-        logger.error("[LLM Service] Failed to parse LLM response as JSON. Falling back to no instructions.")
-        return {}
     except Exception as e:
         logger.error(f"[LLM Service] Exercise instruction generation failed: {str(e)}")
         return {}
+    
+
+
+#added for demo2 - 
+async def generate_nutrition_plan(data_summary: str) -> Optional[str]:
+    """
+    Call the local LLM to generate a personalized daily nutrition plan
+    based on the user's quiz data, macros, and dietary preferences.
+    """
+    if not settings.ENABLE_LLM_MODEL:
+        logger.info("[LLM Service] LLM disabled, returning mock nutrition plan.")
+        return (
+            "## Daily Nutrition Plan (Mock)\n\n"
+            "**LLM is currently disabled.** Enable it in settings to receive a real, personalized nutrition plan.\n\n"
+            "### General Guidelines\n"
+            "- Eat sufficient protein spread across the day\n"
+            "- Prioritize whole, unprocessed foods\n"
+            "- Stay hydrated with at least 3L of water daily\n"
+            "- Time carbs around your workouts for best performance"
+        )
+ 
+    try:
+        logger.info(f"[LLM Service] Generating nutrition plan using {settings.LOCAL_MODEL_NAME}...")
+ 
+        system_prompt = (
+            "You are a certified sports nutritionist based in the US. "
+            "Your task is to create a practical, personalized daily nutrition plan based on the user's profile data. "
+            "Rules you MUST follow: "
+            "1. Be direct and actionable. No fluff or generic advice. "
+            "2. Format your entire response strictly in Markdown. "
+            "3. Only provide the plan — no introductory phrases like 'Sure, here is your plan'. "
+            "4. Use Imperial units (lbs, oz) and common US food items. "
+            "5. Use ONLY the macro targets provided in the data. Do NOT recalculate them yourself. "
+            "6. Structure your plan with these sections: "
+            "   - **Daily Overview**: Summarize the macro targets and overall strategy in 2-3 sentences. "
+            "   - **Food Recommendations**: List 10-15 specific foods that fit this plan, grouped by protein sources, carb sources, fat sources, and vegetables. Include approximate portion sizes. "
+            "   - **Hydration**: Water intake target and timing. "
+            "   - **Supplement Suggestions**: 2-3 evidence-based supplements if relevant to the goal. "
+            "   - **Key Tips**: 3-4 practical tips specific to the user's goal and preferences. "
+            "7. If the user has dietary preferences or allergies, ALL food recommendations MUST respect them. "
+            "8. Keep the entire response under 600 words."
+        )
+ 
+        user_prompt = (
+            f"User Profile & Targets:\n{data_summary}\n\n"
+            "Generate a complete daily nutrition plan for this user."
+        )
+ 
+        client = ollama.AsyncClient(host=settings.OLLAMA_HOST)
+ 
+        response = await client.chat(
+            model=settings.LOCAL_MODEL_NAME,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            options={
+                "temperature": 0.7,
+                "num_predict": 1024,
+            },
+        )
+ 
+        logger.info("[LLM Service] Nutrition plan generated successfully!")
+        return response['message']['content']
+ 
+    except Exception as e:
+        logger.error(f"[LLM Service] Nutrition plan generation failed: {str(e)}")
+        return (
+            "## Daily Nutrition Plan\n\n"
+            "⚠️ The AI nutritionist encountered an error. "
+            "Please try again later or contact support.\n\n"
+            "In the meantime, focus on hitting your protein target "
+            "and eating whole, unprocessed foods."
+        )

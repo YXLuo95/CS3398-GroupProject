@@ -202,3 +202,19 @@ class CompletedWorkoutRead(BaseModel):
     completed_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class NutritionPlanRead(BaseModel):
+    id: int
+    user_id: int
+    plan_content: str
+    data_summary: Optional[str]
+    calories: Optional[int]
+    protein_g: Optional[int]
+    fat_g: Optional[int]
+    carbs_g: Optional[int]
+    model_used: Optional[str]
+    created_at: datetime
+ 
+    model_config = ConfigDict(from_attributes=True)
+ 
