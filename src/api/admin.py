@@ -16,7 +16,9 @@ from src.model import (
     ChatMessage,
     WorkoutPlan,
     Exercise,
-    CompletedWorkout
+    CompletedWorkout,
+    NutritionPlan, 
+    WorkoutSet,   
 )
 class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool:
@@ -129,6 +131,18 @@ class CompletedWorkoutAdmin(ModelView, model=CompletedWorkout):
     name_plural = "Completed Workouts"
     icon = "fa-solid fa-check-double"
 
+class NutritionPlanAdmin(ModelView, model=NutritionPlan):
+    column_list = ["id", "user_id", "calories", "protein_g", "fat_g", "model_used", "created_at"]
+    column_details_list = "__all__"
+    name = "Nutrition Plan"
+    name_plural = "Nutrition Plans"
+    icon = "fa-solid fa-utensils"
+
+class WorkoutSetAdmin(ModelView, model=WorkoutSet):
+    column_list = ["id", "user_id", "exercise_id", "set_number", "completed_at"]
+    name = "Workout Set"
+    name_plural = "Workout Sets"
+    icon = "fa-solid fa-list-check"
 
 
 
@@ -151,5 +165,8 @@ def setup_admin(app, engine):
     #added admin views for workout plans and exercises TS3-41
     admin.add_view(WorkoutPlanAdmin)
     admin.add_view(ExerciseAdmin)
-    admin.add_view(CompletedWorkoutAdmin)   
+    admin.add_view(CompletedWorkoutAdmin)
+    #added admin view for  feature/workout-plan 
+    admin.add_view(NutritionPlanAdmin)
+    admin.add_view(WorkoutSetAdmin)
     return admin
