@@ -45,3 +45,4 @@ logs/
 *.swp
 *.DS_Store
 Thumbs.db
+start.bat
