@@ -43,6 +43,9 @@ class FitnessRecordBase(BaseModel):
 class FitnessRecordCreate(FitnessRecordBase):
     pass 
 
+class QuickWeightLog(BaseModel):
+    weight_lbs: float = Field(..., gt=0, description="Weight in pounds")
+
 class FitnessRecordRead(FitnessRecordBase):
     id: int
     user_id: int

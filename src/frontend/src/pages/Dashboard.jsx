@@ -95,6 +95,11 @@ export default function Dashboard() {
   const [activityLog, setActivityLog] = useState([]);
   const [macros, setMacros] = useState({ calories: 0, protein: 0, fats: 0 });
 
+  // Weight logging
+  const [weightInput, setWeightInput] = useState("");
+  const [weightLogging, setWeightLogging] = useState(false);
+  const [weightMessage, setWeightMessage] = useState("");
+
   const getToken = () => localStorage.getItem("token");
 
   // ==========================================
@@ -214,6 +219,42 @@ export default function Dashboard() {
   const getExercisesForDay = (day) => {
     if (!planData || !planData.exercises) return [];
     return planData.exercises.filter(e => e.day === day);
+  };
+
+  // ==========================================
+  // Quick weight log
+  // ==========================================
+  const handleLogWeight = async () => {
+    const val = parseFloat(weightInput);
+    if (!val || val <= 0) return;
+
+    setWeightLogging(true);
+    setWeightMessage("");
+
+    try {
+      await axios.post(
+        `${API_URL}/api/v1/records/weight`,
+        { weight_lbs: val },
+        { headers: { Authorization: `Bearer ${getToken()}` } }
+      );
+      setWeightMessage(`✅ Logged ${val} lbs`);
+      setWeightInput("");
+
+      // Add to activity log immediately
+      setActivityLog(prev => [
+        {
+          id: `rec-new-${Date.now()}`,
+          action: `Logged weight: ${val} lbs`,
+          timestamp: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+          icon: "⚖️",
+        },
+        ...prev.slice(0, 3),
+      ]);
+    } catch (err) {
+      setWeightMessage(err.response?.data?.detail || "Failed to log weight.");
+    } finally {
+      setWeightLogging(false);
+    }
   };
 
   if (loading) {
@@ -541,8 +582,51 @@ export default function Dashboard() {
 
       <div className="ff-grid ff-grid-2 ff-section">
         <SectionCard title="Recent Activity">
+          {/* Quick weight log form */}
+          {quizData && (
+            <div style={{
+              display: "flex", gap: "0.5rem", marginBottom: "1rem",
+              alignItems: "center",
+            }}>
+              <input
+                className="ff-input"
+                type="number"
+                step="0.1"
+                min="1"
+                placeholder="Weight (lbs)"
+                value={weightInput}
+                onChange={(e) => setWeightInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleLogWeight()}
+                style={{ flex: 1, padding: "0.6rem 0.75rem" }}
+              />
+              <button
+                className="ff-btn ff-btn-primary ff-btn-sm"
+                onClick={handleLogWeight}
+                disabled={!weightInput || weightLogging}
+                style={{
+                  opacity: !weightInput || weightLogging ? 0.5 : 1,
+                  cursor: !weightInput || weightLogging ? "not-allowed" : "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {weightLogging ? "..." : "⚖️ Log"}
+              </button>
+            </div>
+          )}
+
+          {weightMessage && (
+            <div style={{
+              fontSize: "0.8rem", marginBottom: "0.7rem",
+              color: weightMessage.includes("✅") ? "#4ade80" : "#f87171",
+            }}>
+              {weightMessage}
+            </div>
+          )}
+
           {activityLog.length === 0 ? (
-            <div style={{ color: "#a7b4c9", padding: "1rem 0" }}>No activity yet. Start logging!</div>
+            <div style={{ color: "#a7b4c9", padding: "0.5rem 0" }}>
+              {quizData ? "No activity yet. Log your first weight above!" : "Complete the quiz to start logging."}
+            </div>
           ) : (
             <div className="ff-stack">
               {activityLog.map((item) => (

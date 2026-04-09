@@ -1,14 +1,16 @@
 from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException
 
 # importing dependencies for database session management and user authentication
 from src.core.database import get_session
 from src.core.auth import get_current_user
 from src.model import User
+from src.model import FitnessRecord
 
 # importing Pydantic schemas for request validation and response formatting, as well as CRUD functions for fitness records
-from src.schemas import FitnessRecordCreate, FitnessRecordRead
+from src.schemas import FitnessRecordCreate, FitnessRecordRead,QuickWeightLog
 from src.crud.fitness import create_fitness_record, get_user_fitness_records
 
 router = APIRouter()
@@ -38,3 +40,39 @@ async def read_fitness_records(
     retrieve a list of recent fitness records for the current user. 
     """
     return await get_user_fitness_records(session, current_user.id, limit)
+
+@router.post("/records/weight", response_model=FitnessRecordRead, status_code=status.HTTP_201_CREATED)
+async def quick_weight_log(
+    data: QuickWeightLog,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Quick weight log — user only provides weight_lbs.
+    Other fields (age, gender, height, activity_level, fitness_goal)
+    are auto-filled from the user's quiz data (FitnessGoal).
+    """
+    from src.crud.quiz import get_goal_by_user_id
+ 
+    goal = await get_goal_by_user_id(session, current_user.id)
+    if not goal:
+        raise HTTPException(
+            status_code=400,
+            detail="Complete the fitness quiz first so we can fill in your profile data."
+        )
+ 
+    record = FitnessRecord(
+        user_id=current_user.id,
+        weight_lbs=data.weight_lbs,
+        age=goal.age,
+        gender=goal.gender,
+        height_in=goal.height_in,
+        activity_level=goal.activity_level,
+        fitness_goal=goal.goal_type,
+    )
+ 
+    session.add(record)
+    await session.commit()
+    await session.refresh(record)
+    return record
+ 

@@ -158,7 +158,7 @@ def _load_db() -> list[dict]:
         os.path.join(os.path.dirname(__file__), "..", "data", "exercises.json")
     )
 
-    with open(db_path, "r") as f:
+    with open(db_path, "r", encoding="utf-8") as f:
         raw = json.load(f)
 
     exercises = []
