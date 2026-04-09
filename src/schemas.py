@@ -111,6 +111,7 @@ class QuizSubmit(BaseModel):
     dietary_preferences: List[str] = []
     allergies: List[str] = []
     limitations: Optional[str] = None
+    equipment_available: List[str] = []
 
 
 # Response schema with calculated health metrics
@@ -128,6 +129,7 @@ class FitnessGoalRead(BaseModel):
     dietary_preferences: List[str]
     allergies: List[str]
     limitations: Optional[str]
+    equipment_available: List[str]
     bmi: Optional[float]
     bmr: Optional[float]
     tdee: Optional[float]

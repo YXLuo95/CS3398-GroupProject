@@ -229,3 +229,101 @@ async def generate_nutrition_plan(data_summary: str) -> Optional[str]:
             "In the meantime, focus on hitting your protein target "
             "and eating whole, unprocessed foods."
         )
+
+
+async def generate_workout_plan_with_llm(
+    goal_type: str,
+    activity_level: str,
+    difficulty: str,
+    workout_days: int,
+    equipment: List[str],
+    limitations: Optional[str],
+    schedule: dict,
+    catalog: List[dict],
+    catalog_by_name: dict,
+) -> dict:
+    """
+    LLM selects exercises from the db catalog and writes personalized instructions.
+
+    Returns: {day_int: [{"name": str, "instructions": str}, ...]}
+    Raises ValueError if LLM is disabled or returns invalid data — caller falls back to hardcoded generation.
+    """
+    if not settings.ENABLE_LLM_MODEL:
+        raise ValueError("LLM disabled")
+
+    equipment_str   = ", ".join(equipment) if equipment else "bodyweight only"
+    limitations_str = limitations if limitations else "none"
+
+    schedule_lines = "\n".join(
+        f"  Day {day}: {', '.join(groups)}"
+        for day, groups in schedule.items()
+    )
+
+    catalog_json = json.dumps(catalog, separators=(",", ":"))
+
+    system_prompt = (
+        "You are a certified personal trainer. "
+        "Select exercises from the provided catalog and write personalized instructions. "
+        "Rules you MUST follow: "
+        "1. Only select exercises from the catalog — use exact names. "
+        "2. Skip exercises where the user lacks required equipment. "
+        "3. Skip exercises listed in contraindications that match the user's limitations. "
+        "4. Select 2-3 exercises per muscle group per day. "
+        "5. Write 3 concise steps per exercise, separated by ' | ', tailored to the user's profile. "
+        "6. Respond ONLY with valid JSON. No markdown, no extra text. "
+        "7. JSON format: {\"day_1\": [{\"name\": \"...\", \"instructions\": \"Step 1 | Step 2 | Step 3\"}, ...], \"day_2\": [...]}"
+    )
+
+    user_prompt = (
+        f"USER PROFILE:\n"
+        f"- Goal: {goal_type.replace('_', ' ')}\n"
+        f"- Activity level: {activity_level} (use {difficulty} difficulty exercises)\n"
+        f"- Equipment available: {equipment_str}\n"
+        f"- Limitations/injuries: {limitations_str}\n"
+        f"- Workout days: {workout_days}\n\n"
+        f"DAY SCHEDULE:\n{schedule_lines}\n\n"
+        f"EXERCISE CATALOG:\n{catalog_json}\n\n"
+        f"Return the workout plan JSON now."
+    )
+
+    try:
+        logger.info("[LLM Service] Generating personalized workout plan from db catalog...")
+        client = ollama.AsyncClient(host=settings.OLLAMA_HOST)
+        response = await client.chat(
+            model=settings.LOCAL_MODEL_NAME,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": user_prompt},
+            ],
+            options={
+                "temperature": 0.3,
+                "num_predict": 2048,
+            },
+            keep_alive="30m",
+        )
+
+        raw = response["message"]["content"].strip()
+
+        # strip markdown code block if LLM wraps output
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+
+        plan_data = json.loads(raw)
+
+        # validate all names exist in catalog
+        for day_key, exercises in plan_data.items():
+            for ex in exercises:
+                if ex["name"] not in catalog_by_name:
+                    raise ValueError(f"Unknown exercise from LLM: {ex['name']}")
+
+        logger.info("[LLM Service] Workout plan generated successfully.")
+        return {int(k.split("_")[1]): v for k, v in plan_data.items()}
+
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.error(f"[LLM Service] Failed to parse workout plan JSON: {e}")
+        raise ValueError("LLM returned invalid JSON") from e
+    except Exception as e:
+        logger.error(f"[LLM Service] Workout plan generation failed: {e}")
+        raise
