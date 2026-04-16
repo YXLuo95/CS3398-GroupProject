@@ -178,6 +178,10 @@ app.include_router(workout_router, prefix="/api/v1/workout", tags=["Workout"])
 from src.api.nutrition_plan import router as nutrition_plan_router
 app.include_router(nutrition_plan_router, prefix=f"{settings.API_V1_STR}/nutrition-plans", tags=["Nutrition Plans"])
 
+#onboarding
+# from src.api.feedback import router as feedback_router
+# app.include_router(feedback_router, prefix=f"{settings.API_V1_STR}/feedback", tags=["Feedback"])
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

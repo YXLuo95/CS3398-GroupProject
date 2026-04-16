@@ -239,3 +239,16 @@ class NutritionPlanRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+#onboarding feedback schemas
+# class FeedbackCreate(BaseModel):
+#     rating: int = Field(ge=1, le=5)
+#     comment: Optional[str] = None
+
+# class FeedbackRead(BaseModel):
+#     id: int
+#     user_id: int
+#     rating: int
+#     comment: Optional[str]
+#     created_at: datetime
+
+#     model_config = ConfigDict(from_attributes=True)

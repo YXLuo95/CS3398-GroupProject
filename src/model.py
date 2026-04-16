@@ -62,6 +62,9 @@ class User(TimestampMixin, table=True):
     #added relation for nutrition plans demo2
     nutrition_plans: List["NutritionPlan"] = Relationship(back_populates="user")
 
+    #onboarding
+    # feedback: List["UserFeedback"] = Relationship(back_populates="user")
+
 class FitnessRecord(TimestampMixin, table=True):
     __tablename__ = "fitness_records"
 
@@ -237,3 +240,13 @@ class NutritionPlan(TimestampMixin, table=True):
 
     user: Optional["User"] = Relationship(back_populates="nutrition_plans")
 
+# # for onboarding
+# class UserFeedback(TimestampMixin, table=True):
+#     __tablename__ = "user_feedback"
+
+#     id: Optional[int] = Field(default=None, primary_key=True)
+#     user_id: int = Field(foreign_key="users.id", index=True)
+#     rating: int = Field(ge=1, le=5)   # 1-5 stars
+#     comment: Optional[str] = Field(default=None, sa_column=Column(TEXT))
+
+#     user: Optional["User"] = Relationship(back_populates="feedback")

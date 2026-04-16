@@ -147,6 +147,17 @@ class WorkoutSetAdmin(ModelView, model=WorkoutSet):
 
 
 
+# from src.model import (..., UserFeedback)
+
+
+# class UserFeedbackAdmin(ModelView, model=UserFeedback):
+#     column_list = ["id", "user_id", "rating", "comment", "created_at"]
+#     name = "Feedback"
+#     name_plural = "User Feedback"
+#     icon = "fa-solid fa-star"
+
+
+
 
 
 
@@ -169,4 +180,7 @@ def setup_admin(app, engine):
     #added admin view for  feature/workout-plan 
     admin.add_view(NutritionPlanAdmin)
     admin.add_view(WorkoutSetAdmin)
+
+    # onboarding
+    # admin.add_view(UserFeedbackAdmin)
     return admin
