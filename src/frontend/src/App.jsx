@@ -2,6 +2,7 @@
 // IMPORTS
 // ==========================================
 import React from "react";
+import axios from "axios";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // Global design system
@@ -29,16 +30,6 @@ import Reports from "./pages/Reports";
 import DietPlan from "./pages/DietPlan";
 import NotFound from "./pages/NotFound";
 
-const Features = () => (
-  <main className="ff-page">
-    <div className="ff-container">
-      <h1 className="ff-title">Features</h1>
-    </div>
-  </main>
-);
-
-import axios from "axios";
-
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -50,8 +41,13 @@ axios.interceptors.response.use(
   }
 );
 
-
-
+const Features = () => (
+  <main className="ff-page">
+    <div className="ff-container">
+      <h1 className="ff-title">Features</h1>
+    </div>
+  </main>
+);
 
 // ==========================================
 // MAIN APP COMPONENT (Router Wrapper)
