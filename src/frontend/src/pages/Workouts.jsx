@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import AppPage from "../components/ui/AppPage";
 import SectionCard from "../components/ui/SectionCard";
+import MuscleHeatMap from "../components/MuscleHeatMap";
+import { normalizeGroupScores } from "../data/muscleGroups";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -37,6 +39,50 @@ function todayPlanDay() {
 function muscleEmoji(group) {
   const key = (group || "").toLowerCase().replace(/\s/g, "_");
   return MUSCLE_EMOJI[key] || "🏋️";
+}
+
+/** Plan `muscle_group` → heat-map group keys (`muscleGroups.js` / `expandGroupIntensities`). */
+const EXERCISE_CARD_GROUP_WEIGHTS = {
+  chest: { chest: 1 },
+  biceps: { biceps: 1 },
+  triceps: { triceps: 1 },
+  shoulders: { shoulders: 1 },
+  back: { lats: 1, "middle back": 1, "lower back": 1, traps: 1 },
+  legs: { quadriceps: 1, hamstrings: 1, glutes: 1, calves: 1, abductors: 1, adductors: 0.6 },
+  core: { abdominals: 1 },
+  cardio: {},
+};
+
+/** Sum raw workload per canonical muscle group for the whole plan (then normalize for the map). */
+function planExercisesToGroupScores(exercises) {
+  /** @type {Record<string, number>} */
+  const scores = {};
+  for (const ex of exercises) {
+    const key = (ex.muscle_group || "").toLowerCase();
+    const weights = EXERCISE_CARD_GROUP_WEIGHTS[key];
+    if (!weights || !Object.keys(weights).length) continue;
+    const n = parseInt(String(ex.sets).split(/\D/)[0], 10) || 3;
+    for (const [group, w] of Object.entries(weights)) {
+      scores[group] = (scores[group] || 0) + w * n;
+    }
+  }
+  return scores;
+}
+
+/**
+ * Group intensities for one plan exercise (from `muscle_group` only), or null if
+ * `primaryMuscles` / `secondaryMuscles` should drive the map instead.
+ * @param {object} exercise
+ * @returns {Record<string, number> | null}
+ */
+function singleExerciseHeatGroupIntensities(exercise) {
+  const hasPs =
+    (exercise.primaryMuscles?.length ?? 0) > 0 || (exercise.secondaryMuscles?.length ?? 0) > 0;
+  if (hasPs) return null;
+  const key = (exercise.muscle_group || "").toLowerCase();
+  const weights = EXERCISE_CARD_GROUP_WEIGHTS[key];
+  if (!weights || !Object.keys(weights).length) return {};
+  return normalizeGroupScores(weights);
 }
 
 // ─── Progress ring ────────────────────────────────────────────────────────────
@@ -139,7 +185,15 @@ function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet,
   const [expanded, setExpanded]   = useState(false);
   const [swapping, setSwapping]   = useState(false);
   const steps      = exercise.instructions ? exercise.instructions.split(" | ") : [];
-  const hasDetails = steps.length > 0 || !!exercise.image_url;
+  const heatFromGroup = useMemo(() => singleExerciseHeatGroupIntensities(exercise), [
+    exercise.muscle_group,
+    (exercise.primaryMuscles ?? []).join("|"),
+    (exercise.secondaryMuscles ?? []).join("|"),
+  ]);
+  const showHeatMap = heatFromGroup !== null
+    ? Object.keys(heatFromGroup).length > 0
+    : (exercise.primaryMuscles?.length ?? 0) + (exercise.secondaryMuscles?.length ?? 0) > 0;
+  const hasDetails = steps.length > 0 || !!exercise.image_url || showHeatMap;
   const diffStyle  = DIFFICULTY_COLORS[exercise.difficulty] || {};
   const setCount   = parseInt(exercise.sets) || 0;
   const doneSets   = loggedSets || new Set();
@@ -238,11 +292,63 @@ function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet,
             </div>
           )}
 
-          {exercise.image_url && (
-            <img
-              src={exercise.image_url} alt={exercise.name}
-              style={{ width: "100%", maxWidth: 320, borderRadius: 10, objectFit: "cover" }}
-            />
+          {(exercise.image_url || showHeatMap) && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: "0.75rem",
+                alignItems: "stretch",
+                justifyContent: exercise.image_url && showHeatMap ? "space-between" : "flex-start",
+              }}
+            >
+              {exercise.image_url && (
+                <img
+                  src={exercise.image_url}
+                  alt={exercise.name}
+                  style={{
+                    flex: "1 1 0",
+                    minWidth: 0,
+                    maxWidth: 320,
+                    width: "100%",
+                    borderRadius: 10,
+                    objectFit: "cover",
+                  }}
+                />
+              )}
+              {showHeatMap && (
+                <div
+                  style={{
+                    flex: "1 1 0",
+                    minWidth: 0,
+                    maxWidth: 320,
+                    width: "100%",
+                    borderRadius: 10,
+                    border: "1px solid var(--ff-border-dim)",
+                    background: "var(--ff-surface-2)",
+                    padding: "0.35rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxSizing: "border-box",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {heatFromGroup !== null ? (
+                    <MuscleHeatMap bothSides compact groupIntensities={heatFromGroup} style={{ margin: 0 }} />
+                  ) : (
+                    <MuscleHeatMap
+                      bothSides
+                      compact
+                      primaryMuscles={exercise.primaryMuscles}
+                      secondaryMuscles={exercise.secondaryMuscles}
+                      style={{ margin: 0 }}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           {steps.map((step, i) => (
@@ -528,6 +634,11 @@ export default function Workouts() {
 
   const today = todayPlanDay();
 
+  const muscleHeatGroupIntensities = useMemo(() => {
+    if (!plan?.exercises?.length) return {};
+    return normalizeGroupScores(planExercisesToGroupScores(plan.exercises));
+  }, [plan]);
+
   if (!isLoggedIn) {
     return (
       <AppPage eyebrow="TRAINING" title="Workout" accent="Plans"
@@ -645,6 +756,66 @@ export default function Workouts() {
               </button>
             </div>
           </SectionCard>
+
+          {Object.keys(muscleHeatGroupIntensities).length > 0 && (
+            <SectionCard>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  gap: "clamp(0.85rem, 2.2vw, 1.75rem)",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div style={{ flex: "1 1 14rem", minWidth: 0, maxWidth: "28rem" }}>
+                  <h2
+                    style={{
+                      margin: 0,
+                      fontSize: "clamp(1.05rem, 2.4vw, 1.25rem)",
+                      fontWeight: 700,
+                      color: "#f8fbff",
+                    }}
+                  >
+                    Weekly Muscle Focus
+                  </h2>
+                  <p
+                    style={{
+                      margin: "0.45rem 0 0",
+                      color: "#a7b4c9",
+                      fontSize: "0.88rem",
+                      lineHeight: 1.55,
+                      maxWidth: "38em",
+                    }}
+                  >
+                    Color intensity reflects how much each muscle is trained this week. Brighter areas indicate higher volume. 
+                    Each workout contributes to the total—expand a day to see individual lifts and their impact.
+                  </p>
+                </div>
+                <div
+                  style={{
+                    flex: "1 1 min(22rem, 100%)",
+                    minWidth: 0,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: "0.4rem 0.3rem",
+                    borderRadius: 12,
+                    border: "1px solid var(--ff-border-dim)",
+                    background: "var(--ff-surface-2)",
+                  }}
+                >
+                  <MuscleHeatMap
+                    bothSides
+                    summary
+                    groupIntensities={muscleHeatGroupIntensities}
+                    style={{ gap: "4px", maxWidth: "100%", margin: 0, width: "100%" }}
+                  />
+                </div>
+              </div>
+            </SectionCard>
+          )}
 
           {/* 5. Muscle group filter */}
           {allMuscleGroups.length > 0 && (

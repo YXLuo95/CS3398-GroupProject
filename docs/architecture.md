@@ -194,6 +194,7 @@ A detailed entity-relationship diagram is available in the repository: **docs/ER
 
 - **Stack:** React 19, Vite 7, React Router.
 - **Location:** `src/frontend/`.
+- **Muscle heat map:** FR-15 visualization — component, group→SVG mapping, and Workouts integration are documented in [muscle-heat-map.md](muscle-heat-map.md).
 - **Current state:** Multi-page shell (Home, Features, About, Login, Sign Up) with routing; API integration (auth, quiz, records, reports) is to be wired in later sprints.
 
 ---
@@ -218,4 +219,5 @@ A detailed entity-relationship diagram is available in the repository: **docs/ER
 
 | Version | Date       | Author | Changes     |
 |---------|------------|--------|-------------|
+| 1.1     | 2026-04-12 | —      | Link muscle heat map doc (FR-15 UI). |
 | 1.0     | 2026-03-07 | Shawn  | Initial draft |
