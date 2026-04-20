@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import AppPage from "../components/ui/AppPage";
@@ -132,37 +132,16 @@ function HistoryDayCard({ group }) {
 function muscleLabel(groups) {
   if (!groups || groups.length === 0) return "";
   if (groups.length >= 4) return "FULL BODY";
-  if (groups.length === 3) return `${groups[0].toUpperCase()} + ${groups[1].toUpperCase()} +1`;
   return groups.map(g => g.toUpperCase()).join(" + ");
 }
 
-// ─── Calendar View ────────────────────────────────────────────────────────────
-function CalendarView({ calendarData }) {
-  const today = new Date();
-  const [year,     setYear]     = useState(today.getFullYear());
-  const [month,    setMonth]    = useState(today.getMonth());
-  const [selected, setSelected] = useState(null);
-
-  const dateMap = useMemo(() => {
-    const map = {};
-    for (const entry of calendarData) map[entry.date] = entry;
-    return map;
-  }, [calendarData]);
-
-  function prevMonth() {
-    if (month === 0) { setMonth(11); setYear(y => y - 1); }
-    else setMonth(m => m - 1);
-    setSelected(null);
-  }
-  function nextMonth() {
-    if (month === 11) { setMonth(0); setYear(y => y + 1); }
-    else setMonth(m => m + 1);
-    setSelected(null);
-  }
-
+// ─── Calendar Grid (pure display, no state) ───────────────────────────────────
+function CalendarGrid({ year, month, dateMap, selected, onSelect, animKey }) {
+  const today       = new Date();
+  const todayKey    = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
   const firstDay    = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells = [];
+  const cells       = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
@@ -170,132 +149,223 @@ function CalendarView({ calendarData }) {
     return `${year}-${String(month + 1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
   }
 
-  const todayKey       = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-  const monthWorkouts  = Object.keys(dateMap).filter(k => k.startsWith(`${year}-${String(month+1).padStart(2,"0")}`)).length;
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "5px" }}>
+      {cells.map((day, i) => {
+        if (!day) return <div key={`empty-${i}`} style={{ minHeight: 88 }} />;
+        const key     = dateKey(day);
+        const entry   = dateMap[key];
+        const isToday = key === todayKey;
+        const isSel   = selected === key;
+        const label   = entry ? muscleLabel(entry.muscle_groups) : null;
+        const cellIdx = i;
+
+        return (
+          <div
+            key={key}
+            onClick={() => entry && onSelect(isSel ? null : key)}
+            style={{
+              minHeight: 88,
+              display: "flex", flexDirection: "column",
+              borderRadius: 10, overflow: "hidden",
+              background: entry
+                ? isSel ? "linear-gradient(145deg,#1d4ed8,#2563eb)" : "linear-gradient(145deg,#1e40af,#2563eb)"
+                : isToday ? "rgba(37,99,235,0.12)" : "rgba(255,255,255,0.03)",
+              border: isSel ? "2px solid #93c5fd"
+                : isToday ? "2px solid #2563eb"
+                : entry ? "1px solid rgba(147,197,253,0.25)"
+                : "1px solid rgba(255,255,255,0.04)",
+              cursor: entry ? "pointer" : "default",
+              transition: "transform 0.15s, box-shadow 0.15s",
+              boxShadow: entry ? (isSel ? "0 0 18px rgba(37,99,235,0.55)" : "0 4px 12px rgba(37,99,235,0.25)") : "none",
+              // staggered pop-in for workout cells
+              animation: entry ? `cal-pop 0.35s ease both` : "none",
+              animationDelay: entry ? `${(cellIdx % 14) * 28}ms` : "0ms",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px 4px" }}>
+              <span style={{
+                fontSize: "0.78rem", fontWeight: isToday || entry ? 700 : 400,
+                color: entry ? "#bfdbfe" : isToday ? "#60a5fa" : "rgba(255,255,255,0.25)",
+              }}>{day}</span>
+              {entry && <span style={{ fontSize: "0.75rem" }}>🦅</span>}
+            </div>
+            {entry && (
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 6px 8px", textAlign: "center" }}>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: "0.62rem", color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.35 }}>{label}</p>
+                <p style={{ margin: "3px 0 0", fontSize: "0.58rem", color: "rgba(191,219,254,0.75)", fontWeight: 500 }}>{entry.exercise_count} exercises</p>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Calendar View with real page flip ────────────────────────────────────────
+function CalendarView({ calendarData }) {
+  const today = new Date();
+  const [current,   setCurrent]   = useState({ year: today.getFullYear(), month: today.getMonth() });
+  const [incoming,  setIncoming]  = useState(null);
+  const [animating, setAnimating] = useState(false);
+  const [direction, setDirection] = useState("next");
+  const [falconSpin,setFalconSpin]= useState(false);
+  const [selected,  setSelected]  = useState(null);
+  const FLIP_MS = 620;
+
+  const dateMap = useMemo(() => {
+    const map = {};
+    for (const entry of calendarData) map[entry.date] = entry;
+    return map;
+  }, [calendarData]);
+
+  function getAdjacentMonth(y, m, dir) {
+    if (dir === "next") return m === 11 ? { year: y + 1, month: 0 } : { year: y, month: m + 1 };
+    return m === 0 ? { year: y - 1, month: 11 } : { year: y, month: m - 1 };
+  }
+
+  function navigate(dir) {
+    if (animating) return;
+    const next = getAdjacentMonth(current.year, current.month, dir);
+    setDirection(dir);
+    setIncoming(next);
+    setAnimating(true);
+    setFalconSpin(true);
+    setSelected(null);
+    setTimeout(() => {
+      setCurrent(next);
+      setIncoming(null);
+      setAnimating(false);
+      setFalconSpin(false);
+    }, FLIP_MS);
+  }
+
+  const display = animating && incoming ? incoming : current;
+  const monthWorkouts = Object.keys(dateMap).filter(k =>
+    k.startsWith(`${display.year}-${String(display.month + 1).padStart(2, "0")}`)
+  ).length;
 
   return (
     <div>
-      {/* Header */}
+      <style>{`
+        @keyframes page-flip-out-next {
+          0%   { transform: perspective(1400px) rotateX(0deg);   opacity: 1; box-shadow: 0 0 0 rgba(0,0,0,0); }
+          40%  { box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+          100% { transform: perspective(1400px) rotateX(-180deg); opacity: 0; box-shadow: 0 0 0 rgba(0,0,0,0); }
+        }
+        @keyframes page-flip-in-next {
+          0%   { transform: perspective(1400px) rotateX(180deg);  opacity: 0; }
+          100% { transform: perspective(1400px) rotateX(0deg);    opacity: 1; }
+        }
+        @keyframes page-flip-out-prev {
+          0%   { transform: perspective(1400px) rotateX(0deg);    opacity: 1; box-shadow: 0 0 0 rgba(0,0,0,0); }
+          40%  { box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+          100% { transform: perspective(1400px) rotateX(180deg);  opacity: 0; box-shadow: 0 0 0 rgba(0,0,0,0); }
+        }
+        @keyframes page-flip-in-prev {
+          0%   { transform: perspective(1400px) rotateX(-180deg); opacity: 0; }
+          100% { transform: perspective(1400px) rotateX(0deg);    opacity: 1; }
+        }
+        @keyframes falcon-spin { 0%{transform:rotate(0deg) scale(1)} 50%{transform:rotate(180deg) scale(1.3)} 100%{transform:rotate(360deg) scale(1)} }
+        @keyframes cal-pop { 0%{transform:scale(0.75);opacity:0} 70%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
+        @keyframes shadow-lift {
+          0%,100% { box-shadow: 0 4px 12px rgba(37,99,235,0.25); }
+          50%      { box-shadow: 0 18px 40px rgba(37,99,235,0.45); }
+        }
+      `}</style>
+
+      {/* Blue header with spiral decoration */}
       <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        marginBottom: "1.5rem",
-        padding: "1.25rem 1.5rem",
-        background: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%)",
-        borderRadius: 14,
+        background: "linear-gradient(135deg,#1e3a8a 0%,#2563eb 60%,#3b82f6 100%)",
+        borderRadius: "14px 14px 0 0",
+        padding: "1.25rem 1.5rem 1rem",
+        position: "relative", overflow: "hidden",
       }}>
-        <button onClick={prevMonth} style={navBtn}>‹</button>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
-            <span style={{ fontSize: "1.6rem" }}>🦅</span>
-            <p style={{ margin: 0, fontWeight: 800, color: "#fff", fontSize: "1.3rem", letterSpacing: "0.02em" }}>
-              {MONTHS[month]} {year}
+        {/* Spiral dots decoration at top — like a real spiral calendar binding */}
+        <div style={{ position: "absolute", top: 8, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 18 }}>
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(255,255,255,0.35)", border: "1.5px solid rgba(255,255,255,0.6)" }} />
+          ))}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "0.75rem" }}>
+          <button onClick={() => navigate("prev")} disabled={animating} style={{ ...navBtn, opacity: animating ? 0.35 : 1 }}>‹</button>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+              <span style={{ fontSize: "1.6rem", display: "inline-block", animation: falconSpin ? "falcon-spin 0.62s ease both" : "none" }}>🦅</span>
+              <p style={{ margin: 0, fontWeight: 800, color: "#fff", fontSize: "1.3rem", letterSpacing: "0.02em" }}>
+                {MONTHS[display.month]} {display.year}
+              </p>
+            </div>
+            <p style={{ margin: "0.2rem 0 0", fontSize: "0.78rem", color: "rgba(255,255,255,0.75)", fontWeight: 500 }}>
+              {monthWorkouts > 0
+                ? `🔥 ${monthWorkouts} workout${monthWorkouts !== 1 ? "s" : ""} completed this month`
+                : "No workouts yet this month — let's go!"}
             </p>
           </div>
-          <p style={{ margin: "0.2rem 0 0", fontSize: "0.78rem", color: "rgba(255,255,255,0.75)", fontWeight: 500 }}>
-            {monthWorkouts > 0
-              ? `🔥 ${monthWorkouts} workout${monthWorkouts !== 1 ? "s" : ""} completed this month`
-              : "No workouts yet this month — let's go!"}
-          </p>
+          <button onClick={() => navigate("next")} disabled={animating} style={{ ...navBtn, opacity: animating ? 0.35 : 1 }}>›</button>
         </div>
-        <button onClick={nextMonth} style={navBtn}>›</button>
       </div>
 
       {/* Weekday headers */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "5px", marginBottom: "5px" }}>
+      <div style={{
+        display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "5px",
+        padding: "8px 0 6px",
+        background: "rgba(30,58,138,0.15)",
+        borderLeft: "1px solid rgba(37,99,235,0.2)",
+        borderRight: "1px solid rgba(37,99,235,0.2)",
+      }}>
         {WEEKDAYS.map((d, i) => (
           <div key={d} style={{
-            textAlign: "center", fontSize: "0.72rem", fontWeight: 700, padding: "5px 0",
-            color: i === 0 || i === 6 ? "rgba(147,197,253,0.8)" : "var(--ff-text-muted)",
-            borderBottom: "1px solid var(--ff-border-dim)",
-          }}>
-            {d}
-          </div>
+            textAlign: "center", fontSize: "0.72rem", fontWeight: 700, padding: "4px 0",
+            color: i === 0 || i === 6 ? "rgba(147,197,253,0.9)" : "var(--ff-text-muted)",
+          }}>{d}</div>
         ))}
       </div>
 
-      {/* Day grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "5px" }}>
-        {cells.map((day, i) => {
-          if (!day) return <div key={`empty-${i}`} style={{ minHeight: 88 }} />;
-          const key     = dateKey(day);
-          const entry   = dateMap[key];
-          const isToday = key === todayKey;
-          const isSel   = selected === key;
-          const label   = entry ? muscleLabel(entry.muscle_groups) : null;
+      {/* Page flip stage */}
+      <div style={{
+        position: "relative",
+        minHeight: 530,
+        border: "1px solid rgba(37,99,235,0.2)",
+        borderTop: "none",
+        borderRadius: "0 0 14px 14px",
+        overflow: "hidden",
+        background: "var(--ff-surface-2)",
+        padding: "6px 0 8px",
+      }}>
+        {/* Front page (going out) */}
+        {animating && (
+          <div style={{
+            position: "absolute", top: 6, left: 0, right: 0, padding: "0 6px",
+            transformOrigin: "50% 0%",
+            animation: `${direction === "next" ? "page-flip-out-next" : "page-flip-out-prev"} ${FLIP_MS/2}ms ease-in forwards`,
+            zIndex: 2,
+          }}>
+            <CalendarGrid year={current.year} month={current.month} dateMap={dateMap} selected={null} onSelect={() => {}} animKey="front" />
+          </div>
+        )}
 
-          return (
-            <div
-              key={key}
-              onClick={() => entry && setSelected(isSel ? null : key)}
-              style={{
-                minHeight: 88,
-                display: "flex", flexDirection: "column",
-                borderRadius: 10,
-                overflow: "hidden",
-                background: entry
-                  ? isSel
-                    ? "linear-gradient(145deg, #1d4ed8, #2563eb)"
-                    : "linear-gradient(145deg, #1e40af, #2563eb)"
-                  : isToday
-                  ? "rgba(37,99,235,0.12)"
-                  : "rgba(255,255,255,0.03)",
-                border: isSel
-                  ? "2px solid #93c5fd"
-                  : isToday
-                  ? "2px solid #2563eb"
-                  : entry
-                  ? "1px solid rgba(147,197,253,0.25)"
-                  : "1px solid rgba(255,255,255,0.04)",
-                cursor: entry ? "pointer" : "default",
-                transition: "all 0.15s",
-                boxShadow: entry
-                  ? isSel
-                    ? "0 0 16px rgba(37,99,235,0.5)"
-                    : "0 4px 12px rgba(37,99,235,0.25)"
-                  : "none",
-              }}
-            >
-              {/* Top row: date + falcon */}
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "6px 8px 4px",
-              }}>
-                <span style={{
-                  fontSize: "0.78rem", fontWeight: isToday || entry ? 700 : 400,
-                  color: entry ? "#bfdbfe" : isToday ? "#60a5fa" : "rgba(255,255,255,0.25)",
-                }}>
-                  {day}
-                </span>
-                {entry && (
-                  <span style={{ fontSize: "0.75rem", lineHeight: 1 }}>🦅</span>
-                )}
-              </div>
+        {/* Back page (coming in) */}
+        {animating && incoming && (
+          <div style={{
+            position: "absolute", top: 6, left: 0, right: 0, padding: "0 6px",
+            transformOrigin: "50% 0%",
+            animation: `${direction === "next" ? "page-flip-in-next" : "page-flip-in-prev"} ${FLIP_MS/2}ms ease-out ${FLIP_MS/2}ms forwards`,
+            opacity: 0,
+            zIndex: 1,
+          }}>
+            <CalendarGrid year={incoming.year} month={incoming.month} dateMap={dateMap} selected={null} onSelect={() => {}} animKey="back" />
+          </div>
+        )}
 
-              {/* Muscle label */}
-              {entry && (
-                <div style={{
-                  flex: 1, display: "flex", flexDirection: "column",
-                  alignItems: "center", justifyContent: "center",
-                  padding: "0 6px 8px", textAlign: "center",
-                }}>
-                  <p style={{
-                    margin: 0, fontWeight: 800, fontSize: "0.62rem",
-                    color: "#fff", textTransform: "uppercase",
-                    letterSpacing: "0.04em", lineHeight: 1.35,
-                  }}>
-                    {label}
-                  </p>
-                  <p style={{
-                    margin: "3px 0 0", fontSize: "0.58rem",
-                    color: "rgba(191,219,254,0.75)", fontWeight: 500,
-                  }}>
-                    {entry.exercise_count} exercises
-                  </p>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {/* Static page (idle) */}
+        {!animating && (
+          <div style={{ padding: "0 6px" }}>
+            <CalendarGrid year={current.year} month={current.month} dateMap={dateMap} selected={selected} onSelect={setSelected} animKey={`${current.year}-${current.month}`} />
+          </div>
+        )}
       </div>
 
       {/* Legend */}
@@ -308,18 +378,16 @@ function CalendarView({ calendarData }) {
           <div style={{ width: 14, height: 14, borderRadius: 4, border: "2px solid #2563eb" }} />
           <span style={{ fontSize: "0.75rem", color: "var(--ff-text-muted)" }}>Today</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-          <span style={{ fontSize: "0.75rem", color: "var(--ff-text-muted)" }}>Tap a workout day to see details</span>
-        </div>
+        <span style={{ fontSize: "0.75rem", color: "var(--ff-text-muted)" }}>Tap a workout day to see details</span>
       </div>
 
       {/* Selected day detail */}
       {selected && dateMap[selected] && (
         <div style={{
           marginTop: "1.25rem", padding: "1.1rem 1.25rem",
-          background: "linear-gradient(135deg, rgba(30,58,138,0.3), rgba(37,99,235,0.15))",
-          border: "1px solid rgba(147,197,253,0.25)",
-          borderRadius: 12,
+          background: "linear-gradient(135deg,rgba(30,58,138,0.3),rgba(37,99,235,0.15))",
+          border: "1px solid rgba(147,197,253,0.25)", borderRadius: 12,
+          animation: "cal-pop 0.3s ease both",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.6rem" }}>
             <span style={{ fontSize: "1.1rem" }}>🦅</span>
@@ -336,6 +404,7 @@ function CalendarView({ calendarData }) {
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "0.45rem 0.75rem", background: "var(--ff-surface-3)",
                 borderRadius: 8, fontSize: "0.83rem",
+                animation: "cal-pop 0.25s ease both", animationDelay: `${i * 30}ms`,
               }}>
                 <span style={{ color: "var(--ff-text)", fontWeight: 600 }}>{ex.name}</span>
                 <span style={{ color: "var(--ff-text-muted)", fontSize: "0.78rem" }}>{ex.sets} sets · {ex.reps} reps</span>
