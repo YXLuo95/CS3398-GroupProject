@@ -182,6 +182,7 @@ class ExerciseRead(BaseModel):
     youtube_url: Optional[str]
     instructions: Optional[str]
     image_url: Optional[str]
+    rest_seconds: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 
