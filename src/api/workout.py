@@ -24,6 +24,7 @@ from src.crud.workout import (
     create_completion, get_completions_by_user, get_completion_for_day, delete_completion,
     log_set, unlog_set, get_sets_for_plan, swap_exercise,
     get_workout_history, get_workout_history_count,
+    get_calendar_completions,
 )
 
 router = APIRouter()
@@ -231,3 +232,12 @@ async def get_history(
     history = await get_workout_history(session, current_user.id, skip=skip, limit=limit)
     total   = await get_workout_history_count(session, current_user.id)
     return {"total": total, "skip": skip, "limit": limit, "items": history}
+
+
+@router.get("/calendar")
+async def get_calendar(
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Get all completed workout dates for calendar view. Returns full history, not paginated."""
+    return await get_calendar_completions(session, current_user.id)
