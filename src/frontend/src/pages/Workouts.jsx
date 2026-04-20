@@ -85,6 +85,124 @@ function singleExerciseHeatGroupIntensities(exercise) {
   return normalizeGroupScores(weights);
 }
 
+// ─── Rest Timer Modal ─────────────────────────────────────────────────────────
+function RestTimerModal({ seconds, exerciseName, onClose }) {
+  const [timeLeft, setTimeLeft] = useState(seconds);
+  const [running,  setRunning]  = useState(true);
+  const [done,     setDone]     = useState(false);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (running && timeLeft > 0) {
+      intervalRef.current = setInterval(() => {
+        setTimeLeft((t) => {
+          if (t <= 1) {
+            clearInterval(intervalRef.current);
+            setRunning(false);
+            setDone(true);
+            return 0;
+          }
+          return t - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [running]);
+
+  function handlePause()  { clearInterval(intervalRef.current); setRunning(false); }
+  function handleResume() { setRunning(true); }
+  function handleSkip()   { clearInterval(intervalRef.current); onClose(); }
+  function handleRestart(){ setTimeLeft(seconds); setRunning(true); setDone(false); }
+
+  const pct  = 1 - timeLeft / seconds;
+  const r    = 54;
+  const circ = 2 * Math.PI * r;
+  const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
+  const secs = String(timeLeft % 60).padStart(2, "0");
+
+  const ringColor = done ? "var(--ff-green)" : running ? "var(--ff-accent)" : "rgba(251,191,36,0.7)";
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+    >
+      <div onClick={(e) => e.stopPropagation()} style={{
+        background: "var(--ff-surface-2)", border: "1px solid var(--ff-border-dim)",
+        borderRadius: 20, padding: "2rem 2.5rem", minWidth: 300, textAlign: "center",
+        boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
+      }}>
+        <p style={{ margin: "0 0 0.3rem", color: "var(--ff-text-muted)", fontSize: "0.78rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Rest Timer
+        </p>
+        <p style={{ margin: "0 0 1.5rem", color: "var(--ff-text)", fontSize: "0.95rem", fontWeight: 700 }}>
+          {exerciseName}
+        </p>
+
+        {/* Ring */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.5rem" }}>
+          <svg width={128} height={128}>
+            <circle cx={64} cy={64} r={r} fill="none" stroke="var(--ff-surface-3)" strokeWidth={7}/>
+            <circle
+              cx={64} cy={64} r={r} fill="none"
+              stroke={ringColor}
+              strokeWidth={7}
+              strokeDasharray={`${pct * circ} ${circ}`}
+              strokeLinecap="round"
+              transform="rotate(-90 64 64)"
+              style={{ transition: "stroke-dasharray 0.9s ease, stroke 0.3s" }}
+            />
+            <text x="50%" y="46%" dominantBaseline="middle" textAnchor="middle"
+              fill={done ? "var(--ff-green)" : "var(--ff-text)"}
+              fontSize={done ? 18 : 26} fontWeight={700} fontFamily="inherit">
+              {done ? "Done!" : `${mins}:${secs}`}
+            </text>
+            {!done && (
+              <text x="50%" y="65%" dominantBaseline="middle" textAnchor="middle"
+                fill={running ? "var(--ff-text-muted)" : "rgba(251,191,36,0.9)"}
+                fontSize={11} fontFamily="inherit">
+                {running ? "resting" : "paused"}
+              </text>
+            )}
+          </svg>
+        </div>
+
+        {/* Controls */}
+        <div style={{ display: "flex", gap: "0.6rem", justifyContent: "center" }}>
+          {done ? (
+            <>
+              <button onClick={handleRestart} style={timerBtn("var(--ff-surface-3)", "var(--ff-text)")}>↺ Restart</button>
+              <button onClick={onClose}       style={timerBtn("var(--ff-accent)", "#fff")}>Done</button>
+            </>
+          ) : running ? (
+            <>
+              <button onClick={handlePause} style={timerBtn("rgba(251,191,36,0.15)", "#fde68a")}>⏸ Pause</button>
+              <button onClick={handleSkip}  style={timerBtn("rgba(239,68,68,0.15)", "#fca5a5")}>Skip</button>
+            </>
+          ) : (
+            <>
+              <button onClick={handleResume} style={timerBtn("var(--ff-accent)", "#fff")}>▶ Resume</button>
+              <button onClick={handleSkip}   style={timerBtn("rgba(239,68,68,0.15)", "#fca5a5")}>Skip</button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function timerBtn(bg, color) {
+  return {
+    padding: "0.5rem 1.2rem", borderRadius: 8, border: "none",
+    background: bg, color, fontWeight: 700, fontSize: "0.88rem",
+    cursor: "pointer", transition: "opacity 0.15s",
+  };
+}
+
 // ─── Progress ring ────────────────────────────────────────────────────────────
 function ProgressRing({ value, max, color }) {
   const pct  = max > 0 ? value / max : 0;
@@ -182,8 +300,9 @@ function GeneratingAnimation() {
 
 // ─── Single exercise card ─────────────────────────────────────────────────────
 function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet, onSwap }) {
-  const [expanded, setExpanded]   = useState(false);
-  const [swapping, setSwapping]   = useState(false);
+  const [expanded,    setExpanded]    = useState(false);
+  const [swapping,    setSwapping]    = useState(false);
+  const [showTimer,   setShowTimer]   = useState(false);
   const steps      = exercise.instructions ? exercise.instructions.split(" | ") : [];
   const heatFromGroup = useMemo(() => singleExerciseHeatGroupIntensities(exercise), [
     exercise.muscle_group,
@@ -228,7 +347,23 @@ function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet,
               {exercise.difficulty}
             </span>
           )}
-          {/* 4. Swap button */}
+          {/* Rest timer button — only shown when rest_seconds is present */}
+          {exercise.rest_seconds && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowTimer(true); }}
+              title={`Rest timer: ${exercise.rest_seconds}s`}
+              style={{
+                width: 28, height: 28, borderRadius: "50%", border: "1px solid var(--ff-border-dim)",
+                background: "transparent", color: "var(--ff-text-muted)",
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "0.85rem", lineHeight: 1, flexShrink: 0, transition: "all 0.2s",
+              }}
+              className="ff-timer-btn"
+            >
+              ⏱
+            </button>
+          )}
+          {/* Swap button */}
           <button
             className="ff-swap-btn"
             onClick={handleSwap}
@@ -247,6 +382,15 @@ function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet,
           >
             ↻
           </button>
+
+          {/* Rest timer modal */}
+          {showTimer && (
+            <RestTimerModal
+              seconds={exercise.rest_seconds}
+              exerciseName={exercise.name}
+              onClose={() => setShowTimer(false)}
+            />
+          )}
           {hasDetails && (
             <span style={{ color: "var(--ff-text-muted)", fontSize: "0.8rem" }}>
               {expanded ? "▲" : "▼"}
@@ -872,7 +1016,8 @@ export default function Workouts() {
           50%       { transform: scale(1.08); box-shadow: 0 0 22px 6px var(--ff-accent-glow); }
         }
         @keyframes ff-spin { to { transform: rotate(360deg); } }
-        .ff-swap-btn:hover { background: var(--ff-accent-soft) !important; border-color: var(--ff-accent) !important; color: var(--ff-accent) !important; transform: rotate(20deg); }
+        .ff-swap-btn:hover  { background: var(--ff-accent-soft) !important; border-color: var(--ff-accent) !important; color: var(--ff-accent) !important; transform: rotate(20deg); }
+        .ff-timer-btn:hover { background: var(--ff-accent-soft) !important; border-color: var(--ff-accent) !important; color: var(--ff-accent) !important; }
       `}</style>
     </AppPage>
   );
