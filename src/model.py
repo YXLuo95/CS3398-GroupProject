@@ -61,6 +61,13 @@ class User(TimestampMixin, table=True):
     workout_plans: List["WorkoutPlan"] = Relationship(back_populates="user")
     #added relation for nutrition plans demo2
     nutrition_plans: List["NutritionPlan"] = Relationship(back_populates="user")
+    #added relation for forum feature T3S-85
+    forum_author: Optional["ForumAuthor"] = Relationship(
+        sa_relationship_kwargs={"uselist": False},
+        back_populates="user"
+    )
+    forum_posts: List["ForumPost"] = Relationship(back_populates="user")
+    forum_replies: List["ForumReply"] = Relationship(back_populates="user")
 
 class FitnessRecord(TimestampMixin, table=True):
     __tablename__ = "fitness_records"
@@ -238,3 +245,40 @@ class NutritionPlan(TimestampMixin, table=True):
 
     user: Optional["User"] = Relationship(back_populates="nutrition_plans")
 
+#Forum feature T3S-85
+class ForumAuthor(TimestampMixin, table=True):
+    """Whitelist — only users in this table can create forum posts."""
+    __tablename__ = "forum_authors"
+ 
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", unique=True, index=True)
+    note: Optional[str] = Field(default=None)  # why this user has posting rights
+ 
+    user: Optional["User"] = Relationship(back_populates="forum_author")
+ 
+ 
+class ForumPost(TimestampMixin, table=True):
+    __tablename__ = "forum_posts"
+ 
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    title: str
+    content: str = Field(sa_column=Column(TEXT))  # markdown
+ 
+    user: Optional["User"] = Relationship(back_populates="forum_posts")
+    replies: List["ForumReply"] = Relationship(
+        back_populates="post",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
+ 
+ 
+class ForumReply(TimestampMixin, table=True):
+    __tablename__ = "forum_replies"
+ 
+    id: Optional[int] = Field(default=None, primary_key=True)
+    post_id: int = Field(foreign_key="forum_posts.id", index=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    content: str = Field(sa_column=Column(TEXT))  # markdown
+ 
+    user: Optional["User"] = Relationship(back_populates="forum_replies")
+    post: Optional["ForumPost"] = Relationship(back_populates="replies")

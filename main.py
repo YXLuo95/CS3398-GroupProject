@@ -12,7 +12,11 @@ import redis.asyncio as aioredis
 from src.core.config import settings
 from sqlmodel import SQLModel
 from src.core.database import engine
-from src.model import User, FitnessRecord, FitnessReport
+from src.model import (
+    User, FitnessRecord, FitnessReport, FitnessGoal, UserProfile,
+    ChatMessage, WorkoutPlan, Exercise, CompletedWorkout, NutritionPlan,
+    WorkoutSet, ForumAuthor, ForumPost, ForumReply,
+)
 from src.tasks import llm_queue_worker
 
 logger = logging.getLogger("uvicorn.info")
@@ -177,6 +181,9 @@ app.include_router(workout_router, prefix="/api/v1/workout", tags=["Workout"])
 
 from src.api.nutrition_plan import router as nutrition_plan_router
 app.include_router(nutrition_plan_router, prefix=f"{settings.API_V1_STR}/nutrition-plans", tags=["Nutrition Plans"])
+
+from src.api.forum import router as forum_router
+app.include_router(forum_router, prefix=f"{settings.API_V1_STR}/forum", tags=["Forum"])
 
 
 if __name__ == "__main__":

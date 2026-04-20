@@ -240,3 +240,42 @@ class NutritionPlanRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+#forum features schemas TSS-85
+class ForumPostCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    content: str = Field(..., min_length=1)
+ 
+ 
+class ForumReplyCreate(BaseModel):
+    content: str = Field(..., min_length=1)
+ 
+ 
+class ForumReplyRead(BaseModel):
+    id: int
+    post_id: int
+    user_id: int
+    username: str  # joined from User
+    content: str
+    created_at: datetime
+ 
+    model_config = ConfigDict(from_attributes=True)
+ 
+ 
+class ForumPostRead(BaseModel):
+    id: int
+    user_id: int
+    username: str  # joined from User
+    title: str
+    content: str
+    reply_count: int
+    created_at: datetime
+ 
+    model_config = ConfigDict(from_attributes=True)
+ 
+ 
+class ForumPostDetail(ForumPostRead):
+    replies: List[ForumReplyRead]
+ 
+ 
+class ForumAuthorStatus(BaseModel):
+    can_post: bool

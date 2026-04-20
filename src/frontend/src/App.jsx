@@ -29,6 +29,8 @@ import Supplements from "./pages/Supplements";
 import Reports from "./pages/Reports";
 import DietPlan from "./pages/DietPlan";
 import NotFound from "./pages/NotFound";
+import Forum from "./pages/Forum";
+import ForumPost from "./pages/ForumPost";
 
 axios.interceptors.response.use(
   (response) => response,
@@ -77,6 +79,8 @@ function App() {
           <Route path="/supplements"     element={<Supplements />} />
           <Route path="/reports"         element={<Reports />} />
           <Route path="/diet-plan"       element={<DietPlan />} />
+          <Route path="/forum" element={<Forum />} />
+          <Route path="/forum/:postId" element={<ForumPost />} />
           <Route path="*"                element={<NotFound />} />
         </Routes>
 

@@ -100,6 +100,9 @@ export default function Dashboard() {
   const [weightLogging, setWeightLogging] = useState(false);
   const [weightMessage, setWeightMessage] = useState("");
 
+  // Forum posts preview
+  const [forumPosts, setForumPosts] = useState([]);
+
   const getToken = () => localStorage.getItem("token");
 
   // ==========================================
@@ -119,13 +122,14 @@ export default function Dashboard() {
         const payload = JSON.parse(atob(token.split('.')[1]));
         if (payload.sub) setUserName(payload.sub);
 
-        const [quizRes, completeRes, recordsRes, profileRes, planRes, nutritionRes] = await Promise.allSettled([
+        const [quizRes, completeRes, recordsRes, profileRes, planRes, nutritionRes, forumRes] = await Promise.allSettled([
           axios.get(`${API_URL}/api/v1/onboarding/quiz`, { headers }),
           axios.get(`${API_URL}/api/v1/workout/complete`, { headers }),
           axios.get(`${API_URL}/api/v1/records?limit=5`, { headers }),
           axios.get(`${API_URL}/api/v1/profile`, { headers }),
           axios.get(`${API_URL}/api/v1/workout/plan`, { headers }),
           axios.get(`${API_URL}/api/v1/nutrition-plans`, { headers }),
+          axios.get(`${API_URL}/api/v1/forum/posts?limit=4`, { headers }),
         ]);
 
         if (profileRes.status === "fulfilled" && profileRes.value.data.first_name) {
@@ -143,6 +147,11 @@ export default function Dashboard() {
           if (Array.isArray(npData) && npData.length > 0) {
             setNutritionPlan(npData[0]); // latest plan
           }
+        }
+
+        // Forum posts
+        if (forumRes.status === "fulfilled") {
+          setForumPosts(forumRes.value.data || []);
         }
 
         let completedData = [];
@@ -642,12 +651,58 @@ export default function Dashboard() {
           )}
         </SectionCard>
 
-        <SectionCard title="Fitness Tips">
-          <div className="ff-stack">
-            {tips.map((tip) => (
-              <div key={tip} className="ff-tip-item">{tip}</div>
-            ))}
-          </div>
+        <SectionCard title="Community Forum">
+          {forumPosts.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "1rem", color: "#64748b", fontSize: "0.88rem" }}>
+              <div style={{ fontSize: "1.8rem", marginBottom: "0.3rem" }}>💬</div>
+              No posts yet. Check back soon!
+            </div>
+          ) : (
+            <div className="ff-stack">
+              {forumPosts.slice(0, 4).map((post) => (
+                <div
+                  key={post.id}
+                  onClick={() => navigate(`/forum/${post.id}`)}
+                  style={{
+                    padding: "0.7rem 0.9rem",
+                    borderRadius: 8,
+                    backgroundColor: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.05)",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(59,130,246,0.06)";
+                    e.currentTarget.style.borderColor = "rgba(59,130,246,0.25)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.03)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)";
+                  }}
+                >
+                  <div style={{
+                    color: "#f8fbff", fontWeight: 600, fontSize: "0.88rem",
+                    marginBottom: "0.25rem",
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                  }}>
+                    {post.title}
+                  </div>
+                  <div style={{ display: "flex", gap: "0.8rem", fontSize: "0.72rem", color: "#64748b" }}>
+                    <span>👤 {post.username}</span>
+                    <span>💬 {post.reply_count}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            className="ff-btn ff-btn-ghost ff-btn-sm"
+            onClick={() => navigate("/forum")}
+            style={{ marginTop: "0.8rem", width: "100%" }}
+          >
+            View All Posts →
+          </button>
         </SectionCard>
       </div>
 

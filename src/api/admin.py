@@ -18,7 +18,8 @@ from src.model import (
     Exercise,
     CompletedWorkout,
     NutritionPlan, 
-    WorkoutSet,   
+    WorkoutSet,
+    ForumAuthor, ForumPost, ForumReply   
 )
 class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool:
@@ -145,6 +146,27 @@ class WorkoutSetAdmin(ModelView, model=WorkoutSet):
     icon = "fa-solid fa-list-check"
 
 
+class ForumAuthorAdmin(ModelView, model=ForumAuthor):
+    column_list = ["id", "user_id", "note", "created_at"]
+    name = "Forum Author"
+    name_plural = "Forum Authors"
+    icon = "fa-solid fa-pen-to-square"
+ 
+ 
+class ForumPostAdmin(ModelView, model=ForumPost):
+    column_list = ["id", "user_id", "title", "created_at"]
+    column_details_list = "__all__"
+    name = "Forum Post"
+    name_plural = "Forum Posts"
+    icon = "fa-solid fa-comments"
+ 
+ 
+class ForumReplyAdmin(ModelView, model=ForumReply):
+    column_list = ["id", "post_id", "user_id", "created_at"]
+    name = "Forum Reply"
+    name_plural = "Forum Replies"
+    icon = "fa-solid fa-reply"
+
 
 
 
@@ -169,4 +191,8 @@ def setup_admin(app, engine):
     #added admin view for  feature/workout-plan 
     admin.add_view(NutritionPlanAdmin)
     admin.add_view(WorkoutSetAdmin)
+    #added admin views for forum feature T3S-85
+    admin.add_view(ForumAuthorAdmin)
+    admin.add_view(ForumPostAdmin)
+    admin.add_view(ForumReplyAdmin)
     return admin
