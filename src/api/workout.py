@@ -4,7 +4,7 @@ All endpoints require authentication.
 """
 
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -23,6 +23,7 @@ from src.crud.workout import (
     get_plan_by_user_id, create_plan, delete_plan,
     create_completion, get_completions_by_user, get_completion_for_day, delete_completion,
     log_set, unlog_set, get_sets_for_plan, swap_exercise,
+    get_workout_history, get_workout_history_count,
 )
 
 router = APIRouter()
@@ -217,3 +218,16 @@ async def swap_exercise_endpoint(
 
     new_name, new_image, new_instructions = alt
     return await swap_exercise(session, exercise, new_name, new_image, new_instructions)
+
+
+@router.get("/history")
+async def get_history(
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
+):
+    """Get all-time workout history for the current user, newest first. Paginated."""
+    history = await get_workout_history(session, current_user.id, skip=skip, limit=limit)
+    total   = await get_workout_history_count(session, current_user.id)
+    return {"total": total, "skip": skip, "limit": limit, "items": history}

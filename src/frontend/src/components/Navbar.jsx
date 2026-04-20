@@ -40,6 +40,7 @@ export default function Navbar() {
           {token ? (
             <>
               <NavLink to="/dashboard" className={navClass}>Dashboard</NavLink>
+              <NavLink to="/history"   className={navClass}>History</NavLink>
               <NavLink to="/chat"      className={navClass}>Chat</NavLink>
               <NavLink to="/profile"   className={navClass}>Profile</NavLink>
               <button
