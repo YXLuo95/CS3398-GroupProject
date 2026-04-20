@@ -52,6 +52,14 @@ _EXERCISES_PER_GROUP = {
     "gain_muscle":       2,
 }
 
+# Default rest seconds between sets by goal
+_REST_SECONDS = {
+    "gain_muscle":       120,
+    "maintain":          60,
+    "lose_weight":       45,
+    "improve_endurance": 30,
+}
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -75,7 +83,7 @@ def _get_schedule(workout_days: int) -> dict:
     return {day: groups for day, groups in base.items() if day <= workout_days}
 
 
-def _to_exercise(entry: dict, day: int) -> Exercise:
+def _to_exercise(entry: dict, day: int, rest_seconds: Optional[int] = None) -> Exercise:
     return Exercise(
         name=entry["name"],
         muscle_group=entry["muscle_group"],
@@ -86,6 +94,7 @@ def _to_exercise(entry: dict, day: int) -> Exercise:
         youtube_url=entry.get("youtube_url"),
         image_url=entry.get("image_url"),
         instructions=entry.get("instructions"),
+        rest_seconds=rest_seconds,
     )
 
 
@@ -130,6 +139,7 @@ def generate_workout_plan(fitness_goal: FitnessGoal) -> List[Exercise]:
     cardio_count        = _CARDIO_PER_DAY.get(goal, 1)
     equipment           = getattr(fitness_goal, "equipment_available", []) or []
     limitations         = getattr(fitness_goal, "limitations", None)
+    rest_seconds        = _REST_SECONDS.get(goal, 60)
 
     result: List[Exercise] = []
 
@@ -143,7 +153,7 @@ def generate_workout_plan(fitness_goal: FitnessGoal) -> List[Exercise]:
                 count=exercises_per_group,
             )
             for entry in entries:
-                result.append(_to_exercise(entry, day))
+                result.append(_to_exercise(entry, day, rest_seconds))
 
         # append cardio exercises for the day
         if cardio_count > 0:
@@ -155,7 +165,7 @@ def generate_workout_plan(fitness_goal: FitnessGoal) -> List[Exercise]:
                 count=cardio_count,
             )
             for entry in cardio_entries:
-                result.append(_to_exercise(entry, day))
+                result.append(_to_exercise(entry, day, rest_seconds))
 
     return result
 
@@ -185,7 +195,7 @@ def get_catalog_for_llm(
     )
 
 
-def build_exercise_from_db(name: str, day: int, instructions: Optional[str] = None) -> Optional[Exercise]:
+def build_exercise_from_db(name: str, day: int, instructions: Optional[str] = None, rest_seconds: Optional[int] = None) -> Optional[Exercise]:
     """Build an Exercise object from db data by name. Used by LLM path."""
     entry = exercise_db.get_exercise_by_name(name)
     if not entry:
@@ -200,4 +210,5 @@ def build_exercise_from_db(name: str, day: int, instructions: Optional[str] = No
         youtube_url=entry.get("youtube_url"),
         image_url=entry.get("image_url"),
         instructions=instructions or entry.get("instructions"),
+        rest_seconds=rest_seconds,
     )

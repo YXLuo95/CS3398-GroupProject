@@ -64,7 +64,7 @@ async def generate_plan(
         )
         for day, ex_list in llm_plan.items():
             for ex in ex_list:
-                exercise = build_exercise_from_db(ex["name"], day, ex.get("instructions"))
+                exercise = build_exercise_from_db(ex["name"], day, ex.get("instructions"), ex.get("rest_seconds"))
                 if exercise:
                     exercises.append(exercise)
     except Exception:

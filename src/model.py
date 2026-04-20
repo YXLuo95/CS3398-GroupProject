@@ -188,6 +188,7 @@ class Exercise(SQLModel, table=True):
     youtube_url: Optional[str] = Field(default=None)
     instructions: Optional[str] = Field(default=None, sa_column=Column(TEXT))
     image_url: Optional[str] = Field(default=None)
+    rest_seconds: Optional[int] = Field(default=None)
 
     workout_plan: Optional["WorkoutPlan"] = Relationship(back_populates="exercises")
 
