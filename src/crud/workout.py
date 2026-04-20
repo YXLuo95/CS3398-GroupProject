@@ -249,3 +249,51 @@ async def get_workout_history_count(session: AsyncSession, user_id: int) -> int:
         select(CompletedWorkout).where(CompletedWorkout.user_id == user_id)
     )
     return len(result.scalars().all())
+
+
+async def get_calendar_completions(session: AsyncSession, user_id: int) -> List[dict]:
+    """
+    Return all completed workout dates for calendar view, merged by calendar date.
+    Multiple plan days completed on the same date are combined into one entry.
+    """
+    completions_result = await session.execute(
+        select(CompletedWorkout)
+        .where(CompletedWorkout.user_id == user_id)
+        .order_by(CompletedWorkout.completed_at.asc())
+    )
+    completions = completions_result.scalars().all()
+
+    # Merge by calendar date
+    date_buckets: dict = {}
+
+    for completion in completions:
+        exercises_result = await session.execute(
+            select(Exercise)
+            .where(Exercise.plan_id == completion.plan_id)
+            .where(Exercise.day == completion.day)
+        )
+        exercises = exercises_result.scalars().all()
+        date_str = completion.completed_at.strftime("%Y-%m-%d")
+
+        if date_str not in date_buckets:
+            date_buckets[date_str] = {
+                "date":         date_str,
+                "completed_at": completion.completed_at,
+                "muscle_groups": [],
+                "exercises":    [],
+            }
+
+        for ex in exercises:
+            if ex.muscle_group not in date_buckets[date_str]["muscle_groups"]:
+                date_buckets[date_str]["muscle_groups"].append(ex.muscle_group)
+            date_buckets[date_str]["exercises"].append({
+                "name":         ex.name,
+                "muscle_group": ex.muscle_group,
+                "sets":         ex.sets,
+                "reps":         ex.reps,
+            })
+
+    for entry in date_buckets.values():
+        entry["exercise_count"] = len(entry["exercises"])
+
+    return list(date_buckets.values())
