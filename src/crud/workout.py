@@ -173,3 +173,79 @@ async def get_completion_for_day(
     )
     result = await session.execute(statement)
     return result.scalars().first()
+
+
+async def get_workout_history(
+    session: AsyncSession,
+    user_id: int,
+    skip: int = 0,
+    limit: int = 20,
+) -> List[dict]:
+    """
+    Return all completed workout days across all weeks, newest first.
+    For each completed day, include exercises done and sets logged that day.
+    """
+    # Fetch all completed workouts for this user, newest first
+    completions_result = await session.execute(
+        select(CompletedWorkout)
+        .where(CompletedWorkout.user_id == user_id)
+        .order_by(CompletedWorkout.completed_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    completions = completions_result.scalars().all()
+
+    if not completions:
+        return []
+
+    history = []
+    for completion in completions:
+        # Get exercises for this plan day
+        exercises_result = await session.execute(
+            select(Exercise)
+            .where(Exercise.plan_id == completion.plan_id)
+            .where(Exercise.day == completion.day)
+        )
+        exercises = exercises_result.scalars().all()
+
+        # Count sets logged on the completion date (same calendar day)
+        day_start = completion.completed_at.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end   = completion.completed_at.replace(hour=23, minute=59, second=59, microsecond=999999)
+        exercise_ids = [ex.id for ex in exercises]
+
+        sets_count = 0
+        if exercise_ids:
+            sets_result = await session.execute(
+                select(WorkoutSet)
+                .where(WorkoutSet.user_id == user_id)
+                .where(WorkoutSet.exercise_id.in_(exercise_ids))
+                .where(WorkoutSet.logged_at >= day_start)
+                .where(WorkoutSet.logged_at <= day_end)
+            )
+            sets_count = len(sets_result.scalars().all())
+
+        history.append({
+            "id":           completion.id,
+            "day":          completion.day,
+            "completed_at": completion.completed_at,
+            "exercises": [
+                {
+                    "name":         ex.name,
+                    "muscle_group": ex.muscle_group,
+                    "sets":         ex.sets,
+                    "reps":         ex.reps,
+                }
+                for ex in exercises
+            ],
+            "sets_logged": sets_count,
+        })
+
+    return history
+
+
+async def get_workout_history_count(session: AsyncSession, user_id: int) -> int:
+    """Total number of completed workout days for pagination."""
+    result = await session.execute(
+        select(CompletedWorkout).where(CompletedWorkout.user_id == user_id)
+    )
+    return len(result.scalars().all())
