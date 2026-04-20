@@ -261,6 +261,16 @@ async def generate_workout_plan_with_llm(
 
     catalog_json = json.dumps(catalog, separators=(",", ":"))
 
+    rest_map = {"gain_muscle": 120, "maintain": 60, "lose_weight": 45, "improve_endurance": 30}
+    default_rest = rest_map.get(goal_type, 60)
+
+    sets_reps_hint = {
+        "gain_muscle":       "heavy sets, low reps (e.g. 4x6 or 5x5)",
+        "lose_weight":       "moderate sets, higher reps (e.g. 3x15)",
+        "improve_endurance": "light sets, high reps or time-based (e.g. 3x20 or 3x90sec)",
+        "maintain":          "balanced sets and reps (e.g. 3x10-12)",
+    }.get(goal_type, "3x10")
+
     system_prompt = (
         "You are a certified personal trainer. "
         "Select exercises from the provided catalog and write personalized instructions. "
@@ -269,9 +279,13 @@ async def generate_workout_plan_with_llm(
         "2. Skip exercises where the user lacks required equipment. "
         "3. Skip exercises listed in contraindications that match the user's limitations. "
         "4. Select 2-3 exercises per muscle group per day. "
-        "5. Write 3 concise steps per exercise, separated by ' | ', tailored to the user's profile. "
-        "6. Respond ONLY with valid JSON. No markdown, no extra text. "
-        "7. JSON format: {\"day_1\": [{\"name\": \"...\", \"instructions\": \"Step 1 | Step 2 | Step 3\"}, ...], \"day_2\": [...]}"
+        "5. Order exercises compound-before-isolation within each day (e.g. bench press before flyes). "
+        "6. Do NOT repeat the same exercise on consecutive training days. "
+        f"7. Use goal-appropriate volume: {sets_reps_hint}. "
+        "8. Write 3 concise steps per exercise, separated by ' | ', tailored to the user's profile. "
+        f"9. Include a rest_seconds field per exercise (default {default_rest}s, adjust per exercise intensity). "
+        "10. Respond ONLY with valid JSON. No markdown, no extra text. "
+        "11. JSON format: {\"day_1\": [{\"name\": \"...\", \"instructions\": \"Step 1 | Step 2 | Step 3\", \"rest_seconds\": 90}, ...], \"day_2\": [...]}"
     )
 
     user_prompt = (
@@ -312,11 +326,16 @@ async def generate_workout_plan_with_llm(
 
         plan_data = json.loads(raw)
 
-        # validate all names exist in catalog
+        # validate all exercises have required fields and known names
         for day_key, exercises in plan_data.items():
             for ex in exercises:
+                if "name" not in ex or "instructions" not in ex:
+                    raise ValueError(f"LLM response missing required fields in {day_key}")
                 if ex["name"] not in catalog_by_name:
                     raise ValueError(f"Unknown exercise from LLM: {ex['name']}")
+                # default rest_seconds if LLM omitted it
+                if "rest_seconds" not in ex or not isinstance(ex["rest_seconds"], int):
+                    ex["rest_seconds"] = rest_map.get(goal_type, 60)
 
         logger.info("[LLM Service] Workout plan generated successfully.")
         return {int(k.split("_")[1]): v for k, v in plan_data.items()}

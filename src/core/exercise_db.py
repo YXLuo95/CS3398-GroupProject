@@ -340,10 +340,9 @@ def _equipment_ok(exercise_equipment: list[str], available: list[str]) -> bool:
     """
     Return True if the exercise can be done with available equipment.
     Bodyweight exercises are always allowed.
-    If user provided no equipment list, allow everything.
+    If user provided no equipment list, default to bodyweight only.
     """
-    if not available:
-        return True
+    effective = available if available else ["bodyweight"]
     if "bodyweight" in exercise_equipment:
         return True
-    return any(eq in available for eq in exercise_equipment)
+    return any(eq in effective for eq in exercise_equipment)
