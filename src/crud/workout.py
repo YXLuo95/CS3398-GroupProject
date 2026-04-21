@@ -164,12 +164,15 @@ async def get_completion_for_day(
     plan_id: int,
     day: int,
 ) -> Optional[CompletedWorkout]:
-    """Check if a specific day is already marked complete."""
+    """Check if a specific day is already marked complete this week."""
+    today = datetime.now(timezone.utc)
+    week_start = (today - timedelta(days=today.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     statement = (
         select(CompletedWorkout)
         .where(CompletedWorkout.user_id == user_id)
         .where(CompletedWorkout.plan_id == plan_id)
         .where(CompletedWorkout.day == day)
+        .where(CompletedWorkout.completed_at >= week_start)
     )
     result = await session.execute(statement)
     return result.scalars().first()
