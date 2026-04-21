@@ -1,40 +1,44 @@
-import squatAnim    from '../assets/animations/squat.json';
-import pushupAnim   from '../assets/animations/push_up.json';
-import treadmillAnim from '../assets/animations/treadmill.json';
-import cyclingAnim  from '../assets/animations/Cycling.json';
+import squatAnim      from '../assets/animations/squat.json';
+import treadmillAnim  from '../assets/animations/treadmill.json';
+import cyclingAnim    from '../assets/animations/Cycling.json';
+import barbellCurl    from '../assets/animations/Barbell curl.json';
+import chinupAnim     from '../assets/animations/Chinup animation.json';
+import legPressAnim   from '../assets/animations/Leg press.json';
+import sitUpAnim      from '../assets/animations/Man Doing Sit Up Exercise for ABS.json';
+import plankAnim      from '../assets/animations/T Plank Exercise.json';
 
 /**
- * Maps exact exercise names (from exercises.json / DB) to Lottie animation data.
- * Add more entries here as new animation JSONs are downloaded.
+ * Exact 1:1 map — exercise name from exercises.json → Lottie animation.
+ * Only add an entry when the animation visually matches the exact exercise.
  */
 export const EXERCISE_ANIMATIONS = {
-  // Squat variations
-  'Barbell Squat':               squatAnim,
-  'Bodyweight Squat':            squatAnim,
-  'Barbell Full Squat':          squatAnim,
-  'Barbell Hack Squat':          squatAnim,
-  'Barbell Side Split Squat':    squatAnim,
-  'Dumbbell Squat':              squatAnim,
-  'Goblet Squat':                squatAnim,
+  // Squat — animation shows standard squat movement
+  'Barbell Squat':          squatAnim,
+  'Bodyweight Squat':       squatAnim,
 
-  // Push-up variations
-  'Push-Up':                     pushupAnim,
-  'Close-Grip Push-Up off of a Dumbbell': pushupAnim,
-  'Decline Push-Up':             pushupAnim,
-  'Incline Push-Up':             pushupAnim,
-  'Incline Push-Up Close-Grip':  pushupAnim,
-  'Wide-Grip Push-Up':           pushupAnim,
-  'Clock Push-Up':               pushupAnim,
-  'Handstand Push-Ups':          pushupAnim,
+  // Treadmill — animation shows person on a treadmill
+  'Running, Treadmill':     treadmillAnim,
+  'Jogging, Treadmill':     treadmillAnim,
+  'Walking, Treadmill':     treadmillAnim,
 
-  // Treadmill / running cardio
-  'Running, Treadmill':          treadmillAnim,
-  'Jogging, Treadmill':          treadmillAnim,
+  // Cycling — animation shows person cycling
+  'Bicycling':              cyclingAnim,
+  'Bicycling, Stationary':  cyclingAnim,
 
-  // Cycling cardio
-  'Bicycling':                   cyclingAnim,
-  'Bicycling, Stationary':       cyclingAnim,
-  'Recumbent Bike':              cyclingAnim,
+  // Barbell Curl — animation shows barbell curl
+  'Barbell Curl':           barbellCurl,
+
+  // Chin-Up — animation shows chin-up on pull-up bar
+  'Chin-Up':                chinupAnim,
+
+  // Leg Press — animation shows leg press machine
+  'Leg Press':              legPressAnim,
+
+  // Sit-Up — animation shows sit-up movement
+  'Sit-Up':                 sitUpAnim,
+
+  // Plank — animation shows plank hold
+  'Plank':                  plankAnim,
 };
 
 /**
