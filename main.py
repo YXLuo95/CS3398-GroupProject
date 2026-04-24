@@ -188,6 +188,9 @@ app.include_router(forum_router, prefix=f"{settings.API_V1_STR}/forum", tags=["F
 from src.api.subscription import router as subscription_router
 app.include_router(subscription_router,prefix=f"{settings.API_V1_STR}/subscription",tags=["Subscription"],)
 
+from src.api.stats import router as stats_router
+app.include_router(stats_router,prefix=f"{settings.API_V1_STR}/stats",tags=["Stats"],)
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

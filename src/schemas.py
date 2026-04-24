@@ -300,3 +300,12 @@ class SubscriptionStatus(BaseModel):
 class CouponRedeem(BaseModel):
     coupon: str = Field(..., min_length=1)
     tier: str = Field(..., description="Tier to activate: basic / premium / pro")
+
+#TSS-90 Monthly Stats Schemas
+class MonthlyStatsRead(BaseModel):
+    workouts_completed: int
+    workouts_target: Optional[int] = None
+    weight_change_lbs: Optional[float] = None
+    weight_start_date: Optional[str] = None
+    goal_progress_pct: Optional[int] = None
+    streak_days: int
