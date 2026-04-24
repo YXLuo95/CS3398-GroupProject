@@ -185,6 +185,9 @@ app.include_router(nutrition_plan_router, prefix=f"{settings.API_V1_STR}/nutriti
 from src.api.forum import router as forum_router
 app.include_router(forum_router, prefix=f"{settings.API_V1_STR}/forum", tags=["Forum"])
 
+from src.api.subscription import router as subscription_router
+app.include_router(subscription_router,prefix=f"{settings.API_V1_STR}/subscription",tags=["Subscription"],)
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

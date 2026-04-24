@@ -279,3 +279,24 @@ class ForumPostDetail(ForumPostRead):
  
 class ForumAuthorStatus(BaseModel):
     can_post: bool
+
+#TSS-86 Subscription Schemas
+class SubscriptionRead(BaseModel):
+    tier: str
+    started_at: datetime
+    expires_at: datetime
+    is_active: bool  # computed: expires_at > now()
+ 
+    model_config = ConfigDict(from_attributes=True)
+ 
+ 
+class SubscriptionStatus(BaseModel):
+    """Returned even if user has no subscription."""
+    is_premium: bool
+    tier: Optional[str] = None
+    expires_at: Optional[datetime] = None
+ 
+ 
+class CouponRedeem(BaseModel):
+    coupon: str = Field(..., min_length=1)
+    tier: str = Field(..., description="Tier to activate: basic / premium / pro")

@@ -8,6 +8,7 @@ from src.core.config import settings
 
 ## import all tables at the same place
 from src.model import (
+    Subscription,
     User, 
     FitnessRecord, 
     FitnessReport, 
@@ -167,6 +168,16 @@ class ForumReplyAdmin(ModelView, model=ForumReply):
     name_plural = "Forum Replies"
     icon = "fa-solid fa-reply"
 
+#T3S-86 admin view for subscription (membership)
+class SubscriptionAdmin(ModelView, model=Subscription):
+    column_list = [
+        "id", "user_id", "tier", "started_at", "expires_at", "coupon_used", "created_at"
+    ]
+    column_details_list = "__all__"
+    name = "Subscription"
+    name_plural = "Subscriptions"
+    icon = "fa-solid fa-crown"
+
 
 
 
@@ -195,4 +206,5 @@ def setup_admin(app, engine):
     admin.add_view(ForumAuthorAdmin)
     admin.add_view(ForumPostAdmin)
     admin.add_view(ForumReplyAdmin)
+    admin.add_view(SubscriptionAdmin)
     return admin
