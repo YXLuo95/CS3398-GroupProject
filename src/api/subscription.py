@@ -16,7 +16,6 @@ from src.schemas import SubscriptionStatus, CouponRedeem, SubscriptionRead
 from src.crud.subscription import (
     get_subscription_by_user,
     create_or_extend_subscription,
-    is_user_premium,
 )
  
 router = APIRouter()
