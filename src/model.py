@@ -68,6 +68,13 @@ class User(TimestampMixin, table=True):
     )
     forum_posts: List["ForumPost"] = Relationship(back_populates="user")
     forum_replies: List["ForumReply"] = Relationship(back_populates="user")
+    
+    #added relation for subscription T3S-86 (membership)
+    subscription: Optional["Subscription"] = Relationship(
+        sa_relationship_kwargs={"uselist": False},
+        back_populates="user"
+    )
+
 
 class FitnessRecord(TimestampMixin, table=True):
     __tablename__ = "fitness_records"
@@ -282,3 +289,18 @@ class ForumReply(TimestampMixin, table=True):
  
     user: Optional["User"] = Relationship(back_populates="forum_replies")
     post: Optional["ForumPost"] = Relationship(back_populates="replies")
+
+#T3S86 - membership 
+class Subscription(TimestampMixin, table=True):
+    __tablename__ = "subscriptions"
+ 
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", unique=True, index=True)
+ 
+    tier: str = Field(default="basic")  # basic / premium / pro
+    started_at: datetime = Field(default_factory=utc_now)
+    expires_at: datetime  # 10 years from redemption
+    coupon_used: Optional[str] = Field(default=None)
+ 
+    user: Optional["User"] = Relationship(back_populates="subscription")
+ 

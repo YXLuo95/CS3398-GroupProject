@@ -1,10 +1,12 @@
 import React from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import falconLogo from "../assets/blue-falcon-logo.png";
+import { useSubscription } from "../context/SubscriptionContext";
 
 export default function Navbar() {
-  const navigate  = useNavigate();
-  const token     = localStorage.getItem("token");
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const { isPremium, tier } = useSubscription();
 
   const navClass = ({ isActive }) =>
     `ff-nav-link${isActive ? " active" : ""}`;
@@ -26,13 +28,13 @@ export default function Navbar() {
 
         {/* Center: Navigation Links */}
         <div className="ff-nav-links">
-          <NavLink to="/"           className={navClass} end>Home</NavLink>
-          <NavLink to="/about"      className={navClass}>About</NavLink>
-          <NavLink to="/workouts"   className={navClass}>Workouts</NavLink>
-          <NavLink to="/nutrition"  className={navClass}>Nutrition</NavLink>
+          <NavLink to="/"            className={navClass} end>Home</NavLink>
+          <NavLink to="/about"       className={navClass}>About</NavLink>
+          <NavLink to="/workouts"    className={navClass}>Workouts</NavLink>
+          <NavLink to="/nutrition"   className={navClass}>Nutrition</NavLink>
           <NavLink to="/supplements" className={navClass}>Supplements</NavLink>
           {token && <NavLink to="/forum" className={navClass}>Forum</NavLink>}
-          {/* {!token && <NavLink to="/quiz" className={navClass}>Quiz</NavLink>} */}
+          {!token && <NavLink to="/quiz" className={navClass}>Quiz</NavLink>}
         </div>
 
         {/* Right: Auth Actions */}
@@ -40,9 +42,39 @@ export default function Navbar() {
           {token ? (
             <>
               <NavLink to="/dashboard" className={navClass}>Dashboard</NavLink>
-              <NavLink to="/history"   className={navClass}>History</NavLink>
               <NavLink to="/chat"      className={navClass}>Chat</NavLink>
               <NavLink to="/profile"   className={navClass}>Profile</NavLink>
+
+              {/* Premium badge OR Upgrade prompt */}
+              {isPremium ? (
+                <span
+                  style={{
+                    padding: "0.35rem 0.75rem",
+                    background: "linear-gradient(135deg, #f59e0b, #a78bfa)",
+                    color: "white",
+                    borderRadius: "6px",
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.03em",
+                    boxShadow: "0 2px 8px rgba(245, 158, 11, 0.3)",
+                  }}
+                  title="Your subscription tier"
+                >
+                  ★ {tier?.toUpperCase() || "PREMIUM"}
+                </span>
+              ) : (
+                <NavLink
+                  to="/upgrade"
+                  className={navClass}
+                  style={{
+                    color: "#f59e0b",
+                    fontWeight: 700,
+                  }}
+                >
+                  Upgrade ✨
+                </NavLink>
+              )}
+
               <button
                 onClick={handleLogout}
                 className="ff-btn ff-btn-ghost ff-btn-sm"

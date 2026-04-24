@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     LOCAL_MODEL_NAME: str = "llama3" 
     OLLAMA_HOST: str = "http://localhost:11434"
 
+    PREMIUM_COUPON: str = "DEMO2026"  # default fallback coupon code for premium access, should be overridden in production
+
     # Redis configuration settings, including the host, port, and password for connecting to the Redis server, 
     # as well as the database indices for different purposes (authentication, LLM rate limiting, and task queue management). This allows for organized and efficient use of Redis for various functionalities in the application.
     REDIS_HOST: str = "localhost"
