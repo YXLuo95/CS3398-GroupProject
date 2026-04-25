@@ -103,6 +103,9 @@ export default function Dashboard() {
   // Forum posts preview
   const [forumPosts, setForumPosts] = useState([]);
 
+  // Monthly stats from /api/v1/stats/monthly
+  const [monthlyStats, setMonthlyStats] = useState(null);
+
   const getToken = () => localStorage.getItem("token");
 
   // ==========================================
@@ -122,7 +125,7 @@ export default function Dashboard() {
         const payload = JSON.parse(atob(token.split('.')[1]));
         if (payload.sub) setUserName(payload.sub);
 
-        const [quizRes, completeRes, recordsRes, profileRes, planRes, nutritionRes, forumRes] = await Promise.allSettled([
+        const [quizRes, completeRes, recordsRes, profileRes, planRes, nutritionRes, forumRes, statsRes] = await Promise.allSettled([
           axios.get(`${API_URL}/api/v1/onboarding/quiz`, { headers }),
           axios.get(`${API_URL}/api/v1/workout/complete`, { headers }),
           axios.get(`${API_URL}/api/v1/records?limit=5`, { headers }),
@@ -130,7 +133,13 @@ export default function Dashboard() {
           axios.get(`${API_URL}/api/v1/workout/plan`, { headers }),
           axios.get(`${API_URL}/api/v1/nutrition-plans`, { headers }),
           axios.get(`${API_URL}/api/v1/forum/posts?limit=4`, { headers }),
+          axios.get(`${API_URL}/api/v1/stats/monthly`, { headers }),
         ]);
+
+        // Monthly stats (backend aggregation)
+        if (statsRes.status === "fulfilled") {
+          setMonthlyStats(statsRes.value.data);
+        }
 
         if (profileRes.status === "fulfilled" && profileRes.value.data.first_name) {
           setUserName(profileRes.value.data.first_name);
@@ -298,21 +307,61 @@ export default function Dashboard() {
     >
       <SectionCard title="Your Stats This Month">
         <div className="ff-grid ff-grid-4">
+          {/* Workouts Completed / Target */}
           <div className="ff-kpi">
-            <div className="ff-kpi-value" style={{ color: "var(--ff-green)" }}>{stats.workoutsDone}</div>
-            <div className="ff-kpi-label">Workouts Done</div>
+            <div className="ff-kpi-value" style={{ color: "var(--ff-green)" }}>
+              {monthlyStats?.workouts_completed ?? 0}
+              {monthlyStats?.workouts_target != null && (
+                <span style={{ fontSize: "0.5em", color: "#64748b", fontWeight: 500 }}>
+                  {" / "}{monthlyStats.workouts_target}
+                </span>
+              )}
+            </div>
+            <div className="ff-kpi-label">Workouts Completed</div>
           </div>
+
+          {/* Weight Change */}
           <div className="ff-kpi">
-            <div className="ff-kpi-value" style={{ color: "var(--ff-amber)" }}>{quizData?.workout_days || 0}</div>
-            <div className="ff-kpi-label">Target Days/Week</div>
+            <div className="ff-kpi-value" style={{
+              color: monthlyStats?.weight_change_lbs == null
+                ? "#64748b"
+                : monthlyStats.weight_change_lbs < 0
+                ? "var(--ff-green)"
+                : monthlyStats.weight_change_lbs > 0
+                ? "var(--ff-amber)"
+                : "#94a3b8",
+            }}>
+              {monthlyStats?.weight_change_lbs == null
+                ? "—"
+                : `${monthlyStats.weight_change_lbs > 0 ? "+" : ""}${monthlyStats.weight_change_lbs}`}
+              {monthlyStats?.weight_change_lbs != null && (
+                <span style={{ fontSize: "0.5em", color: "#64748b", fontWeight: 500 }}> lbs</span>
+              )}
+            </div>
+            <div className="ff-kpi-label">Weight Change</div>
           </div>
+
+          {/* Goal Progress */}
           <div className="ff-kpi">
-            <div className="ff-kpi-value" style={{ color: "var(--ff-cyan)" }}>{macros.calories || "---"}</div>
-            <div className="ff-kpi-label">Daily Calories</div>
+            <div className="ff-kpi-value" style={{ color: "var(--ff-cyan, #06b6d4)" }}>
+              {monthlyStats?.goal_progress_pct != null
+                ? `${monthlyStats.goal_progress_pct}%`
+                : "—"}
+            </div>
+            <div className="ff-kpi-label">Goal Progress</div>
           </div>
+
+          {/* Streak */}
           <div className="ff-kpi">
-            <div className="ff-kpi-value" style={{ color: "var(--ff-purple)" }}>{macros.protein || "---"}g</div>
-            <div className="ff-kpi-label">Daily Protein</div>
+            <div className="ff-kpi-value" style={{ color: "var(--ff-purple)" }}>
+              {monthlyStats?.streak_days ?? 0}
+              {monthlyStats?.streak_days > 0 && (
+                <span style={{ fontSize: "0.6em" }}> 🔥</span>
+              )}
+            </div>
+            <div className="ff-kpi-label">
+              {monthlyStats?.streak_days === 1 ? "Day Streak" : "Days Streak"}
+            </div>
           </div>
         </div>
       </SectionCard>
