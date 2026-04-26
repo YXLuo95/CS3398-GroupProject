@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import styles from "../../pages/Home.module.css";
 
-const placeholderImage =
-  "https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=1200&q=80";
+import falconsImage from "../../assets/falcons.png";
+
+const placeholderImage = falconsImage;
 
 export default function HeroSection({ isLoggedIn }) {
   return (
