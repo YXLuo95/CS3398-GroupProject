@@ -1,0 +1,29 @@
+.falcon-animation {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99999;
+  overflow: hidden;
+}
+
+.falcon-img {
+  position: fixed;
+  width: 220px;
+  top: 30%;
+  left: -260px;
+  z-index: 100000;
+
+  animation: falconFly 4s linear forwards;
+}
+
+@keyframes falconFly {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateX(140vw);
+    opacity: 0;
+  }
+}
