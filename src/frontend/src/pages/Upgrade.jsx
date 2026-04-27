@@ -8,28 +8,43 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const TIERS = [
   {
-    id: "basic",
-    name: "Basic",
-    price: "$4.99",
+    id: "hatchling",
+    name: "Hatchling",
+    price: "$2.99",
     period: "/month",
-    color: "#3b82f6",
+    color: "#22c55e",
     perks: [
       "✅ Ad-free experience",
-      "Priority chat support",
-      "Weekly progress reports",
-      "Basic macro tracking",
+      "Basic progress tracking",
+      "Community forum access",
+      "Standard support",
     ],
     recommended: false,
   },
   {
-    id: "premium",
-    name: "Premium",
-    price: "$9.99",
+    id: "wingman",
+    name: "Wingman",
+    price: "$6.99",
+    period: "/month",
+    color: "#3b82f6",
+    perks: [
+      "✅ Ad-free experience",
+      "All Hatchling features",
+      "Priority chat support",
+      "Weekly progress reports",
+      "Advanced macro tracking",
+    ],
+    recommended: false,
+  },
+  {
+    id: "elite",
+    name: "Elite",
+    price: "$12.99",
     period: "/month",
     color: "#f59e0b",
     perks: [
       "✅ Ad-free experience",
-      "All Basic features",
+      "All Wingman features",
       "Advanced AI coaching",
       "Custom meal plans",
       "Unlimited workout generation",
@@ -37,14 +52,14 @@ const TIERS = [
     recommended: true,
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: "$19.99",
+    id: "swole_patrol",
+    name: "Swole Patrol",
+    price: "$24.99",
     period: "/month",
     color: "#a78bfa",
     perks: [
       "✅ Ad-free experience",
-      "All Premium features",
+      "All Elite features",
       "1-on-1 trainer matching",
       "Priority LLM inference",
       "Early access to new features",
@@ -66,7 +81,7 @@ export default function Upgrade() {
   const getToken = () => localStorage.getItem("token");
   const getHeaders = () => ({ Authorization: `Bearer ${getToken()}` });
 
-  const [selectedTier, setSelectedTier] = useState("premium");
+  const [selectedTier, setSelectedTier] = useState("elite");
   const [coupon, setCoupon] = useState("");
   const [currentStatus, setCurrentStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -181,7 +196,7 @@ export default function Upgrade() {
     >
       {/* Tier selection */}
       <SectionCard title="Choose Your Plan">
-        <div className="ff-grid ff-grid-3" style={{ gap: "1rem" }}>
+        <div className="ff-grid ff-grid-4" style={{ gap: "1rem" }}>
           {TIERS.map((tier) => {
             const isSelected = selectedTier === tier.id;
             return (
