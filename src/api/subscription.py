@@ -20,7 +20,7 @@ from src.crud.subscription import (
  
 router = APIRouter()
  
-VALID_TIERS = {"basic", "premium", "pro"}
+VALID_TIERS = {"hatchling", "wingman", "elite", "swole_patrol"}
  
  
 @router.get("/status", response_model=SubscriptionStatus)
