@@ -1,0 +1,72 @@
+.falcon-animation {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* Base falcon */
+.falcon {
+  position: absolute;
+  left: -200px;
+  animation: flyAcross 3s linear forwards;
+}
+
+/* Bar-graph heights */
+.falcon-1 {
+  top: 25%;
+  animation-delay: 0s;
+}
+
+.falcon-2 {
+  top: 45%;
+  animation-delay: 0.4s;
+}
+
+.falcon-3 {
+  top: 65%;
+  animation-delay: 0.8s;
+}
+
+/* Wing motion */
+.falcon-wing-motion {
+  animation: wingMotion 0.4s ease-in-out infinite alternate;
+}
+
+.falcon-img {
+  width: 160px;
+  height: auto;
+}
+
+/* Smooth flight */
+@keyframes flyAcross {
+  0% {
+    transform: translateX(0) translateY(0) rotate(-6deg);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  50% {
+    transform: translateX(60vw) translateY(-10px) rotate(2deg);
+  }
+
+  100% {
+    transform: translateX(120vw) translateY(10px) rotate(6deg);
+    opacity: 0;
+  }
+}
+
+/* Subtle flap */
+@keyframes wingMotion {
+  from {
+    transform: translateY(0px) scaleY(1);
+  }
+
+  to {
+    transform: translateY(-4px) scaleY(1.05);
+  }
+}

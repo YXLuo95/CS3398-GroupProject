@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import AppPage from "../components/ui/AppPage";
 import SectionCard from "../components/ui/SectionCard";
+import FalconAnimation from "../components/FalconAnimation";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -78,6 +79,7 @@ function getWeightProgress(current, target) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [showFalcon, setShowFalcon] = useState(false);
   
   // ==========================================
   // Backend States
@@ -223,6 +225,18 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [navigate]);
 
+  useEffect(() => {
+    if (loading) return;
+
+    setShowFalcon(true);
+
+    const timer = setTimeout(() => {
+    setShowFalcon(false);
+    }, 4000);
+
+  return () => clearTimeout(timer);
+}, [loading]);
+
   // ==========================================
   // Compute next workout day from plan
   // ==========================================
@@ -295,6 +309,9 @@ export default function Dashboard() {
   const doneCount = allDays.filter(d => completedDays.some(c => c.day === d)).length;
 
   return (
+  <>
+    {showFalcon && <FalconAnimation />}
+
     <AppPage
       eyebrow="DASHBOARD"
       title={`Welcome back, ${userName}`}
@@ -775,5 +792,6 @@ export default function Dashboard() {
         </div>
       </SectionCard>
     </AppPage>
-  );
+</>
+);
 }
