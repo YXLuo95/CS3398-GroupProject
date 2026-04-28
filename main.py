@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.crud import quiz
 import uvicorn
 import redis.asyncio as aioredis 
+from supplement_engine import get_supplement_recommendations
+from response_formatter import format_supplement_response
 
 from src.core.config import settings
 from sqlmodel import SQLModel
@@ -106,6 +108,18 @@ async def lifespan(app: FastAPI):
     app.state.worker_task = asyncio.create_task(llm_queue_worker(app))
 
     yield 
+
+@app.post("/api/supplements")
+async def get_supplements(request: Request):
+    data = await request.json()
+
+    supplements = get_supplement_recommendations(data)
+    message = format_supplement_response(data, supplements)
+
+    return {
+        "supplements": supplements,
+        "message": message
+    }
 
     # 5. Graceful Shutdown
     logger.info("[Shutdown] Cleaning up...")
