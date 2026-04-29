@@ -10,12 +10,12 @@ cs3398-groupproject/
 │   ├── project-management-plan.md
 │   └── ERdiagram_sprint1.png
 ├── src/
-│   ├── api/           # API endpoints (login, fitness, report, quiz, admin)
-│   ├── core/          # Config, auth, database, security, health calculations
-│   ├── crud/          # Database operations (user, fitness, quiz)
-│   ├── model.py       # SQLModel database models
+│   ├── api/           # API modules (login, fitness, quiz, profile, report, workout, nutrition, forum, chat, subscription, stats)
+│   ├── core/          # Config, auth, database, security, health calculations, llm
+│   ├── crud/          # Database operations by feature module
+│   ├── model.py       # SQLModel entities
 │   ├── schemas.py     # Pydantic request/response schemas
-│   └── tasks.py       # Background LLM queue worker
+│   └── tasks.py       # Background queue worker(s)
 ├── src/frontend/      # React + Vite SPA
 ├── main.py            # FastAPI app entry point
 ├── requirements.txt
@@ -71,7 +71,7 @@ npm install
 npm run dev
 ```
 
-Runs the app at `http://localhost:5173` (or the port Vite reports). Point it at the backend URL (e.g. `http://localhost:8000`) when you wire API calls.
+Runs the app at `http://localhost:5173` (or the port Vite reports). Set `VITE_API_URL` to your backend URL (e.g. `http://localhost:8000`).
 
 ---
 
@@ -83,16 +83,27 @@ Create a `.env` file in the **project root** (next to `main.py`):
 |----------|----------|-------------|
 | `SECRET_KEY` | Yes | Secret for JWT signing (use a long random string) |
 | `ALGORITHM` | No | JWT algorithm (default: `HS256`) |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | No | JWT expiration in minutes (default: `30`) |
 | `PROJECT_NAME` | No | App title (default: Fitness Advice and Tracking Service) |
 | `REDIS_HOST` | No | Redis host (default: `localhost`) |
 | `REDIS_PORT` | No | Redis port (default: `6379`) |
 | `REDIS_PASSWORD` | No | Redis password (default: none) |
 | `REDIS_DB_AUTH` | No | Redis DB for auth (default: `0`) |
+| `REDIS_DB_LLM` | No | Reserved Redis DB for LLM-related cache/rate-limit data (default: `1`; currently optional/not required by startup path) |
 | `REDIS_DB_QUEUE` | No | Redis DB for report queue (default: `2`) |
 | `ENABLE_LLM_MODEL` | No | Set to `true` to use Ollama; `false` for mock reports (default: `true`) |
 | `LOCAL_MODEL_NAME` | No | Ollama model name, e.g. `llama3` or `mistral-nemo` (default: `llama3`) |
 | `OLLAMA_HOST` | No | Ollama server URL (default: `http://localhost:11434`) |
+| `PREMIUM_COUPON` | No | Coupon code used by subscription redeem flow (default: `DEMO2026`) |
 | `ADMIN_PASSWORD` | No | Admin panel password (default: `admin123`) |
+
+### Frontend environment variables
+
+Create `src/frontend/.env`:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_API_URL` | Yes | Backend API base URL used by frontend (example: `http://localhost:8000`) |
 
 **Minimal `.env` example:**
 
@@ -103,10 +114,9 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_DB_AUTH=0
 REDIS_DB_QUEUE=2
+PREMIUM_COUPON=DEMO2026
 ENABLE_LLM_MODEL=false
 LOCAL_MODEL_NAME=mistral-nemo
-OLLAMA_HOST=http://localhost:11434
-ADMIN_PASSWORD=admin123
 ```
 
 ---
@@ -136,6 +146,13 @@ cd src/frontend && npm run dev
 - **Health check:** http://localhost:8000/health  
 - **Project docs:** [Project Management Plan](docs/project-management-plan.md) · [Requirements](docs/requirements-specification.md) · [Architecture](docs/architecture.md) · [Test Plan](docs/test-plan.md)  
 - **API docs:** Served by FastAPI at http://localhost:8000/docs (Swagger) and `/openapi.json`
+
+---
+
+## Repository Scripts
+
+- `python scripts/strip_svg_inkscape.py`  
+  Strips editor metadata from SVG source files in `src/muscle-map-sources/` and updates web-ready files in `src/frontend/src/assets/muscle-maps/`.
 
 ---
 

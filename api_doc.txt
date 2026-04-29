@@ -27,7 +27,7 @@ Response: {"id": 1, "username": "...", "email": "..."}
 
 =======================================
 2. Fitness Data
-POST /api/v1/fitness 🔒
+POST /api/v1/records 🔒
 
 Description: Submit new fitness metrics (used as a baseline or progress update).
 
@@ -35,11 +35,19 @@ Payload (JSON): {"age": 35, "gender": "male", "height_in": 72.5, "weight_lbs": 1
 
 Response: 200 OK with the created database record (includes id and created_at).
 
-GET /api/v1/fitness 🔒
+GET /api/v1/records 🔒
 
 Description: Retrieve the current user's historical fitness records.
 
 Response: A list of fitness record JSON objects.
+
+POST /api/v1/records/weight 🔒
+
+Description: Quick weight-only log. The backend fills other fields from the user's saved quiz/goal profile.
+
+Payload (JSON): {"weight_lbs": 190.5}
+
+Response: 201 Created with the created fitness record.
 =======================================
 
 =======================================
@@ -62,7 +70,6 @@ Response: A list of report objects containing the full Markdown text (report_con
 =======================================
 4. System status
 GET /health
-
 Description: Check if the server and the local LLM engine are online.
 
 Response: {"status": "online", "llm": "ready", "message": "Server is running."}

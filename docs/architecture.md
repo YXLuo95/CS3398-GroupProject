@@ -1,7 +1,7 @@
 # System Architecture Overview
 ## Intelligent Fitness Application (Blue Falcons Fitness App)
 
-**Version:** 1.0  
+**Version:** 1.2  
 **Related:** [Project Management Plan](project-management-plan.md) | [Requirements Specification](requirements-specification.md)
 
 ---
@@ -28,28 +28,29 @@ The system is a **web application** with:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           CLIENT (Browser)                               │
-│  React + Vite SPA (src/frontend) — routing, pages, future API calls      │
+│                           CLIENT (Browser)                              │
+│ React + Vite SPA (src/frontend) — routing, pages, live API integrations │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
                                       │ HTTP / REST (JSON)
                                       ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         BACKEND (FastAPI)                                │
-│  main.py — CORS, lifespan, router registration                           │
-│  ├── api/          — REST endpoints (login, fitness, report, quiz, admin)│
-│  ├── core/         — config, auth (JWT), database, security, health     │
-│  ├── crud/         — database operations (user, fitness, quiz)          │
-│  ├── model.py      — SQLModel entities                                  │
-│  ├── schemas.py    — Pydantic request/response DTOs                     │
-│  └── tasks.py      — background worker (consumes Redis queue)            │
-└─────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         BACKEND (FastAPI)                                 │
+│  main.py — CORS, lifespan, router registration                            │
+│  ├── api/          — endpoints (auth, fitness, reports, quiz, workouts,   │
+│  │                  nutrition, forum, chat, subscription, stats, profile) │
+│  ├── core/         — config, auth (JWT), database, security, health, llm  │
+│  ├── crud/         — database operations by feature modules               │
+│  ├── model.py      — SQLModel entities                                    │
+│  ├── schemas.py    — Pydantic request/response DTOs                       │
+│  └── tasks.py      — background worker (consumes Redis queue)             │
+└───────────────────────────────────────────────────────────────────────────┘
          │                    │                        │
          │                    │                        │
          ▼                    ▼                        ▼
 ┌──────────────┐    ┌──────────────────┐    ┌─────────────────────────┐
-│   SQLite     │    │      Redis       │    │  Ollama (optional)       │
-│  (database)  │    │  Auth + Queue    │    │  Local LLM for reports   │
+│   SQLite     │    │      Redis       │    │  Ollama (optional)      │
+│  (database)  │    │  Auth + Queue    │    │  Local LLM for reports  │
 └──────────────┘    └──────────────────┘    └─────────────────────────┘
 ```
 
@@ -114,9 +115,16 @@ flowchart LR
 |-----------------|----------------|---------|
 | `login`         | `/api/v1`      | Registration, login (JWT access token). |
 | `fitness`       | `/api/v1`      | Create and list fitness records (auth required). |
-| `report`        | `/api/v1/reports` | Enqueue AI report generation (auth required). |
+| `report`        | `/api/v1/reports` | Enqueue report generation and list report history (auth required). |
 | `quiz`          | `/api/v1/onboarding` | Onboarding quiz: submit, get, update; quiz status. |
-| Admin (SQLAdmin)| `/admin`       | CRUD UI for User, FitnessRecord, FitnessReport, FitnessGoal. |
+| `profile`       | `/api/v1` | Get and update profile data. |
+| `workout`       | `/api/v1/workout` | Plan generation, completion tracking, set tracking, history/calendar. |
+| `nutrition_plan`| `/api/v1/nutrition-plans` | Nutrition plan generation and retrieval. |
+| `forum`         | `/api/v1/forum` | Forum author status, posts, post details, replies. |
+| `chat`          | `/api/v1` | Chat history endpoint and chat transport integration. |
+| `subscription`  | `/api/v1/subscription` | Premium status and coupon redeem flow. |
+| `stats`         | `/api/v1/stats` | Monthly analytics for dashboard surfaces. |
+| Admin (SQLAdmin)| `/admin`       | CRUD UI for major entities (users, records/reports/goals, profiles, workouts, nutrition, forum, subscriptions, chat). |
 
 Protected routes use the `get_current_user` dependency (JWT from `Authorization: Bearer <token>`).
 
@@ -131,8 +139,8 @@ Protected routes use the `get_current_user` dependency (JWT from `Authorization:
 
 ### 4.4 Data Layer
 
-- **Models (`src/model.py`):** `User`, `FitnessRecord`, `FitnessReport`, `FitnessGoal` (with `TimestampMixin`). Relationships: User → FitnessRecord(s), User → FitnessReport(s), User → FitnessGoal (one-to-one).
-- **CRUD (`src/crud/`):** User (create, get by username/email), fitness records (create, list by user), quiz/FitnessGoal (get/create/update by user).
+- **Models (`src/model.py`):** Includes user/auth, records/reports/goals, profile, workout plan/exercises/completions/sets, forum entities, chat messages, and nutrition plans (with shared timestamp fields where applicable).
+- **CRUD (`src/crud/`):** Feature-scoped modules (user, fitness, quiz, profile, workout, forum, nutrition, and related helpers).
 - **Schemas (`src/schemas.py`):** Pydantic models for request/response validation and serialization (e.g. UserCreate, UserRead, FitnessRecordCreate/Read, QuizSubmit, FitnessGoalRead, Token).
 
 ---
@@ -163,7 +171,14 @@ Protected routes use the `get_current_user` dependency (JWT from `Authorization:
 1. Authenticated user sends `POST /api/v1/reports/generate`.
 2. Backend loads user’s recent fitness data, builds a summary, pushes a task payload to a Redis list (queue).
 3. Backend responds immediately with “queued” / “pending.”
-4. Background worker (in process) pops tasks from Redis, calls LLM (or mock), and persists `FitnessReport` to SQLite. (A future endpoint may expose report history to the client.)
+4. Background worker (in process) pops tasks from Redis, calls LLM (or mock), and persists `FitnessReport` to SQLite.
+5. Client fetches report history from `GET /api/v1/reports`.
+
+### 5.5 Real-time and Async Patterns
+
+1. Report and nutrition generation use async queue processing with Redis and worker tasks.
+2. Chat supports message history retrieval through REST and can use WebSocket transport where enabled.
+3. Redis DBs are logically partitioned by purpose (auth, llm-related cache/rate-limit, queue workloads).
 
 ---
 
@@ -185,7 +200,7 @@ A detailed entity-relationship diagram is available in the repository: **docs/ER
 | Dependency | Role | Required |
 |------------|------|----------|
 | SQLite (file) | Primary database | Yes |
-| Redis | Auth state, report task queue | Yes |
+| Redis | Auth state, report/nutrition queues, chat Pub/Sub | Yes |
 | Ollama | Local LLM for report text | No (mock used if disabled) |
 
 ---
@@ -195,7 +210,7 @@ A detailed entity-relationship diagram is available in the repository: **docs/ER
 - **Stack:** React 19, Vite 7, React Router.
 - **Location:** `src/frontend/`.
 - **Muscle heat map:** FR-15 visualization — component, group→SVG mapping, and Workouts integration are documented in [muscle-heat-map.md](muscle-heat-map.md).
-- **Current state:** Multi-page shell (Home, Features, About, Login, Sign Up) with routing; API integration (auth, quiz, records, reports) is to be wired in later sprints.
+- **Current state:** Multi-page app with active routing and API integration across auth, onboarding, profile, records, reports, workouts, nutrition, forum, subscription, stats, and chat history.
 
 ---
 
@@ -219,5 +234,6 @@ A detailed entity-relationship diagram is available in the repository: **docs/ER
 
 | Version | Date       | Author | Changes     |
 |---------|------------|--------|-------------|
-| 1.1     | 2026-04-12 | —      | Link muscle heat map doc (FR-15 UI). |
+| 1.2     | 2026-04-27 | Shawn  | Updated router/domain coverage and frontend integration status. |
+| 1.1     | 2026-04-12 | Shawn  | Link muscle heat map doc (FR-15 UI). |
 | 1.0     | 2026-03-07 | Shawn  | Initial draft |
