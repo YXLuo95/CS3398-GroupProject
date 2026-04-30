@@ -1,56 +1,64 @@
-# React + Vite
+# Falcon Fitness Frontend
 
-# Falcon Fitness
-
-Falcon Fitness is a personalized fitness web application being developed by Blue Falcons Inc. The goal of this project is to help users build better habits, stay consistent, and reach their fitness goals through customized workout, diet, and supplement guidance.
-
-This frontend is currently built with React and Vite and serves as the main user interface for the application.
+React + Vite frontend for the Blue Falcons Fitness App.
 
 ---
 
-## Project Overview
+## Current Frontend Features
 
-Falcon Fitness is designed to provide users with a fitness platform that can eventually support:
-
-- Personalized workout plans
-- Diet recommendations
-- Supplement recommendations
-- User profiles
-- Goal-based onboarding
-- Future backend integration for authentication and data storage
-
-At this stage, the frontend landing page and main visual structure have been set up and prepared for team collaboration.
-
----
-
-## Current Features
-
-The current frontend includes:
-
-- Falcon Fitness landing page
-- Branded navigation bar
-- Login button
-- Sign Up button
-- Hero section with project branding
-- Clean UI structure for future expansion
-- Updated layout with removed quiz/profile navigation items
+- Authentication pages (`/login`, `/signup`)
+- Core app pages (`/dashboard`, `/profile`, `/about`, `/features`)
+- Onboarding quiz (`/quiz`)
+- Workouts and details (`/workouts`, `/workouts/:slug`)
+- Nutrition and diet plan pages (`/nutrition`, `/nutrition/:slug`, `/diet-plan`)
+- Reports and history (`/reports`, `/history`)
+- Community forum (`/forum`, `/forum/:postId`)
+- Chat (`/chat`)
+- Premium/upgrade flow (`/upgrade`)
+- Fallback 404 route
 
 ---
 
 ## Tech Stack
 
-This project currently uses:
-
-- **React**
-- **Vite**
-- **JavaScript**
-- **CSS**
+- React
+- React Router
+- Vite
+- Axios
+- JavaScript + CSS
 
 ---
 
-## Getting Started
+## Configuration
 
-### 1. Clone the repository
+Create `src/frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+If unset, some modules fall back to `http://localhost:8000`, but setting `VITE_API_URL` is recommended for all environments.
+
+---
+
+## Development
+
+From `src/frontend`:
 
 ```bash
-git clone <your-bitbucket-repo-url>
+npm install
+npm run dev
+```
+
+Default dev URL: `http://localhost:5173`
+
+---
+
+## Build and Preview
+
+From `src/frontend`:
+
+```bash
+npm run build
+npm run preview
+```

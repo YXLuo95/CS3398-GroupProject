@@ -1,7 +1,7 @@
 # Requirements Specification
 ## Intelligent Fitness Application
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Related:** [Project Management Plan](project-management-plan.md)
 
 ---
@@ -37,25 +37,25 @@ This document specifies the functional and non-functional requirements for the B
 |------|-------------|----------|----------------|
 | FR-8 | The system shall allow users to submit fitness/body data (e.g., weight, height, activity level, fitness goal). | Must | Implemented: `POST /api/v1/records` |
 | FR-9 | The system shall allow users to retrieve their submitted fitness records. | Must | Implemented: `GET /api/v1/records` |
-| FR-10 | The system shall allow users to track completed workouts. | Must | Planned (Sprint 2) |
-| FR-11 | The system shall support favorites and completed workout tracking. | Should | Planned (Sprint 2) |
+| FR-10 | The system shall allow users to track completed workouts. | Must | Implemented: workout completion endpoints (`POST/GET/DELETE /api/v1/workout/complete`) |
+| FR-11 | The system shall support favorites and completed workout tracking. | Should | Partially implemented: completed workout tracking is live; favorites workflow pending |
 
 ### 2.4 Workout & Nutrition
 
 | ID   | Requirement | Priority | Status / Notes |
 |------|-------------|----------|----------------|
-| FR-12 | The system shall generate personalized workout plans based on user goals. | Must | Planned (Sprint 2) |
-| FR-13 | The system shall generate diet recommendations aligned with fitness objectives. | Must | Planned (Sprint 2) |
+| FR-12 | The system shall generate personalized workout plans based on user goals. | Must | Implemented backend: `POST/GET/DELETE /api/v1/workout/plan`; frontend integration present |
+| FR-13 | The system shall generate diet recommendations aligned with fitness objectives. | Must | Implemented backend: `POST/GET /api/v1/nutrition-plans`; frontend integration present |
 | FR-14 | The system shall provide supplement suggestions based on user goals. | Should | Planned (Sprint 2) |
-| FR-15 | The system shall organize workouts by muscle group. | Should | Planned (Sprint 2) |
+| FR-15 | The system shall organize workouts by muscle group. | Should | Implemented: workout data model + frontend heat-map visualization (see `docs/muscle-heat-map.md`) |
 
 ### 2.5 AI Reports & Analytics
 
 | ID   | Requirement | Priority | Status / Notes |
 |------|-------------|----------|----------------|
 | FR-16 | The system shall generate AI-based fitness/advice reports using user data. | Must | Implemented: `POST /api/v1/reports/generate` (async queue + LLM or mock) |
-| FR-17 | The system shall display progress metrics on a personalized dashboard. | Must | Planned (Sprint 3) |
-| FR-18 | The system shall allow users to view their report history. | Must | Backend: FitnessReport model; GET endpoint TBD |
+| FR-17 | The system shall display progress metrics on a personalized dashboard. | Must | Partially implemented: backend monthly stats endpoint (`GET /api/v1/stats/monthly`) and dashboard integration present; expansion ongoing |
+| FR-18 | The system shall allow users to view their report history. | Must | Implemented: `GET /api/v1/reports` with persisted `FitnessReport` records |
 
 ### 2.6 Optional / Future
 
@@ -114,4 +114,5 @@ This document specifies the functional and non-functional requirements for the B
 
 | Version | Date       | Author | Changes     |
 |---------|------------|--------|-------------|
-| 1.0     | 2026-03-07 | —      | Initial draft |
+| 1.1     | 2026-04-27 | Shawn  | Updated requirement implementation status to match current API/frontend scope. |
+| 1.0     | 2026-03-07 | Shawn  | Initial draft |

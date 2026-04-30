@@ -18,11 +18,11 @@ When adding a new feature (e.g., `User Profile`), you must implement the followi
 - **Responsibility:** Defines data validation and payload serialization using `Pydantic`.
 
 ### 3. The Data Access Layer (CRUD)
-- **File:** `src/crud.py`
+- **File:** `src/crud/<feature_module>.py`
 - **Responsibility:** Executes asynchronous database transactions (`AsyncSession`). It connects Models and Schemas.
 
 ### 4. The Routing Layer (API Endpoint)
-- **File:** `src/api/v1/endpoints/profile.py`
+- **File:** `src/api/<feature_module>.py`
 - **Responsibility:** Handles HTTP requests, enforces authentication, and delegates logic to the CRUD layer.
 
 ---
@@ -105,8 +105,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.schemas import UserProfileCreate, UserProfileResponse
 from src.model import User
 # Assume get_session and get_current_user are defined in dependencies
-from src.core.dependencies import get_session, get_current_user
-import src.crud as crud
+from src.core.database import get_session
+from src.core.auth import get_current_user
+from src.crud import profile as crud
 
 router = APIRouter()
 
@@ -121,6 +122,8 @@ async def create_profile(
     return await crud.create_user_profile(session, payload, current_user.id)
 ```
 
-### Step 5: Test the new API with FastAPI's built-in tools
+### Step 5: Register and test your router
 
-Add your new table (if you created one) to `api/admin.py` to use SQLAdmin. Verify that your new feature correctly creates and retrieves the new table.
+1. Import and register your router in `main.py` using `app.include_router(...)` with the intended prefix and tag.
+2. Add your new table (if created) to `src/api/admin.py` to expose it in SQLAdmin.
+3. Verify create/read/update flows from `http://localhost:8000/docs`.
