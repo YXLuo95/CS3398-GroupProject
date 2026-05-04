@@ -46,3 +46,4 @@ logs/
 *.DS_Store
 Thumbs.db
 start.bat
+/src/frontend/src/assets/gallery
