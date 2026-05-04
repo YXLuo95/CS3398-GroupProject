@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import Lottie from "lottie-react";
 import AppPage from "../components/ui/AppPage";
 import SectionCard from "../components/ui/SectionCard";
+import { getExerciseAnimation } from "../data/exerciseAnimations";
 import MuscleHeatMap from "../components/MuscleHeatMap";
 import { normalizeGroupScores } from "../data/muscleGroups";
 
@@ -312,7 +314,7 @@ function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet,
   const showHeatMap = heatFromGroup !== null
     ? Object.keys(heatFromGroup).length > 0
     : (exercise.primaryMuscles?.length ?? 0) + (exercise.secondaryMuscles?.length ?? 0) > 0;
-  const hasDetails = steps.length > 0 || !!exercise.image_url || showHeatMap;
+  const hasDetails = steps.length > 0 || !!exercise.image_url || !!getExerciseAnimation(exercise.name) || showHeatMap;
   const diffStyle  = DIFFICULTY_COLORS[exercise.difficulty] || {};
   const setCount   = parseInt(exercise.sets) || 0;
   const doneSets   = loggedSets || new Set();
@@ -436,7 +438,7 @@ function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet,
             </div>
           )}
 
-          {(exercise.image_url || showHeatMap) && (
+          {(exercise.image_url || getExerciseAnimation(exercise.name) || showHeatMap) && (
             <div
               style={{
                 display: "flex",
@@ -444,10 +446,19 @@ function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet,
                 flexWrap: "wrap",
                 gap: "0.75rem",
                 alignItems: "stretch",
-                justifyContent: exercise.image_url && showHeatMap ? "space-between" : "flex-start",
+                justifyContent: (exercise.image_url || getExerciseAnimation(exercise.name)) && showHeatMap ? "space-between" : "flex-start",
               }}
             >
-              {exercise.image_url && (
+              {getExerciseAnimation(exercise.name) ? (
+                <div style={{ flex: "1 1 0", minWidth: 0, maxWidth: 320, width: "100%" }}>
+                  <Lottie
+                    animationData={getExerciseAnimation(exercise.name)}
+                    loop
+                    autoplay
+                    style={{ width: "100%", borderRadius: 10 }}
+                  />
+                </div>
+              ) : exercise.image_url ? (
                 <img
                   src={exercise.image_url}
                   alt={exercise.name}
@@ -460,7 +471,7 @@ function ExerciseCard({ exercise, allExpanded, loggedSets, onLogSet, onUnlogSet,
                     objectFit: "cover",
                   }}
                 />
-              )}
+              ) : null}
               {showHeatMap && (
                 <div
                   style={{
