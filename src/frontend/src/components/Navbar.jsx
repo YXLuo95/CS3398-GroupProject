@@ -67,7 +67,7 @@ export default function Navbar() {
           <NavLink to="/workouts"    className={navClass}>Workouts</NavLink>
           <NavLink to="/nutrition"   className={navClass}>Nutrition</NavLink>
           <NavLink to="/supplements" className={navClass}>Supplements</NavLink>
-          {!token && <NavLink to="/quiz" className={navClass}>Quiz</NavLink>}
+          <NavLink to="/architecture" className={navClass}>Architecture</NavLink>
         </div>
 
         {/* Right: Auth Actions */}

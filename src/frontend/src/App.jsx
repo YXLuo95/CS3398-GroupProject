@@ -38,6 +38,8 @@ import ForumPost from "./pages/ForumPost";
 import History from "./pages/History";
 import Upgrade from "./pages/Upgrade";
 
+import Architecture from "./pages/Architecture";
+
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -107,6 +109,7 @@ function App() {
             <Route path="/history"         element={<History />} />
             <Route path="/upgrade"         element={<Upgrade />} />
             <Route path="*"                element={<NotFound />} />
+            <Route path="/architecture" element={<Architecture />} />
           </Routes>
 
           {/* Global Footer */}
