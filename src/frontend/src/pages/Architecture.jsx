@@ -36,15 +36,17 @@ export default function Architecture() {
   );
 
   const SVGForkConnector = () => (
-    <div style={{ margin: '0 15px', flexShrink: 0, display: 'flex', alignItems: 'center', position: 'relative', zIndex: -1 }}>
-      <svg width="60" height="200" viewBox="0 0 60 200">
-        <path d="M 0 100 L 25 100 L 25 45 L 55 45" stroke="#2f7bff" strokeWidth="3" fill="none" />
-        <polygon points="53,40 60,45 53,50" fill="#2f7bff" />
-        <path d="M 0 100 L 25 100 L 25 155 L 55 155" stroke="#2f7bff" strokeWidth="3" fill="none" />
-        <polygon points="53,150 60,155 53,160" fill="#2f7bff" />
-      </svg>
-    </div>
-  );
+  <div style={{ margin: '0 15px', flexShrink: 0, display: 'flex', alignItems: 'center', position: 'relative', zIndex: 1 }}> 
+    <svg width="80" height="200" viewBox="0 0 80 200" style={{ overflow: 'visible' }}>
+      {/* Top branch — to Redis */}
+      <path d="M 0 100 L 30 100 L 30 45 L 70 45" stroke="#2f7bff" strokeWidth="3" fill="none" />
+      <polygon points="68,40 78,45 68,50" fill="#2f7bff" />
+      {/* Bottom branch — to LLM Worker */}
+      <path d="M 0 100 L 30 100 L 30 155 L 70 155" stroke="#2f7bff" strokeWidth="3" fill="none" />
+      <polygon points="68,150 78,155 68,160" fill="#2f7bff" />
+    </svg>
+  </div>
+);
 
   const JWTStep = ({ number, title, desc, color }) => (
     <div style={{
