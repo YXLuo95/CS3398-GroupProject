@@ -82,7 +82,6 @@ export default function Architecture() {
           <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", flexWrap: "nowrap", width: "max-content", margin: "0 auto" }}>
 
             <div style={{ ...glassCardStyle, borderTop: "4px solid #f39c12" }}>
-              <PortBadge port="443" color="#f39c12" />
               <div style={{ fontSize: "2rem", marginBottom: "5px" }}>☁️</div>
               <h3 style={{ margin: "0 0 10px 0", color: "#f39c12", fontSize: "1.1rem" }}>Cloudflare Tunnel</h3>
               <p style={{ fontSize: "0.8rem", color: "#94a3b8", margin: 0 }}>Public HTTPS gateway with no exposed ports.</p>
